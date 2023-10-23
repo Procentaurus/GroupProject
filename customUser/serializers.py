@@ -7,40 +7,40 @@ import bleach
 from .models import MyUser
 
 
-class MyUserFullSerializer(serializers.ModelSerializer):
+class MyUserAdminSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = MyUser
-        fields = ['email', 'username', 'phone_number', 'creation_date', 'last_login', 'hide_contact_data']
+        fields = ['id', 'email', 'username', 'phone_number', 'creation_date', 'last_login', 'hide_contact_data', 'is_admin']
 
 
 class MyUserAccountDataSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = MyUser
-        fields = ['email', 'username', 'last_login', 'creation_date', 'hide_contact_data']
+        fields = ['id','email', 'username', 'phone_number', 'creation_date', 'hide_contact_data']
 
 
-class MyUserContactDataSerializer(serializers.ModelSerializer):
+class MyUserPublicListSerializer(serializers.ModelSerializer):
     class Meta:
         model = MyUser
-        fields = ('username', 'email', 'phone_number')
+        fields = ('id','username', 'email')   
 
-class MyUserLightSerializer(serializers.ModelSerializer):
+class MyUserPublicDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = MyUser
-        fields = ('username', 'email', 'last_login')   
+        fields = ('id','username', 'email', 'creation_date', 'last_login')   
 
 
-class RegisterSerializer(serializers.ModelSerializer):
+class MyUserCreateUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = MyUser
-        fields = ('username', 'email', 'password', 'phone_number')
+        fields = ('username', 'email', 'password', 'phone_number', 'hide_contact_data')
 
     def validate_username(self, value):
         if len(value) < 6 or len(value) > 50:
-            raise serializers.ValidationError("Username must be at least 6 characters long.")
+            raise serializers.ValidationError("Username length must be between 6 and 50.")
         return value
 
     def validate_password(self, value):
@@ -66,22 +66,24 @@ class RegisterSerializer(serializers.ModelSerializer):
             
         return None
 
+    def update(self, instance, validated_data):
 
-    def create(self, validated_data):
-        user = MyUser.objects.create_user(
-            bleach.clean(validated_data['email']),
-            bleach.clean(validated_data['username']),
-            validated_data['password']
-        )
+        email = validated_data.get("email")
+        if email:
+            instance.email = bleach.clean(validated_data.get('email', instance.email))
 
-        if validated_data['phoneNumber'] is not None:
-            user.phone_number = validated_data['phoneNumber']
+        username = validated_data.get("username")
+        if username:
+            instance.username = bleach.clean(validated_data.get('username', instance.username))
+        
+        phone_number = validated_data.get('phone_number')
+        if phone_number is not None:
+            instance.phone_number = phone_number
+        
+        hide_contact_data = validated_data.get('hide_contact_data')
+        if hide_contact_data is not None:
+            instance.hide_contact_data = hide_contact_data
 
-        return user
-
-
-class LoginSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = MyUser
-        fields = ('email', 'password')
+        instance.save()
+        return instance
+    
