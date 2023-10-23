@@ -8,7 +8,7 @@ class MyUserAdmin(UserAdmin):
     model = MyUser
     list_display = ("email", "username", "phone_number")
     list_filter = ("email", "username")
-    readonly_fields = ("lastLogin", "creationDate")
+    readonly_fields = ("last_login", "creation_date")
     search_fields = ("email",)
     ordering = ("email",)
     
