@@ -1,0 +1,34 @@
+### authenticate and get tokens
+POST http://localhost:8000/users/token/
+Content-Type: application/json
+
+{
+    "email": "michalski.44@wp.pl",
+    "password":"123456PIOTR"
+}
+
+### refresh access token
+POST http://localhost:8000/users/token/refresh/
+Content-Type: application/json
+
+{
+    "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTY5ODA5NTU5NCwiaWF0IjoxNjk4MDkxOTk0LCJqdGkiOiJkZWU4NTQzNWM0ZGI0ZTczOWRhNmNiZTJjZDI2Yzg4MiIsInVzZXJfaWQiOiIzOTVkNTQ5Yi05YjkzLTRjOWYtOTgxMC0zMmQ5M2M0YWY0YjEiLCJpc3MiOiJQcm9jZW50YXVydXNTeXN0ZW1zIn0.0y7hctbRA_tMrEATaqzaSHRaCo4pz6hya4b8DVA-rYY"
+}
+
+### get all users
+GET http://localhost:8000/users/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjk4MDkyNTk0LCJpYXQiOjE2OTgwOTE5OTQsImp0aSI6ImE3ZjRmOWJhOTgzMDQ4ZTQ4MjJkNDBmZjJkNWE1Zjg4IiwidXNlcl9pZCI6IjM5NWQ1NDliLTliOTMtNGM5Zi05ODEwLTMyZDkzYzRhZjRiMSIsImlzcyI6IlByb2NlbnRhdXJ1c1N5c3RlbXMifQ.uUhmiTYCW7Ve8OuqFhVw5oabivS10AIBq0LXV3Hiydk
+
+### get users after filtering
+GET http://localhost:8000/users/?username=ma
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjk4MDkyNTk0LCJpYXQiOjE2OTgwOTE5OTQsImp0aSI6ImE3ZjRmOWJhOTgzMDQ4ZTQ4MjJkNDBmZjJkNWE1Zjg4IiwidXNlcl9pZCI6IjM5NWQ1NDliLTliOTMtNGM5Zi05ODEwLTMyZDkzYzRhZjRiMSIsImlzcyI6IlByb2NlbnRhdXJ1c1N5c3RlbXMifQ.uUhmiTYCW7Ve8OuqFhVw5oabivS10AIBq0LXV3Hiydk
+
+### update user
+PUT http://localhost:8000/users/41c8d7b7-da39-488f-8480-decc5c609f87/
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjk4MDkyNTk0LCJpYXQiOjE2OTgwOTE5OTQsImp0aSI6ImE3ZjRmOWJhOTgzMDQ4ZTQ4MjJkNDBmZjJkNWE1Zjg4IiwidXNlcl9pZCI6IjM5NWQ1NDliLTliOTMtNGM5Zi05ODEwLTMyZDkzYzRhZjRiMSIsImlzcyI6IlByb2NlbnRhdXJ1c1N5c3RlbXMifQ.uUhmiTYCW7Ve8OuqFhVw5oabivS10AIBq0LXV3Hiydk
+
+{
+    "phone_number": 776123666,
+    "hide_contact_data": "False"
+}

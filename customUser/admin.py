@@ -11,6 +11,15 @@ class MyUserAdmin(UserAdmin):
     readonly_fields = ("last_login", "creation_date")
     search_fields = ("email",)
     ordering = ("email",)
+    fieldsets = (
+        ("Main section", {"fields": ("email", "username", "password")}),
+        ("Additional", {"fields": ("hide_contact_data", "is_active", "is_admin")}),
+        ("Set up", {"fields": ("last_login", "creation_date")}),
+    )
+    add_fieldsets = (
+        ("Main section", {"fields": ("email", "username", "password1", "password2")}),
+        ("Additional", {"fields": ("hide_contact_data", "is_active", "is_admin")}),
+    )
     
 admin.site.register(MyUser, MyUserAdmin)
 admin.site.unregister(Group)

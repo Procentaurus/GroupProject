@@ -36,9 +36,9 @@ class MyUser(AbstractBaseUser, PermissionsMixin):
     # def user_directory_path(instance, filename):
     #     return 'avatars/user_{0}/{1}'.format(instance.id, filename)
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-    email = models.EmailField(max_length=50, unique=True)
-    phone_number = models.PositiveIntegerField(null=True, unique=True)
-    username = models.CharField(max_length=30, unique=True)
+    email = models.EmailField(max_length=50, unique=True, null=False, blank=False)
+    phone_number = models.PositiveIntegerField(null=True, unique=True, blank=True)
+    username = models.CharField(max_length=30, unique=True, null=False, blank=False)
     creation_date = models.DateTimeField(auto_now_add=True)
     lastLogin = models.DateTimeField(auto_now=True)
     

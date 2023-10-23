@@ -9,25 +9,28 @@ from WebGame.permissions import *
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
+
     def post(self, request, *args, **kwargs):
 
-        email = bleach.clean(request.data.get('email'))
+
+        email = None if request.data.get('email') is None else bleach.clean(request.data.get('email'))
         password = request.data.get('password')
 
         if email and password:
 
-            user = authenticate(request=self.context.get('request'), email=email, password=password)
+            user = authenticate(email=email, password=password)
             if user:
                 response = super().post(request, *args, **kwargs)
                 if response.status_code == 200:
                     # You can perform additional actions here, e.g., logging the login.
                     return response
 
-            return Response({'detail': 'Invalid email or password'}, status=400)
+            return Response({'detail': 'Invalid email or password'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'detail': 'Lacking obligatory credentials: email or password.'}, status=status.HTTP_400_BAD_REQUEST)
         
 
 class MyUserList(generics.ListCreateAPIView):
-    permission_classes = (IsAuthenticated | ~ChoseSafeMethod)
+    permission_classes = (IsAuthenticated | (~ChoseSafeMethod),)
 
     def get_serializer_class(self):
         if self.request.method == 'POST':
@@ -42,8 +45,8 @@ class MyUserList(generics.ListCreateAPIView):
 
         objects = MyUser.objects.all()
         
-        username = self.request.query_params['username']
-        if username:
+        username = self.request.query_params.get('username', None)
+        if username is not None:
             objects = objects.filter(username__icontains=username)
         
         return objects
@@ -71,7 +74,7 @@ class MyUserList(generics.ListCreateAPIView):
         serializer.is_valid(raise_exception=True)
         user = self.perform_create(serializer)
 
-        dto = MyUserAccountDataSerializer(user).data
+        dto = MyUserAdminSerializer(user).data if request.user.is_admin else MyUserAccountDataSerializer(user).data
         
         return Response(dto, status=status.HTTP_201_CREATED)
     
@@ -83,8 +86,11 @@ class MyUserDetail(generics.RetrieveUpdateAPIView):
 
     permission_classes = (
         IsAuthenticated &
-        ((IsTheVeryUser | IsAdmin) | ChoseSafeMethod)
-        )
+        ((IsTheVeryUser | IsAdmin) | ChoseSafeMethod),
+    )
+
+    queryset = MyUser.objects.all()
+    lookup_field = 'id'
 
     def get_serializer_class(self):
         if self.request.method == 'PUT':
@@ -122,7 +128,10 @@ class MyUserDetail(generics.RetrieveUpdateAPIView):
         return self.retrieve(request, *args, **kwargs)
 
     def put(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+
+        instance = self.get_object()
+
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         user = self.perform_update(serializer)
 

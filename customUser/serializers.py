@@ -65,25 +65,4 @@ class MyUserCreateUpdateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("Phone number must be forwarded as 9 digits without any other signs.")
             
         return None
-
-    def update(self, instance, validated_data):
-
-        email = validated_data.get("email")
-        if email:
-            instance.email = bleach.clean(validated_data.get('email', instance.email))
-
-        username = validated_data.get("username")
-        if username:
-            instance.username = bleach.clean(validated_data.get('username', instance.username))
-        
-        phone_number = validated_data.get('phone_number')
-        if phone_number is not None:
-            instance.phone_number = phone_number
-        
-        hide_contact_data = validated_data.get('hide_contact_data')
-        if hide_contact_data is not None:
-            instance.hide_contact_data = hide_contact_data
-
-        instance.save()
-        return instance
     
