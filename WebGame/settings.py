@@ -18,6 +18,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+AUTH_USER_MODEL = "customUser.MyUser"
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -27,11 +29,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'channels',
-    'rest_framework'
+    'rest_framework',
 
     'gameNetworking.apps.GamenetworkingConfig',
     'gameMechanics.apps.GamemechanicsConfig',
-    'gameApi.apps.gameapiConfig'
+    'gameApi.apps.GameapiConfig',
     'customUser.apps.CustomuserConfig',
 
 ]
