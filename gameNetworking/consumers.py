@@ -9,6 +9,11 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     teachers_waiting = 0
     students_waiting = 0
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(args, kwargs)
+        self.game_id = None
+        self.game_user_id = None
+
     @classmethod
     async def get_number_of_teachers_waiting(cls, conflict_side):
         if conflict_side == "teacher":
@@ -124,7 +129,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
             'event': "game_end",
             'winner':winner
         })
-        
+
     async def error_message(self, info):
         await self.send_json({
             'event': "made_error",
