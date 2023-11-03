@@ -4,31 +4,35 @@ from django.db import models
 from customUser.models import MyUser
 
 
-class Game(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-    teacher_player = models.ForeignKey(MyUser, on_delete=models.SET_NULL)
-    student_player = models.ForeignKey(MyUser, on_delete=models.SET_NULL)
-    start_datetime = models.DateTimeField(auto_now_add=True)
-    end_datetime = models.DateTimeField()
-
-class GameWaitingUser(models.Model):
+class GameUser(models.Model):
 
     CONFLICT_SIDES = (
-        ("Teacher", "Teacher"),
-        ("Student", "Student"),
+        ("teacher", "teacher"),
+        ("student", "student"),
     )
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-    user_id = models.OneToOneField(MyUser, on_delete=models.SET_NULL)
-    conflict_side = models.CharField(choices=CONFLICT_SIDES)
+    user_id = models.OneToOneField(MyUser, on_delete=models.CASCADE, null=False)
+    conflict_side = models.CharField(choices=CONFLICT_SIDES, null=False)
+    started_waiting = models.DateTimeField(auto_now_add=True)
+    channel_name = models.CharField(null=False)
+    in_game = models.BooleanField(default=False)
     # level = models.SmallIntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(3)])
 
-class GameAuthenticatedUser(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-    user_id = models.OneToOneField(MyUser, on_delete=models.SET_NULL)
+    class Meta:
+        ordering = ["started_waiting"]
 
+class Game(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    teacher_player = models.ForeignKey(GameUser, on_delete=models.SET_NULL)
+    student_player = models.ForeignKey(GameUser, on_delete=models.SET_NULL)
+    start_datetime = models.DateTimeField(auto_now_add=True)
+    end_datetime = models.DateTimeField()
 
 class GameAuthenticationToken(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-    user_id = models.ForeignKey(MyUser, on_delete=models.CASCADE)
+    user_id = models.ForeignKey(MyUser, on_delete=models.CASCADE, null=False)
     issued = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-issued"]
