@@ -3,13 +3,12 @@ from django.db import models
 
 from customUser.models import MyUser
 
-
-class GameUser(models.Model):
-
-    CONFLICT_SIDES = (
+CONFLICT_SIDES = (
         ("teacher", "teacher"),
         ("student", "student"),
     )
+
+class GameUser(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     user_id = models.OneToOneField(MyUser, on_delete=models.CASCADE, null=False)
@@ -17,17 +16,18 @@ class GameUser(models.Model):
     started_waiting = models.DateTimeField(auto_now_add=True)
     channel_name = models.CharField(null=False)
     in_game = models.BooleanField(default=False)
-    # level = models.SmallIntegerField(default=1, validators=[MinValueValidator(1), MaxValueValidator(3)])
 
     class Meta:
         ordering = ["started_waiting"]
 
 class Game(models.Model):
+
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     teacher_player = models.ForeignKey(GameUser, on_delete=models.SET_NULL)
     student_player = models.ForeignKey(GameUser, on_delete=models.SET_NULL)
     start_datetime = models.DateTimeField(auto_now_add=True)
     end_datetime = models.DateTimeField()
+    next_move = models.CharField(choices=CONFLICT_SIDES, null=False)
 
 class GameAuthenticationToken(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)

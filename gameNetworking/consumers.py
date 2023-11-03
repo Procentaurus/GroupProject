@@ -1,7 +1,8 @@
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
-import enum
+import json
 
 from .models import *
+from .serializers import *
 
 class GameConsumer(AsyncJsonWebsocketConsumer):
 
@@ -40,8 +41,9 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         token = await GameAuthenticationToken.objects.get(id=token_string)
 
         if token is not None:
-            self.game_user = await GameUser.objects.create(user_id=token.user_id, conflict_side=conflict_side, channel_name=self.channel_name)
-            self.game_user.save()
+            game_user = await GameUser.objects.create(user_id=token.user_id, conflict_side=conflict_side, channel_name=self.channel_name)
+            game_user.save()
+            self.game_user_id = game_user.id
 
             GameConsumer.inc_number_of_users_waiting(self.user.conflict_side)
 
@@ -62,21 +64,69 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
                 GameConsumer.dec_number_of_users_waiting("teacher")
                 GameConsumer.dec_number_of_users_waiting("student")
 
+                self.send_message_to_group(
+                    f"game_{self.game_id}",
+                    GameSerializer(game),
+                    "game_start")
+
             self.accept()
 
     async def disconnect(self):
-        self.game_user.delete()
+
+        self.send_message_to_group(f"game_{self.game_id}",None,'game_end')
+
+        game = await Game.objects.get(id=self.game_id)
+        game.teacher_player.delete()
+        game.student_player.delete()
+        game.delete()
+
         self.close()
 
-    # async def send_message_to_group(self, group_name, message_data, event_type):
-    #     await self.channel_layer.group_send(
-    #         group_name,
-    #         {
-    #             'type': event_type,
-    #             'message': message_data,
-    #         }
-    #     )
+    async def receive(self, text_data):
 
+        message = json.loads(text_data)
+        message_type = message.get('type')
+        move = message.get("move")
 
-    # async def receive(self):
-    #     pass
+        game = await Game.objects.get(id=self.game_id)
+        game_user = await GameUser.objects.get(id=self.game_user_id)
+
+        if self.game.next_move == game_user.conflict_side:
+            if message_type == 'made_move':
+                await self.send_message_to_group(f"game_{self.game_id}",move,'made_move')
+                game.next_move = "teacher" if game_user.conflict_side == "student" else "student"
+            else:
+                await self.error_message("Wrong message type.")
+        else:
+            await self.error_message("Not your turn.")
+
+    async def send_message_to_group(self, group_name, data, event_type):
+        await self.channel_layer.group_send(
+            group_name,
+            {
+                'type': event_type,
+                'data': data,
+            }
+        )
+
+    async def game_start_message(self, event):
+        game_data = event['game_start']
+
+        await self.send_json({
+            'event': "game_start",
+            'data':game_data
+        })
+
+    async def game_end_message(self, event):
+        winner = event['game_end']
+
+        await self.send_json({
+            'event': "game_end",
+            'winner':winner
+        })
+        
+    async def error_message(self, info):
+        await self.send_json({
+            'event': "made_error",
+            'info': info
+        })
