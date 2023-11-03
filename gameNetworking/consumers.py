@@ -2,62 +2,31 @@ from channels.generic.websocket import AsyncJsonWebsocketConsumer
 import json
 
 from .models import *
-from .serializers import *
+from .middlewares import *
+from .queries import *
+from .serializers import GameSerializer
 
 class GameConsumer(AsyncJsonWebsocketConsumer):
-
-    teachers_waiting = 0
-    students_waiting = 0
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(args, kwargs)
-        self.game_id = None
-        self.game_user_id = None
-
-    @classmethod
-    async def get_number_of_teachers_waiting(cls, conflict_side):
-        if conflict_side == "teacher":
-            return cls.teachers_waiting
-        elif conflict_side == "student":
-            return cls.students_waiting
-    
-    @classmethod
-    async def dec_number_of_users_waiting(cls, conflict_side):
-        if conflict_side == "teacher":
-            cls.teachers_waiting -= 1
-        elif conflict_side == "student":
-            cls.students_waiting -= 1
-
-    @classmethod
-    async def inc_number_of_users_waiting(cls, conflict_side):
-        if conflict_side == "teacher":
-            cls.teachers_waiting += 1
-        elif conflict_side == "student":
-            cls.students_waiting += 1
 
     async def connect(self):
 
         conflict_side = self.scope["url_route"]["kwargs"]["conflict_side"]
 
-        # extracting and checking validity of token
-        query_string = self.scope["token"].decode("utf-8")
-        query_params = dict(q.split('=') for q in query_string.split('&'))
-        token_string = query_params.get("token")
-        token = await GameAuthenticationToken.objects.get(id=token_string)
-
+        token = self.scope.get("token")
         if token is not None:
-            game_user = await GameUser.objects.create(user_id=token.user_id, conflict_side=conflict_side, channel_name=self.channel_name)
-            game_user.save()
+
+            game_user = await create_game_user(token, conflict_side, self.channel_name)
             self.game_user_id = game_user.id
 
-            GameConsumer.inc_number_of_users_waiting(self.user.conflict_side)
+            number_of_teachers_waiting = await get_number_of_waiting_players("teacher")
+            number_of_students_waiting = await get_number_of_waiting_players("student")
 
-            if GameConsumer.get_number_of_users_waiting("teacher") > 0 and GameConsumer.get_number_of_users_waiting("student") > 0:
+            if number_of_teachers_waiting > 0 and number_of_students_waiting > 0:
 
-                longest_waiting_teacher_player = await GameUser.objects.filter(conflict_side="teacher")[0]
-                longest_waiting_student_player = await GameUser.objects.filter(conflict_side="student")[0]
+                longest_waiting_teacher_player = await get_longest_waiting_player("teacher")
+                longest_waiting_student_player = await get_longest_waiting_player("student")
 
-                game = await Game.objects.create(teacher_player=longest_waiting_teacher_player, student_player=longest_waiting_student_player)
+                game = await create_game(longest_waiting_teacher_player, longest_waiting_student_player)
                 self.game_id = game.id
 
                 await self.channel_layer.group_add(f"game_{self.game_id}", longest_waiting_teacher_player.channel_name)
@@ -66,15 +35,14 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
                 longest_waiting_teacher_player.in_game = True
                 longest_waiting_student_player.in_game = False
 
-                GameConsumer.dec_number_of_users_waiting("teacher")
-                GameConsumer.dec_number_of_users_waiting("student")
+                game_serialized = GameSerializer(game).data
 
-                self.send_message_to_group(
+                await self.send_message_to_group(
                     f"game_{self.game_id}",
-                    GameSerializer(game),
+                    game_serialized,
                     "game_start")
 
-            self.accept()
+            await self.accept()
 
     async def disconnect(self):
 
@@ -101,9 +69,9 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
                 await self.send_message_to_group(f"game_{self.game_id}",move,'made_move')
                 game.next_move = "teacher" if game_user.conflict_side == "student" else "student"
             else:
-                await self.error_message("Wrong message type.")
+                await self.error("Wrong message type.")
         else:
-            await self.error_message("Not your turn.")
+            await self.error("Not your turn.")
 
     async def send_message_to_group(self, group_name, data, event_type):
         await self.channel_layer.group_send(
@@ -114,23 +82,23 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
             }
         )
 
-    async def game_start_message(self, event):
-        game_data = event['game_start']
+    async def game_start(self, event):
+        game_data = event['data']
 
         await self.send_json({
             'event': "game_start",
             'data':game_data
         })
 
-    async def game_end_message(self, event):
-        winner = event['game_end']
+    async def game_end(self, event):
+        winner = event['data']
 
         await self.send_json({
             'event': "game_end",
             'winner':winner
         })
 
-    async def error_message(self, info):
+    async def error(self, info):
         await self.send_json({
             'event': "made_error",
             'info': info
