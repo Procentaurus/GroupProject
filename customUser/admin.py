@@ -12,12 +12,12 @@ class MyUserAdmin(UserAdmin):
     search_fields = ("email",)
     ordering = ("email",)
     fieldsets = (
-        ("Main section", {"fields": ("email", "username", "password")}),
+        ("Main section", {"fields": ("email", "username","phone_number", "password")}),
         ("Additional", {"fields": ("hide_contact_data", "is_active", "is_admin")}),
         ("Set up", {"fields": ("last_login", "creation_date")}),
     )
     add_fieldsets = (
-        ("Main section", {"fields": ("email", "username", "password1", "password2")}),
+        ("Main section", {"fields": ("email", "username", "phone_number", "password1", "password2")}),
         ("Additional", {"fields": ("hide_contact_data", "is_active", "is_admin")}),
     )
     

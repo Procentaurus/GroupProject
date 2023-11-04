@@ -4,6 +4,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth import authenticate
 from rest_framework.permissions import IsAuthenticated
 
+import bleach
+
 from .serializers import *
 from WebGame.permissions import *
 

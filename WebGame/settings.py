@@ -21,15 +21,17 @@ ALLOWED_HOSTS = []
 AUTH_USER_MODEL = "customUser.MyUser"
 
 INSTALLED_APPS = [
+
+    'daphne',
+    'channels',
+    'rest_framework',
+
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
-    'channels',
-    'rest_framework',
 
     'gameNetworking.apps.GamenetworkingConfig',
     'gameMechanics.apps.GamemechanicsConfig',
@@ -67,6 +69,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'WebGame.wsgi.application'
+ASGI_APPLICATION = "WebGame.asgi.application"
 
 CHANNEL_LAYERS = {
     'default': {
