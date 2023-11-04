@@ -1,7 +1,5 @@
 from channels.db import database_sync_to_async
-from django.http import HttpResponseForbidden
 from django.contrib.auth.models import AnonymousUser
-from .models import GameAuthenticationToken
 
 from .queries import *
 
@@ -24,7 +22,8 @@ class GameAuthenticationTokenMiddleware:
         if token:
             scope['user'] = user
             scope['token'] = token
-            return await self.inner(scope, receive, send)
+            scope['access_granted'] = True
         else:
-            response = HttpResponseForbidden("Access denied for anonymous users.")
-            await response(scope, receive, send)
+            scope['access_granted'] = False
+            
+        return await self.inner(scope, receive, send)

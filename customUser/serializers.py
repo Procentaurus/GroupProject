@@ -2,8 +2,6 @@ from rest_framework import serializers
 from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
 
-import bleach
-
 from .models import MyUser
 
 
@@ -13,13 +11,11 @@ class MyUserAdminSerializer(serializers.ModelSerializer):
         model = MyUser
         fields = ['id', 'email', 'username', 'phone_number', 'creation_date', 'last_login', 'hide_contact_data', 'is_admin']
 
-
 class MyUserAccountDataSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = MyUser
         fields = ['id','email', 'username', 'phone_number', 'creation_date', 'hide_contact_data']
-
 
 class MyUserPublicListSerializer(serializers.ModelSerializer):
     class Meta:
@@ -30,7 +26,6 @@ class MyUserPublicDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = MyUser
         fields = ('id','username', 'email', 'creation_date', 'last_login')   
-
 
 class MyUserCreateUpdateSerializer(serializers.ModelSerializer):
 
