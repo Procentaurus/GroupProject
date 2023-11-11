@@ -20,43 +20,47 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     async def connect(self):
 
-        access = bool(self.scope.get("token"))
+        token = self.scope.get("token")
+        access = bool(token)
+        conflict_side = self.scope["url_route"]["kwargs"]["conflict_side"]
 
-        if access:
-            conflict_side = self.scope["url_route"]["kwargs"]["conflict_side"]
 
-            token = self.scope.get("token")
-            if token is not None:
-
-                game_user = await create_game_user(token, conflict_side, self.channel_name)
-                self.game_user_id = game_user.id
-
-                number_of_teachers_waiting = await get_number_of_waiting_players("teacher")
-                number_of_students_waiting = await get_number_of_waiting_players("student")
-
-                if number_of_teachers_waiting > 0 and number_of_students_waiting > 0:
-
-                    longest_waiting_teacher_player = await get_longest_waiting_player("teacher")
-                    longest_waiting_student_player = await get_longest_waiting_player("student")
-
-                    game = await create_game(longest_waiting_teacher_player, longest_waiting_student_player)
-                    self.game_id = game.id
-
-                    await self.channel_layer.group_add(f"game_{self.game_id}", longest_waiting_teacher_player.channel_name)
-                    await self.channel_layer.group_add(f"game_{self.game_id}", longest_waiting_student_player.channel_name)
-
-                    await self.send_message_to_opponent(str(self.game_id), "game_id_creation")
-
-                    longest_waiting_teacher_player.in_game = True
-                    longest_waiting_student_player.in_game = False
-
-                    game_serialized = GameSerializer(game).data
-
-                    await self.send_message_to_group(game_serialized, "game_start")
-
-                await self.accept()
-        else:
+        # check if user is using valid token
+        if not access:
             await self.close()
+
+        # check if user has chosen a playable conflict side
+        if conflict_side != "teacher" and conflict_side != "student":
+            await self.close()
+        
+
+        game_user = await create_game_user(token, conflict_side, self.channel_name)
+        self.game_user_id = game_user.id
+
+        number_of_teachers_waiting = await get_number_of_waiting_players("teacher")
+        number_of_students_waiting = await get_number_of_waiting_players("student")
+
+        if number_of_teachers_waiting > 0 and number_of_students_waiting > 0:
+
+            longest_waiting_teacher_player = await get_longest_waiting_player("teacher")
+            longest_waiting_student_player = await get_longest_waiting_player("student")
+
+            game = await create_game(longest_waiting_teacher_player, longest_waiting_student_player)
+            self.game_id = game.id
+
+            await self.channel_layer.group_add(f"game_{self.game_id}", longest_waiting_teacher_player.channel_name)
+            await self.channel_layer.group_add(f"game_{self.game_id}", longest_waiting_student_player.channel_name)
+
+            await self.send_message_to_opponent(str(self.game_id), "game_id_creation")
+
+            longest_waiting_teacher_player.in_game = True
+            longest_waiting_student_player.in_game = False
+
+            game_serialized = GameSerializer(game).data
+
+            await self.send_message_to_group(game_serialized, "game_start")
+
+        await self.accept()
 
     async def cleanup(self):
         self.closure_from_user_side = False
