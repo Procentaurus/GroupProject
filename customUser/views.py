@@ -32,6 +32,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         
 
 class MyUserList(generics.ListCreateAPIView):
+    
     permission_classes = (IsAuthenticated | (~ChoseSafeMethod),)
 
     def get_serializer_class(self):

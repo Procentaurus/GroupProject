@@ -17,7 +17,7 @@ class GameAuthenticationTokenMiddleware:
         token_string = query_string.split('=')[1]
 
         token = await get_token(token_string)
-        user = await get_game_user(token_string)
+        user = await get_game_user_from_token(token_string)
         
         if token:
             scope['user'] = user

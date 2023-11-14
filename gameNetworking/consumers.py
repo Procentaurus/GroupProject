@@ -1,6 +1,4 @@
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
-from channels.layers import get_channel_layer
-import json
 from channels.exceptions import StopConsumer
 from autobahn.exception import Disconnected
 
@@ -24,7 +22,6 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         access = bool(token)
         conflict_side = self.scope["url_route"]["kwargs"]["conflict_side"]
 
-
         # check if user is using valid token
         if not access:
             await self.close()
@@ -37,27 +34,29 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         game_user = await create_game_user(token, conflict_side, self.channel_name)
         self.game_user_id = game_user.id
 
-        number_of_teachers_waiting = await get_number_of_waiting_players("teacher")
-        number_of_students_waiting = await get_number_of_waiting_players("student")
+        number_of_teachers_waiting = await get_number_of_waiting_game_users("teacher")
+        number_of_students_waiting = await get_number_of_waiting_game_users("student")
 
         if number_of_teachers_waiting > 0 and number_of_students_waiting > 0:
 
-            longest_waiting_teacher_player = await get_longest_waiting_player("teacher")
-            longest_waiting_student_player = await get_longest_waiting_player("student")
+            # Initializing game
+            longest_waiting_teacher_player = await get_longest_waiting_game_user("teacher")
+            longest_waiting_student_player = await get_longest_waiting_game_user("student")
+
+            longest_waiting_teacher_player.in_game = True
+            longest_waiting_student_player.in_game = True
+
+            await delete_game_authentication_token(longest_waiting_teacher_player)
+            await delete_game_authentication_token(longest_waiting_student_player)
 
             game = await create_game(longest_waiting_teacher_player, longest_waiting_student_player)
             self.game_id = game.id
+            game_serialized = GameSerializer(game).data
 
             await self.channel_layer.group_add(f"game_{self.game_id}", longest_waiting_teacher_player.channel_name)
             await self.channel_layer.group_add(f"game_{self.game_id}", longest_waiting_student_player.channel_name)
 
             await self.send_message_to_opponent(str(self.game_id), "game_id_creation")
-
-            longest_waiting_teacher_player.in_game = True
-            longest_waiting_student_player.in_game = False
-
-            game_serialized = GameSerializer(game).data
-
             await self.send_message_to_group(game_serialized, "game_start")
 
         await self.accept()
@@ -107,7 +106,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
             move = content.get("move")
 
             game = await get_game(self.game_id)
-            game_user = await get_game_user(self.game_user_id)
+            game_user = await get_game_user_by_id(self.game_user_id)
 
             if game.next_move == game_user.conflict_side:
                 if message_type == 'made_move':
@@ -134,7 +133,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     async def send_message_to_opponent(self, data, event_type):
         
-        user = await get_game_user(self.game_user_id)
+        user = await get_game_user_by_id(self.game_user_id)
         teacher_player, student_player = await get_both_players_from_game(self.game_id)
         opponent_channel = teacher_player.channel_name if user.conflict_side == "student" else student_player.channel_name 
 
