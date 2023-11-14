@@ -33,6 +33,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
         game_user = await create_game_user(token, conflict_side, self.channel_name)
         self.game_user_id = game_user.id
+        await delete_game_token(game_user)
 
         number_of_teachers_waiting = await get_number_of_waiting_game_users("teacher")
         number_of_students_waiting = await get_number_of_waiting_game_users("student")
@@ -45,9 +46,6 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
             longest_waiting_teacher_player.in_game = True
             longest_waiting_student_player.in_game = True
-
-            await delete_game_authentication_token(longest_waiting_teacher_player)
-            await delete_game_authentication_token(longest_waiting_student_player)
 
             game = await create_game(longest_waiting_teacher_player, longest_waiting_student_player)
             self.game_id = game.id
