@@ -71,6 +71,8 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
             await self.send_message_to_opponent({"game_id": str(self.game_id), "channel_name": self.channel_name}, "game_creation")
             await self.send_message_to_group(game_serialized, "game_start")
 
+            # TODO send first task to each player
+
         await self.accept()
 
     async def cleanup(self):
@@ -119,7 +121,6 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         if self.game_id is not None:    # has game started or not
 
             message_type = data.get('type')
-            move = data.get("move")
 
             game = await get_game(self.game_id)
             game_user = await get_game_user_by_id(self.game_user_id)
@@ -140,14 +141,12 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
                             self.moves_table[game_stage] -= 1
 
-                            # TODO get a new choice
-                            next_choice = None
-
-                            self.send_json({
-                                "event": "cards_collecting",
-                                "cards": cards,
-                                "next_choice": next_choice
-                            })
+                            if self.moves_table[game_stage] == 0:
+                                await self.send_json({"event": "collecting_phase", "cards": cards})
+                            else:
+                                # TODO get a new choice
+                                next_task = None
+                                await self.send_json({"event": "collecting_phase", "cards": cards, "next_task": next_task})
                     else:
                         self.error("You have no more moves in that stage.")
 
@@ -155,78 +154,122 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
                     self.winner = "student" if game_user.conflict_side == "teacher" else "teacher"
                     await self.cleanup()
                 else:
-                    await self.error("Wrong message type.")
+                    await self.error("Wrong message type in the current game stage.")
                 
             elif game_stage == GameStage.FIRST_CLASH or game_stage == GameStage.SECOND_CLASH:
                 
                 if message_type == MessageType.CLASH_ACTION_MOVE:
-                    #TODO some action
-                    pass
+
+                    if game.next_move_type != "action":
+                        await self.error("Wrong message type. It is time for reaction.")
+
+                    if game.next_move_player != game_user.conflict_side:
+                        await self.error("Not your turn.")
+                    
+                    if (game_stage == GameStage.FIRST_CLASH and self.moves_table[GameStage.FIRST_CLASH][0] > 0) \
+                        or (game_stage == GameStage.SECOND_CLASH and self.moves_table[GameStage.SECOND_CLASH][0] > 0):
+
+                        action_card = data.get("action_card")
+                        # TODO check if card is valid
+
+                        # TODO remove card connection with player
+
+                        self.moves_table[game_stage][0] -= 1
+                        flag = await update_game_turn(self.game_id)
+                        if not flag:
+                            # TODO logging
+                            pass
+
+                        await self.send_message_to_opponent({"action_card":action_card}, "opponent_move")
+                        
+                    else:
+                        self.error("You have no more moves in that stage.")
+
                 elif message_type == MessageType.CLASH_REACTION_MOVE:
-                    #TODO some action
-                    pass
+                    
+                    if game.next_move_type != "reaction":
+                        await self.error("Wrong message type. It is time for action.")
+
+                    if game.next_move_player != game_user.conflict_side:
+                        await self.error("Not your turn.")
+
+                    if (game_stage == GameStage.FIRST_CLASH and self.moves_table[GameStage.FIRST_CLASH][0] > 0) \
+                        or (game_stage == GameStage.SECOND_CLASH and self.moves_table[GameStage.SECOND_CLASH][0] > 0):
+
+                        reaction_cards = data.get("reaction_cards")
+                        # TODO check if cards are valid
+
+                        # TODO remove cards connection from player
+
+                        # TODO calculate changes in morale
+                        student_new_morale = None
+                        teacher_new_morale = None
+
+                        self.moves_table[game_stage][1] -= 1
+                        flag = await update_game_turn(self.game_id)
+                        if not flag:
+                            # TODO logging
+                            pass
+
+                        await self.send_message_to_opponent({"reaction_cards": reaction_cards}, "opponent_move")
+                        
+                        await self.send_message_to_group({
+                            "student_new_morale": student_new_morale,
+                            "teacher_new_morale": teacher_new_morale,
+                            }, "clash_result")
+
+                    else:
+                        self.error("You have no more moves in that stage.")
+                    
                 elif message_type == MessageType.SURRENDER_MOVE:
                     self.winner = "student" if game_user.conflict_side == "teacher" else "teacher"
                     await self.cleanup()
                 else:
-                    await self.error("Wrong message type.")
-
+                    await self.error("Wrong message type in the current game stage.")
             else:
                 #TODO logging
-                
-
-            if game.next_move == game_user.conflict_side:
-                if message_type == 'made_move':
-                    await self.send_message_to_opponent(move,'made_move')
-                    game = await update_game(self.game_id, game_user.conflict_side)
-                elif message_type == 'win_move':
-                    self.winner = game_user.conflict_side
-                    await self.cleanup()
-                else:
-                    await self.error("Wrong message type.")
-            else:
-                await self.error("Not your turn.")
+                pass
         else:
                 await self.error("The game hasnt started yet.")
 
-    async def send_message_to_group(self, data, event_type):
+    async def send_message_to_group(self, data, event):
         await self.channel_layer.group_send(
             f"game_{self.game_id}",
             {
-                'type': event_type,
+                'event': event,
                 'data': data,
             }
         )
 
-    async def send_message_to_opponent(self, data, event_type):
+    async def send_message_to_opponent(self, data, event):
 
         await self.channel_layer.send(
             self.opponent_channel_name,
             {
-                'type': event_type,
+                'event': event,
                 'data': data,
             }
         )
 
-    async def made_move(self, event):
-        move = event['data']
+    async def made_move(self, data):
+        move = data['data']
 
         await self.send_json({
             'event': "made_move",
             'move': move
         })
 
-    async def game_start(self, event):
-        game_data = event['data']
+    async def game_start(self, data):
+        game_data = data['data']
 
         await self.send_json({
             'event': "game_start",
             'data':game_data
         })
 
-    async def game_end(self, event):
-        winner = event['data']
+    async def game_end(self, data):
 
+        winner = data['data']
         try:
             await self.send_json({
                 'event': "game_end",
@@ -237,8 +280,8 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
             
         await self.close()
 
-    async def game_creation(self, event):
-        data = event['data']
+    async def game_creation(self, data):
+        data = data['data']
         self.game_id = data["game_id"]
         self.opponent_channel_name = data["channel_name"]
 

@@ -1,7 +1,7 @@
+from random import randint
 from channels.db import database_sync_to_async
 from django.contrib.auth.models import AnonymousUser
 from django.db.models import Q
-from random import randint
 
 from .models import GameAuthenticationToken, GameUser, Game
 
@@ -92,14 +92,15 @@ def delete_game(game_id):
         return False
     
 @database_sync_to_async
-def update_game(game_id, conflict_side):
+def update_game_turn(game_id):
     try:
         game = Game.objects.get(id=game_id)
-        game.next_move = "teacher" if conflict_side == "student" else "student"
+        game.next_move_player = "teacher" if game.next_move_player == "student" else "student"
+        game.next_move_type = "action" if game.next_move_type == "reaction" else "action"
         game.save()
-        return game
+        return True
     except:
-        return None
+        return False
     
 @database_sync_to_async
 def delete_game_user(game_user_id):

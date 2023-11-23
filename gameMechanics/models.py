@@ -17,3 +17,12 @@ class StudentChoice(Choice):
 
 class TeacherModel(Choice):
     pass
+
+class Task(models.Model):
+    pass
+
+class StudentTask(Task):
+    pass
+
+class TeacherTask(Task):
+    pass
