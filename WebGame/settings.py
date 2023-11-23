@@ -7,10 +7,8 @@ from django.conf import settings
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
-
 # SECURITY WARNING: keep the secret key used in production secret!
+# docelowo 256 znaków lub więcej
 SECRET_KEY = 'django-insecure-i_!*j@r%biv$jm@e1)^_uhnea8f3)c*7b!*z7&xqd8(oim-53v'
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -97,7 +95,6 @@ REST_FRAMEWORK = {
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=10),
     "REFRESH_TOKEN_LIFETIME": timedelta(minutes=60),
-    "ROTATE_REFRESH_TOKENS": True,
     "UPDATE_LAST_LOGIN": True,
 
     "ALGORITHM": "HS256",
@@ -122,10 +119,6 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-
-
-# Password validation
-# https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
