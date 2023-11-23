@@ -61,8 +61,8 @@ def get_game_user_from_token(token_id):
 def create_game(teacher_player, student_player):
     try:
         number = randint(0,1)
-        next_move = "teacher" if number == 0 else "student"
-        game = Game.objects.create(teacher_player=teacher_player, student_player=student_player, next_move=next_move)
+        next_move_player = "teacher" if number == 0 else "student"
+        game = Game.objects.create(teacher_player=teacher_player, student_player=student_player, next_move_player=next_move_player)
         return game
     except Game.DoesNotExist:
         return None

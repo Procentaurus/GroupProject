@@ -83,15 +83,18 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
             opponent_task, my_task = None, None
 
             opponent_task = initial_task_for_student if is_teacher else initial_task_for_teacher
-            this_user_task = initial_task_for_teacher if is_teacher else initial_task_for_student
+            my_task = initial_task_for_teacher if is_teacher else initial_task_for_student
 
             # sending initial tasks to players
             await self.send_message_to_opponent({"task": opponent_task}, "collect_action")
-            await self.send_json({"event": "collect_action", "task": this_user_task})
+            await self.accept()
+            await self.send_json({"type": "collect_action", "task": my_task})
 
-        await self.accept()
+        else:
+            await self.accept()
 
     async def cleanup(self):
+
         self.closure_from_user_side = False
         winner = self.winner
         await self.send_message_to_group(winner,"game_end")
@@ -122,7 +125,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
                     pass
 
     async def disconnect(self, *args):
-
+        
         if self.closure_from_user_side:  # disconnnect from user side
             if self.game_id is not None:
                 await self.send_message_to_opponent(None, "game_end")
@@ -158,11 +161,11 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
                             self.moves_table[game_stage] -= 1
 
                             if self.moves_table[game_stage] == 0:
-                                await self.send_json({"event": "collect_action", "cards": cards})
+                                await self.send_json({"type": "collect_action", "cards": cards})
                             else:
                                 # TODO get a new choice
                                 next_task = None
-                                await self.send_json({"event": "collect_action", "cards": cards, "task": next_task})
+                                await self.send_json({"type": "collect_action", "cards": cards, "task": next_task})
                     else:
                         self.error("You have no more moves in that stage.")
 
@@ -252,52 +255,51 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         await self.channel_layer.group_send(
             f"game_{self.game_id}",
             {
-                'event': event,
+                'type': event,
                 'data': data,
             }
         )
 
     async def send_message_to_opponent(self, data, event):
-
         await self.channel_layer.send(
             self.opponent_channel_name,
             {
-                'event': event,
+                'type': event,
                 'data': data,
             }
         )
 
     async def opponent_move(self, data):
+        data = data['data']
         action_card = data['action_card']
         reaction_cards =data["reaction_cards"]
 
         if action_card is not None:
             await self.send_json({
-                'event': "opponent_move",
+                'type': "opponent_move",
                 'action_card':  action_card
             })
         else:
             await self.send_json({
-                'event': "opponent_move",
+                'type': "opponent_move",
                 'reaction_cards':  reaction_cards
             })
 
     async def clash_result(self, data):
-        move = data['data']
         student_new_morale = data["student_new_morale"]
         teacher_new_morale = data["teacher_new_morale"]
 
         await self.send_json({
-            'event': "clash_result",
+            'type': "clash_result",
             'student_new_morale': student_new_morale,
             'teacher_new_morale': teacher_new_morale
         })
 
     async def collect_action(self, data):
+        data = data['data']
         task = data['task']
-
         await self.send_json({
-            'event': "collect_action",
+            'type': "collect_action",
             'task': task
         })
 
@@ -305,17 +307,16 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         game_data = data['data']
 
         await self.send_json({
-            'event': "game_start",
+            'type': "game_start",
             'next_move': game_data.get("next_move"),
             'start_datetime': game_data.get("start_datetime")
         })
 
     async def game_end(self, data):
-
         winner = data['data']
         try:
             await self.send_json({
-                'event': "game_end",
+                'type': "game_end",
                 'winner': winner
             })
         except Disconnected:
@@ -330,6 +331,6 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     async def error(self, info):
         await self.send_json({
-            'event': "made_error",
+            'type': "made_error",
             'info': info
         })
