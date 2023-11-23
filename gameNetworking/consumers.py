@@ -2,19 +2,31 @@ from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels.exceptions import StopConsumer
 from autobahn.exception import Disconnected
 
+from gameMechanics.game_stage_checker import *
+
 from .models import *
 from .middlewares import *
 from .queries import *
 from .serializers import GameSerializer
+from .message_type_checker import *
 
 class GameConsumer(AsyncJsonWebsocketConsumer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        # game creation
         self.game_id = None
         self.game_user_id = None
+        self.opponent_channel_name = None
+
+        # game closure
         self.winner = None
         self.closure_from_user_side = True
+
+        # game run
+        self.moves_table = [[2,[2,2],1,[1,1]]*1]
+        self.last_move_send_time = None
 
     async def connect(self):
 
@@ -30,7 +42,6 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         if conflict_side != "teacher" and conflict_side != "student":
             await self.close()
         
-
         game_user = await create_game_user(token, conflict_side, self.channel_name)
         self.game_user_id = game_user.id
 
@@ -51,12 +62,13 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
             game = await create_game(longest_waiting_teacher_player, longest_waiting_student_player)
             self.game_id = game.id
+            self.opponent_channel_name = longest_waiting_student_player.channel_name if longest_waiting_student_player.channel_name == self.channel_name else longest_waiting_teacher_player.channel_name
             game_serialized = GameSerializer(game).data
 
             await self.channel_layer.group_add(f"game_{self.game_id}", longest_waiting_teacher_player.channel_name)
             await self.channel_layer.group_add(f"game_{self.game_id}", longest_waiting_student_player.channel_name)
 
-            await self.send_message_to_opponent(str(self.game_id), "game_id_creation")
+            await self.send_message_to_opponent({"game_id": str(self.game_id), "channel_name": self.channel_name}, "game_creation")
             await self.send_message_to_group(game_serialized, "game_start")
 
         await self.accept()
@@ -87,26 +99,81 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
                     flag2 = await delete_game_user(teacher_player.id)
                 flag3 = await delete_game(self.game_id)
 
+                if not flag1 or not flag2 or not flag3:
+                    #TODO logging
+                    pass
+
     async def disconnect(self, *args):
 
         if self.closure_from_user_side:  # disconnnect from user side
             if self.game_id is not None:
-                await self.send_message_to_opponent(None,"game_end")
+                await self.send_message_to_opponent(None, "game_end")
             await self.perform_cleanup()
         if self.game_id is not None:
             await self.channel_layer.group_discard(f"game_{self.game_id}", self.channel_name)
             
         raise StopConsumer()
 
-    async def receive_json(self, content):
+    async def receive_json(self, data):
 
-        if self.game_id is not None:
+        if self.game_id is not None:    # has game started or not
 
-            message_type = content.get('type')
-            move = content.get("move")
+            message_type = data.get('type')
+            move = data.get("move")
 
             game = await get_game(self.game_id)
             game_user = await get_game_user_by_id(self.game_user_id)
+            game_stage = check_game_stage(self.moves_table[0])
+
+            if game_stage == GameStage.FIRST_COLLECTING or game_stage == GameStage.SECOND_COLLECTING:
+
+                if message_type == MessageType.COLLECTING_MOVE:
+
+                    if (game_stage == GameStage.FIRST_COLLECTING and self.moves_table[GameStage.FIRST_COLLECTING] > 0) \
+                        or (game_stage == GameStage.SECOND_COLLECTING and self.moves_table[GameStage.SECOND_COLLECTING] > 0):   # if the particular stage is in action
+                                                                                                                                # and player has moves left in the stage
+                            # choice = data.get("choice")
+
+                            # TODO get appriopriate cards
+                            cards = None
+                            # TODO save these cards connection with gameuser
+
+                            self.moves_table[game_stage] -= 1
+
+                            # TODO get a new choice
+                            next_choice = None
+
+                            self.send_json({
+                                "event": "cards_collecting",
+                                "cards": cards,
+                                "next_choice": next_choice
+                            })
+                    else:
+                        self.error("You have no more moves in that stage.")
+
+                elif message_type == MessageType.SURRENDER_MOVE:
+                    self.winner = "student" if game_user.conflict_side == "teacher" else "teacher"
+                    await self.cleanup()
+                else:
+                    await self.error("Wrong message type.")
+                
+            elif game_stage == GameStage.FIRST_CLASH or game_stage == GameStage.SECOND_CLASH:
+                
+                if message_type == MessageType.CLASH_ACTION_MOVE:
+                    #TODO some action
+                    pass
+                elif message_type == MessageType.CLASH_REACTION_MOVE:
+                    #TODO some action
+                    pass
+                elif message_type == MessageType.SURRENDER_MOVE:
+                    self.winner = "student" if game_user.conflict_side == "teacher" else "teacher"
+                    await self.cleanup()
+                else:
+                    await self.error("Wrong message type.")
+
+            else:
+                #TODO logging
+                
 
             if game.next_move == game_user.conflict_side:
                 if message_type == 'made_move':
@@ -132,13 +199,9 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         )
 
     async def send_message_to_opponent(self, data, event_type):
-        
-        user = await get_game_user_by_id(self.game_user_id)
-        teacher_player, student_player = await get_both_players_from_game(self.game_id)
-        opponent_channel = teacher_player.channel_name if user.conflict_side == "student" else student_player.channel_name 
 
         await self.channel_layer.send(
-            opponent_channel,
+            self.opponent_channel_name,
             {
                 'type': event_type,
                 'data': data,
@@ -174,9 +237,10 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
             
         await self.close()
 
-    async def game_id_creation(self, event):
-        game_id = event['data']
-        self.game_id = game_id
+    async def game_creation(self, event):
+        data = event['data']
+        self.game_id = data["game_id"]
+        self.opponent_channel_name = data["channel_name"]
 
     async def error(self, info):
         await self.send_json({
