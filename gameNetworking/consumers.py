@@ -2,13 +2,13 @@ from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels.exceptions import StopConsumer
 from autobahn.exception import Disconnected
 
-from gameMechanics.game_stage_checker import *
+from gameMechanics.game_stage import *
 
 from .models import *
 from .middlewares import *
 from .queries import *
 from .serializers import GameSerializer
-from .message_type_checker import *
+from .message_type import *
 
 class GameConsumer(AsyncJsonWebsocketConsumer):
 
@@ -30,19 +30,20 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     async def connect(self):
 
-        token = self.scope.get("token")
-        access = bool(token)
+        access_token = self.scope.get("token")
         conflict_side = self.scope["url_route"]["kwargs"]["conflict_side"]
 
         # check if user is using valid token
-        if not access:
+        if access_token is None:
             await self.close()
+            return
 
         # check if user has chosen a playable conflict side
         if conflict_side != "teacher" and conflict_side != "student":
             await self.close()
+            return
         
-        game_user = await create_game_user(token, conflict_side, self.channel_name)
+        game_user = await create_game_user(access_token, conflict_side, self.channel_name)
         self.game_user_id = game_user.id
 
         number_of_teachers_waiting = await get_number_of_waiting_game_users("teacher")
@@ -50,28 +51,43 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
         if number_of_teachers_waiting > 0 and number_of_students_waiting > 0:
 
+            is_teacher = True if game_user.conflict_side == "teacher" else False
+
             # Initializing game
-            longest_waiting_teacher_player = await get_longest_waiting_game_user("teacher")
-            longest_waiting_student_player = await get_longest_waiting_game_user("student")
+            player2 = await get_longest_waiting_game_user("student") if is_teacher else await get_longest_waiting_game_user("teacher")
+            player1 = game_user
 
-            longest_waiting_teacher_player.in_game = True
-            longest_waiting_student_player.in_game = True
+            player1.in_game = True
+            player2.in_game = True
 
-            await delete_game_authentication_token(longest_waiting_teacher_player)
-            await delete_game_authentication_token(longest_waiting_student_player)
+            await delete_game_authentication_token(player1)
+            await delete_game_authentication_token(player2)
 
-            game = await create_game(longest_waiting_teacher_player, longest_waiting_student_player)
+            # creating game object
+            game = await create_game(player1, player2)
             self.game_id = game.id
-            self.opponent_channel_name = longest_waiting_student_player.channel_name if longest_waiting_student_player.channel_name == self.channel_name else longest_waiting_teacher_player.channel_name
+            self.opponent_channel_name = player2.channel_name
             game_serialized = GameSerializer(game).data
 
-            await self.channel_layer.group_add(f"game_{self.game_id}", longest_waiting_teacher_player.channel_name)
-            await self.channel_layer.group_add(f"game_{self.game_id}", longest_waiting_student_player.channel_name)
+            # adding both players' channels to one group
+            await self.channel_layer.group_add(f"game_{self.game_id}", player2.channel_name)
+            await self.channel_layer.group_add(f"game_{self.game_id}", player1.channel_name)
 
+            # sending info about game to players and opponent's consumer
             await self.send_message_to_opponent({"game_id": str(self.game_id), "channel_name": self.channel_name}, "game_creation")
             await self.send_message_to_group(game_serialized, "game_start")
 
-            # TODO send first task to each player
+            # TODO find first task to each player
+            initial_task_for_student = None
+            initial_task_for_teacher = None
+            opponent_task, my_task = None, None
+
+            opponent_task = initial_task_for_student if is_teacher else initial_task_for_teacher
+            this_user_task = initial_task_for_teacher if is_teacher else initial_task_for_student
+
+            # sending initial tasks to players
+            await self.send_message_to_opponent({"task": opponent_task}, "collect_action")
+            await self.send_json({"event": "collect_action", "task": this_user_task})
 
         await self.accept()
 
@@ -142,11 +158,11 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
                             self.moves_table[game_stage] -= 1
 
                             if self.moves_table[game_stage] == 0:
-                                await self.send_json({"event": "collecting_phase", "cards": cards})
+                                await self.send_json({"event": "collect_action", "cards": cards})
                             else:
                                 # TODO get a new choice
                                 next_task = None
-                                await self.send_json({"event": "collecting_phase", "cards": cards, "next_task": next_task})
+                                await self.send_json({"event": "collect_action", "cards": cards, "task": next_task})
                     else:
                         self.error("You have no more moves in that stage.")
 
@@ -251,12 +267,38 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
             }
         )
 
-    async def made_move(self, data):
+    async def opponent_move(self, data):
+        action_card = data['action_card']
+        reaction_cards =data["reaction_cards"]
+
+        if action_card is not None:
+            await self.send_json({
+                'event': "opponent_move",
+                'action_card':  action_card
+            })
+        else:
+            await self.send_json({
+                'event': "opponent_move",
+                'reaction_cards':  reaction_cards
+            })
+
+    async def clash_result(self, data):
         move = data['data']
+        student_new_morale = data["student_new_morale"]
+        teacher_new_morale = data["teacher_new_morale"]
 
         await self.send_json({
-            'event': "made_move",
-            'move': move
+            'event': "clash_result",
+            'student_new_morale': student_new_morale,
+            'teacher_new_morale': teacher_new_morale
+        })
+
+    async def collect_action(self, data):
+        task = data['task']
+
+        await self.send_json({
+            'event': "collect_action",
+            'task': task
         })
 
     async def game_start(self, data):
@@ -264,7 +306,8 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
         await self.send_json({
             'event': "game_start",
-            'data':game_data
+            'next_move': game_data.get("next_move"),
+            'start_datetime': game_data.get("start_datetime")
         })
 
     async def game_end(self, data):
