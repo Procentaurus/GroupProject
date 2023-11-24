@@ -95,12 +95,22 @@ def delete_game(game_id):
 def update_game_turn(game_id):
     try:
         game = Game.objects.get(id=game_id)
-        game.next_move_player = "teacher" if game.next_move_player == "student" else "student"
-        game.next_move_type = "action" if game.next_move_type == "reaction" else "action"
+        current_move_player = game.next_move_player
+        current_move_type = game.next_move_type
+
+        if current_move_type == "action":
+            game.next_move_player = "teacher" if current_move_player == "student" else "student"
+            game.next_move_type = "reaction"
+        else:
+            game.next_move_type = "action"
+
         game.save()
         return True
     except:
         return False
+    
+    #     next_move_player = models.CharField(choices=CONFLICT_SIDES, max_length=15, null=False)
+    # next_move_type = models.CharField(choices=MOVE_TYPES, max_length=15, null=False, default="action")
     
 @database_sync_to_async
 def delete_game_user(game_user_id):
@@ -110,9 +120,6 @@ def delete_game_user(game_user_id):
         return True
     except:
         return False
-
-
-
 
 @database_sync_to_async
 def delete_game_authentication_token(game_user):

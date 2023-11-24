@@ -2,6 +2,7 @@ from uuid import uuid4
 from django.db import models
 
 from customUser.models import MyUser
+from gameMechanics.models import *
 
 CONFLICT_SIDES = (
     ("teacher", "teacher"),
@@ -16,11 +17,15 @@ class GameUser(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     user = models.OneToOneField(MyUser, on_delete=models.CASCADE, null=False)
-    conflict_side = models.CharField(choices=CONFLICT_SIDES, null=False, max_length=15)
+
     started_waiting = models.DateTimeField(auto_now_add=True)
     channel_name = models.CharField(null=False, max_length=100)
     in_game = models.BooleanField(default=False)
+
     morale = models.SmallIntegerField(default=100, null=False, blank=False)
+    conflict_side = models.CharField(choices=CONFLICT_SIDES, null=False, max_length=15)
+    # action_cards = models.ManyToManyField(ActionCard, null=True)
+    # reaction_cards = models.ManyToManyField(ReactionCard, null=True)
 
     class Meta:
         ordering = ["started_waiting"]
