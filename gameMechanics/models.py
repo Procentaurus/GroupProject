@@ -9,15 +9,6 @@ class ActionCard(Card):
 class ReactionCard(Card):
     pass
 
-class Choice(models.Model):
-    pass
-
-class StudentChoice(Choice):
-    pass
-
-class TeacherModel(Choice):
-    pass
-
 class Task(models.Model):
     pass
 

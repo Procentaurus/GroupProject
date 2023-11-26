@@ -4,6 +4,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.db.models import Q
 
 from .models import GameAuthenticationToken, GameUser, Game
+from gameMechanics.models import ActionCard, ReactionCard
 
 
 ########### GameUser ###########
@@ -17,13 +18,10 @@ def get_game_user_by_id(game_user_id):
 
 @database_sync_to_async
 def create_game_user(token, conflict_side, channel_name):
-    try:
-        user = token.user
-        game_user = GameUser.objects.create(user=user, conflict_side=conflict_side, channel_name=channel_name)
-        return game_user
-    except GameAuthenticationToken.DoesNotExist:
-        return None
-    
+    user = token.user
+    game_user = GameUser.objects.create(user=user, conflict_side=conflict_side, channel_name=channel_name)
+    return game_user
+
 @database_sync_to_async
 def get_longest_waiting_game_user(conflict_side):
     try:
@@ -59,13 +57,10 @@ def get_game_user_from_token(token_id):
 
 @database_sync_to_async
 def create_game(teacher_player, student_player):
-    try:
-        number = randint(0,1)
-        next_move_player = "teacher" if number == 0 else "student"
-        game = Game.objects.create(teacher_player=teacher_player, student_player=student_player, next_move_player=next_move_player)
-        return game
-    except Game.DoesNotExist:
-        return None
+    number = randint(0,1)
+    next_move_player = "teacher" if number == 0 else "student"
+    game = Game.objects.create(teacher_player=teacher_player, student_player=student_player, next_move_player=next_move_player)
+    return game
 
 @database_sync_to_async
 def get_game(game_id):
@@ -88,7 +83,7 @@ def delete_game(game_id):
         game = Game.objects.get(id=game_id)
         game.delete()
         return True
-    except:
+    except Game.DoesNotExist:
         return False
     
 @database_sync_to_async
@@ -106,19 +101,16 @@ def update_game_turn(game_id):
 
         game.save()
         return True
-    except:
+    except Game.DoesNotExist:
         return False
-    
-    #     next_move_player = models.CharField(choices=CONFLICT_SIDES, max_length=15, null=False)
-    # next_move_type = models.CharField(choices=MOVE_TYPES, max_length=15, null=False, default="action")
-    
+
 @database_sync_to_async
 def delete_game_user(game_user_id):
     try:
         game_user = GameUser.objects.get(id=game_user_id)
         game_user.delete()
         return True
-    except:
+    except GameUser.DoesNotExist:
         return False
 
 @database_sync_to_async
@@ -130,8 +122,45 @@ def delete_game_authentication_token(game_user):
             token = GameAuthenticationToken.objects.get(user=my_user)
             token.delete()
             return True
-        except:
+        except GameAuthenticationToken.DoesNotExist:
             return False
     else: 
         return False
             
+
+
+########### Action card ###########
+
+@database_sync_to_async
+def check_action_card_exist(action_card_uuid):
+    try:
+        card = ActionCard.objects.get(action_card_uuid)
+        return True
+    except ActionCard.DoesNotExist:
+        return False
+
+@database_sync_to_async
+def check_action_card_connected(game_user, action_card_uuid):
+    is_card_connected = ActionCard.objects.filter(uuid=action_card_uuid, game_users=game_user).exists()
+    return is_card_connected
+
+def remove_action_card_connection(game_user, action_card_uuid):
+    try:
+        action_card = ActionCard.objects.get(uuid=action_card_uuid)
+        game_user.action_cards.remove(action_card)
+        return True
+    except:
+        return False
+            
+
+########### Rection card ###########
+
+@database_sync_to_async
+def check_reaction_cards_exist(reaction_card_uuids):
+    all_cards_exist = ReactionCard.objects.filter(uuid__in=reaction_card_uuids).count() == len(reaction_card_uuids)
+    return all_cards_exist
+
+@database_sync_to_async
+def check_reaction_cards_connected(game_user, reaction_card_uuids):
+    all_cards_connected = ReactionCard.objects.filter(uuid__in=reaction_card_uuids, game_users=game_user).count() == len(reaction_card_uuids)
+    return all_cards_connected

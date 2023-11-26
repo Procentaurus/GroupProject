@@ -193,10 +193,23 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
                     if (game_stage == GameStage.FIRST_CLASH and self.moves_table[0][GameStage.FIRST_CLASH][0] > 0) \
                         or (game_stage == GameStage.SECOND_CLASH and self.moves_table[0][GameStage.SECOND_CLASH][0] > 0):
 
-                        action_card = data.get("action_card")
-                        # TODO check if card is valid
+                        action_card_id = data.get("action_card")
 
-                        # TODO remove card connection with player
+                        # action_card_exist = await check_action_card_exist(action_card_id)
+                        # if not action_card_exist:
+                        #     await self.error("Provided card doesnt exist")
+                        #     return
+                        
+                        # game_user = await get_game_user_by_id(self.game_user_id)
+                        # action_card_connected = await check_action_card_connected(game_user, action_card_id)
+                        # if not action_card_connected:
+                        #     await self.error("You do not own this card")
+                        #     return
+
+                        # succesful_removal = await remove_action_card_connection(game_user, action_card_id)
+                        # if not succesful_removal:
+                        #     # TODO logging
+                        #     self.error("SERVER ERROR OCCURED")
 
                         self.moves_table[0][game_stage][0] -= 1
                         flag = await update_game_turn(self.game_id)
@@ -204,7 +217,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
                             # TODO logging
                             pass
 
-                        await self.send_message_to_opponent({"action_card":action_card}, "opponent_move")
+                        await self.send_message_to_opponent({"action_card":action_card_id}, "opponent_move")
                         
                     else:
                         self.error("You have no more moves in that stage.")
@@ -219,15 +232,29 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
                         await self.error("Wrong message type. It is time for action.")
                         return
 
-                    if (game_stage == GameStage.FIRST_CLASH and self.moves_table[0][GameStage.FIRST_CLASH][0] > 0) \
-                        or (game_stage == GameStage.SECOND_CLASH and self.moves_table[0][GameStage.SECOND_CLASH][0] > 0):
+                    if (game_stage == GameStage.FIRST_CLASH and self.moves_table[0][GameStage.FIRST_CLASH][1] > 0) \
+                        or (game_stage == GameStage.SECOND_CLASH and self.moves_table[0][GameStage.SECOND_CLASH][1] > 0):
 
-                        reaction_cards = data.get("reaction_cards")
-                        # TODO check if cards are valid
+                        reaction_cards_ids = data.get("reaction_cards")
+                        
+                        # all_reaction_cards_exist = await check_reaction_cards_exist(reaction_cards_ids)
+                        # if not all_reaction_cards_exist:
+                        #     await self.error("Some of provided cards dont exist")
+                        #     return
+                        
+                        # game_user = await get_game_user_by_id(self.game_user_id)
+                        # all_reaction_cards_connected = await check_reaction_cards_connected(game_user, reaction_cards_ids)
+                        # if not all_reaction_cards_connected:
+                        #     await self.error("You do not own all of used cards")
+                        #     return
 
-                        # TODO remove cards connection from player
+                        # # TODO calculate changes in morale
 
-                        # TODO calculate changes in morale
+                        # succesful_removal = await remove_reaction_cards_connection(game_user, reaction_cards_ids)
+                        # if not succesful_removal:
+                        #     # TODO logging
+                        #     self.error("SERVER ERROR OCCURED")
+
                         student_new_morale = None
                         teacher_new_morale = None
 
@@ -237,7 +264,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
                             # TODO logging
                             pass
 
-                        await self.send_message_to_opponent({"reaction_cards": reaction_cards}, "opponent_move")
+                        await self.send_message_to_opponent({"reaction_cards": reaction_cards_ids}, "opponent_move")
                         await self.send_message_to_group({
                             "student_new_morale": student_new_morale,
                             "teacher_new_morale": teacher_new_morale,
@@ -253,6 +280,8 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
                     await self.error("Wrong message type in the current game stage.")
             else:
                 #TODO logging
+                #TODO check the winner
+                await self.send_message_to_group(None, "game_end")
                 pass
         else:
                 await self.error("The game hasnt started yet.")
