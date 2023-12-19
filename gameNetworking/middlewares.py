@@ -19,11 +19,7 @@ class GameAuthenticationTokenMiddleware:
         token = await get_game_token(token_string)
         user = await get_game_user_from_game_token(token_string)
         
-        if token:
-            scope['user'] = user
-            scope['token'] = token
-            scope['access_granted'] = True
-        else:
-            scope['access_granted'] = False
+        scope['user'] = user
+        scope['token'] = token
             
         return await self.inner(scope, receive, send)

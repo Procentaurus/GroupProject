@@ -1,13 +1,12 @@
 from rest_framework import serializers
 
 from .models import Game, GameAuthenticationToken
-from customUser.models import MyUser
 
 class GameSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Game
-        fields = ['next_move', 'start_datetime']
+        fields = ['next_move_player', 'start_datetime']
 
 
 class GameAuthenticationTokenPublicSerializer(serializers.ModelSerializer):
