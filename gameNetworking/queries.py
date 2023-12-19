@@ -38,18 +38,33 @@ def get_number_of_waiting_game_users(conflict_side):
 ########### GameAuthenticationToken ###########
 
 @database_sync_to_async
-def get_token(token_id):
+def get_game_token(token_id):
     try:
         return GameAuthenticationToken.objects.get(id=token_id)
     except GameAuthenticationToken.DoesNotExist:
         return None
     
 @database_sync_to_async
-def get_game_user_from_token(token_id):
+def get_game_user_from_game_token(token_id):
     try:
         return GameAuthenticationToken.objects.get(id=token_id).user
     except GameAuthenticationToken.DoesNotExist:
-        return AnonymousUser()    
+        return AnonymousUser()
+
+
+@database_sync_to_async
+def delete_game_token(game_user):
+
+    if game_user is not None:
+        my_user = game_user.user
+        try:
+            token = GameAuthenticationToken.objects.get(user=my_user)
+            token.delete()
+            return True
+        except:
+            return False
+    else: 
+        return False 
 
 
 

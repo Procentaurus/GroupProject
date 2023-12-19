@@ -48,6 +48,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         
         game_user = await create_game_user(access_token, conflict_side, self.channel_name)
         self.game_user_id = game_user.id
+        await delete_game_token(game_user)
 
         number_of_teachers_waiting = await get_number_of_waiting_game_users("teacher")
         number_of_students_waiting = await get_number_of_waiting_game_users("student")
