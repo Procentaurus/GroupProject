@@ -4,6 +4,10 @@ from django.db import models
 from customUser.models import MyUser
 from gameMechanics.models import *
 
+#
+# Implementation of all entity classes crucial for the module
+#
+
 CONFLICT_SIDES = (
     ("teacher", "teacher"),
     ("student", "student"),
@@ -13,7 +17,7 @@ MOVE_TYPES = (
     ("reaction", "reaction")
 )
 
-class GameUser(models.Model):
+class GameUser(models.Model): # user has new instance of GameUser created for every new game
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     user = models.OneToOneField(MyUser, on_delete=models.CASCADE, null=False)
@@ -40,7 +44,7 @@ class Game(models.Model):
     next_move_player = models.CharField(choices=CONFLICT_SIDES, max_length=15, null=False)
     next_move_type = models.CharField(choices=MOVE_TYPES, max_length=15, null=False, default="action")
 
-class GameAuthenticationToken(models.Model):
+class GameAuthenticationToken(models.Model):  # entity class of single-use tokens needed to authenticate to websocket
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     user = models.ForeignKey(MyUser, on_delete=models.CASCADE, null=False)
     issued = models.DateTimeField(auto_now_add=True)

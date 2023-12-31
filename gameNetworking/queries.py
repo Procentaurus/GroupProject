@@ -33,24 +33,33 @@ def get_longest_waiting_game_user(conflict_side):
 def get_number_of_waiting_game_users(conflict_side):
     return GameUser.objects.filter(Q(in_game=False) & Q(conflict_side=conflict_side)).count()
 
+@database_sync_to_async
+def delete_game_user(game_user_id):
+    try:
+        game_user = GameUser.objects.get(id=game_user_id)
+        game_user.delete()
+        return True
+    except GameUser.DoesNotExist:
+        return False
+
 
 
 ########### GameAuthenticationToken ###########
 
 @database_sync_to_async
-def get_game_token(token_id):
+def get_token(token_id):
     try:
         return GameAuthenticationToken.objects.get(id=token_id)
     except GameAuthenticationToken.DoesNotExist:
         return None
     
 @database_sync_to_async
-def get_game_user_from_game_token(token_id):
+def get_game_user_from_token(token_id):
     try:
         return GameAuthenticationToken.objects.get(id=token_id).user
     except GameAuthenticationToken.DoesNotExist:
         return AnonymousUser()
-
+    
 
 @database_sync_to_async
 def delete_game_token(game_user):
@@ -61,10 +70,10 @@ def delete_game_token(game_user):
             token = GameAuthenticationToken.objects.get(user=my_user)
             token.delete()
             return True
-        except:
+        except GameAuthenticationToken.DoesNotExist:
             return False
-    else: 
-        return False 
+    else:
+        return False
 
 
 
@@ -118,30 +127,7 @@ def update_game_turn(game_id):
         return True
     except Game.DoesNotExist:
         return False
-
-@database_sync_to_async
-def delete_game_user(game_user_id):
-    try:
-        game_user = GameUser.objects.get(id=game_user_id)
-        game_user.delete()
-        return True
-    except GameUser.DoesNotExist:
-        return False
-
-@database_sync_to_async
-def delete_game_authentication_token(game_user):
-
-    if game_user is not None:
-        my_user = game_user.user
-        try:
-            token = GameAuthenticationToken.objects.get(user=my_user)
-            token.delete()
-            return True
-        except GameAuthenticationToken.DoesNotExist:
-            return False
-    else: 
-        return False
-            
+                
 
 
 ########### Action card ###########
@@ -156,8 +142,11 @@ def check_action_card_exist(action_card_uuid):
 
 @database_sync_to_async
 def check_action_card_connected(game_user, action_card_uuid):
-    is_card_connected = ActionCard.objects.filter(uuid=action_card_uuid, game_users=game_user).exists()
-    return is_card_connected
+    try:
+        is_card_connected = game_user.action_cards.get(id=action_card_uuid)
+        return True
+    except ActionCard.DoesNotExist:
+        return False
 
 def remove_action_card_connection(game_user, action_card_uuid):
     try:
@@ -177,5 +166,17 @@ def check_reaction_cards_exist(reaction_card_uuids):
 
 @database_sync_to_async
 def check_reaction_cards_connected(game_user, reaction_card_uuids):
-    all_cards_connected = ReactionCard.objects.filter(uuid__in=reaction_card_uuids, game_users=game_user).count() == len(reaction_card_uuids)
+    all_cards_connected = game_user.action_cards.filter(uuid__in=reaction_card_uuids).count() == len(reaction_card_uuids)
     return all_cards_connected
+
+@database_sync_to_async
+def remove_reaction_cards_connection(game_user, reaction_card_uuids):
+    try:
+        reaction_cards = ReactionCard.objects.filter(uuid__in=reaction_card_uuids)
+
+        for reaction_card in reaction_cards:
+            reaction_card.game_users.remove(game_user)
+
+        return True  # Connections removed successfully
+    except:
+        return False
