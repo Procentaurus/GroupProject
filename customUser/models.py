@@ -2,7 +2,7 @@ from uuid import uuid4
 from django.db import models
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, PermissionsMixin
 
-class MyUserManager(BaseUserManager):
+class MyUserManager(BaseUserManager): # is responsible for managing customized users and superusers creation
 
     def create_user(self, email, username, password=None):
         if not email:
@@ -31,7 +31,7 @@ class MyUserManager(BaseUserManager):
         return user
 
 
-class MyUser(AbstractBaseUser, PermissionsMixin):
+class MyUser(AbstractBaseUser, PermissionsMixin): # main user class used throughout whole application 
 
     # def user_directory_path(instance, filename):
     #     return 'avatars/user_{0}/{1}'.format(instance.id, filename)
