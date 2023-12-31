@@ -1,5 +1,6 @@
 from pathlib import Path
 from datetime import timedelta
+import os
 
 from django.conf import settings
 
@@ -8,26 +9,28 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# docelowo 256 znaków lub więcej
+# TODO docelowo 256 znaków lub więcej
 SECRET_KEY = 'django-insecure-i_!*j@r%biv$jm@e1)^_uhnea8f3)c*7b!*z7&xqd8(oim-53v'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+# Networking config
 ALLOWED_HOSTS = []
 CORS_ORIGIN_ALLOW_ALL = False
 CORS_ORIGIN_WHITELIST = (
-  'http://localhost:8000',
+  'http://localhost:4200',   # adress of frontend application
 )
 
 AUTH_USER_MODEL = "customUser.MyUser"
 
 INSTALLED_APPS = [
 
-    'daphne',
-    'channels',
-    'corsheaders',
+    'daphne',           # used for running asgi server       
+    'corsheaders',      # used for enabling communication between frontend and backend
+
     'rest_framework',
+    'channels',  
 
     'django.contrib.admin',
     'django.contrib.auth',
@@ -77,7 +80,7 @@ ASGI_APPLICATION = "WebGame.asgi.application"
 
 CHANNEL_LAYERS = {
     'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'BACKEND': 'channels_redis.core.RedisChannelLayer', # sets redis db as layer provider
         'CONFIG': {
             "hosts": [('127.0.0.1', 6379)],
         },
@@ -101,13 +104,13 @@ REST_FRAMEWORK = {
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=10),
     "REFRESH_TOKEN_LIFETIME": timedelta(minutes=60),
-    "UPDATE_LAST_LOGIN": True,
+    "UPDATE_LAST_LOGIN": True,                         # updates last_login field in MyUser enyity after logging procerssing token
 
-    "ALGORITHM": "HS256",
+    "ALGORITHM": "HS256",                             # JWT-specific config
     "SIGNING_KEY": settings.SECRET_KEY,
     "ISSUER": "ProcentaurusSystems",
 
-    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_HEADER_TYPES": ("Bearer",),                 # default SimpleJWTConfig
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
     "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "user_id",
@@ -118,6 +121,50 @@ SIMPLE_JWT = {
 
     "JTI_CLAIM": "jti"
 }
+
+# myproject/settings.py
+
+import os
+
+# ...
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+        'gameNetworking_consumers': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'gameNetworking', 'logs', 'consumers.log'),  # Specified path 
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
+        'gameNetworking.consumers': {  # Specified logger for module
+            'handlers': ['gameNetworking_consumers'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
+
+
 
 DATABASES = {
     'default': {
