@@ -30,7 +30,7 @@ class CustomTokenObtainPairView(TokenObtainPairView): # implementation of endpoi
         return Response({'detail': 'Lacking obligatory credentials: email or password.'}, status=status.HTTP_400_BAD_REQUEST)
         
 
-class MyUserList(generics.ListCreateAPIView): # implementation of CRUD enpoints for MyUser class i.e.
+class MyUserList(generics.ListCreateAPIView): # implementation of CREATE and GET endpoints for MyUser class i.e.
     
     permission_classes = (IsAuthenticated | (~ChoseSafeMethod),)  # calculating adequate permissions
 
@@ -82,7 +82,7 @@ class MyUserList(generics.ListCreateAPIView): # implementation of CRUD enpoints 
         return self.list(request, *args, **kwargs)
 
 
-class MyUserDetail(generics.RetrieveUpdateAPIView):
+class MyUserDetail(generics.RetrieveUpdateAPIView): # implementation of UPDATE and GET endpoints for MyUser class i.e.
 
     permission_classes = ( # calculating adequate permissions
         IsAuthenticated &
@@ -98,7 +98,7 @@ class MyUserDetail(generics.RetrieveUpdateAPIView):
         else:
             return MyUserPublicGetSerializer
             
-    def get_outpu_serializer_class(self):
+    def get_output_serializer_class(self):
         if self.request.user.id == self.get_object().id:
             return MyUserAccountDataSerializer
         else:
@@ -134,12 +134,14 @@ class MyUserDetail(generics.RetrieveUpdateAPIView):
 
         instance = self.get_object()
 
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer = self.get_serializer(instance, data=request.data, partial=True) # getting data from request and enabling partial update
         is_valid = serializer.is_valid()
 
         if is_valid:
             user = self.perform_update(serializer)
-            dto = MyUserAccountDataSerializer(user).data
+
+            serializer_class = self.get_output_serializer_class()
+            dto = serializer_class(user).data
             return Response(dto, status=status.HTTP_201_CREATED)
         else:
             return Response("Passed invalid data", status=status.HTTP_400_BAD_REQUEST)
