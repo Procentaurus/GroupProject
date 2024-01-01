@@ -1,9 +1,12 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+import logging
 
 from WebGame.permissions import *
 from .serializers import *
+
+logger = logging.getLogger(__name__)
 
 class GameAuthenticationTokenList(generics.ListCreateAPIView):
 
@@ -37,7 +40,7 @@ class GameAuthenticationTokenList(generics.ListCreateAPIView):
             return Response(dto, status=status.HTTP_201_CREATED)
         
         elif number_of_found_tokens > 1:
-            #TODO logging
+            logger.error("Multiple game tokens connected to player %s", user.username)
             return Response(None, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         else:

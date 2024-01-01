@@ -122,49 +122,40 @@ SIMPLE_JWT = {
     "JTI_CLAIM": "jti"
 }
 
-# myproject/settings.py
-
-import os
-
-# ...
 
 LOGGING = {
     'version': 1,
-    'disable_existing_loggers': False,
+    "disable_existing_loggers": False,
     'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {message}',
+        'main': {
+            'format': '{asctime} {module} {levelname} {message}',
             'style': '{',
-        },
-        'simple': {
-            'format': '{levelname} {message}',
-            'style': '{',
-        },
+            'datefmt':'%H:%M:%S',
+        }
     },
     'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-        },
-        'gameNetworking_consumers': {
-            'level': 'DEBUG',
+        'views': {
             'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, 'gameNetworking', 'logs', 'consumers.log'),  # Specified path 
+            'filename': 'logs/networking/views.log',  # Specified path
+            'formatter' : 'main'
+        },
+        'consumers': {
+            'class': 'logging.FileHandler',
+            'filename': 'logs/networking/consumers.log',  # Specified path
+            'formatter' : 'main',
         },
     },
     'loggers': {
-        'django': {
-            'handlers': ['console'],
-            'level': 'INFO',
+        'gameNetworking.views': {  # Specified logger for module
+            'handlers': ['views'],
+            'level': 'DEBUG',
         },
         'gameNetworking.consumers': {  # Specified logger for module
-            'handlers': ['gameNetworking_consumers'],
+            'handlers': ['consumers'],
             'level': 'DEBUG',
-            'propagate': True,
         },
     },
 }
-
-
 
 DATABASES = {
     'default': {

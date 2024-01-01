@@ -50,7 +50,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         
         game_user = await create_game_user(access_token, conflict_side, self.channel_name)
         self.game_user_id = game_user.id
-        await delete_game_token(game_user)
+        # await delete_game_token(game_user)
 
         number_of_teachers_waiting = await get_number_of_waiting_game_users("teacher")
         number_of_students_waiting = await get_number_of_waiting_game_users("student")
@@ -66,24 +66,22 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
             player1.in_game = True
             player2.in_game = True
 
-            # await delete_game_authentication_token(player1)
-            # await delete_game_authentication_token(player2)
-
             # creating game object
+            logger.debug("The game has started")
             game = await create_game(player1, player2)
             self.game_id = game.id
             self.opponent_channel_name = player2.channel_name
             game_serialized = GameSerializer(game).data
 
             # adding both players' channels to one group
-            await self.channel_layer.group_add(f"game_{self.game_id}", player2.channel_name)
+            await self.channel_layer.group_add(f"game_{self.game_id}", player2.channel_name) # group name is game_{UUID of game entity object}
             await self.channel_layer.group_add(f"game_{self.game_id}", player1.channel_name)
 
             # sending info about game to players and opponent's consumer
             await self.send_message_to_opponent({"game_id": str(self.game_id), "channel_name": self.channel_name}, "game_creation")
             await self.send_message_to_group(game_serialized, "game_start")
 
-            # TODO find first task to each player
+            # TODO get first task to each player
             initial_task_for_student = None
             initial_task_for_teacher = None
             opponent_task, my_task = None, None
@@ -93,28 +91,28 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
             # sending initial tasks to players
             await self.send_message_to_opponent({"task": opponent_task}, "collect_action")
-            await self.accept()
+            await self.accept() # accepting user's connection to websocket 
             await self.send_json({"type": "collect_action", "task": my_task})
 
         else:
-            await self.accept()
+            await self.accept() # accepting user's connection to websocket
 
     async def cleanup(self): # standard cleanup procedure that should be triggered after self.close()
 
         self.closure_from_user_side = False
-        logger.debug("Socket closed from server side")
 
+        # sending end info with the all data (for now only winner)
         winner = self.winner
         await self.send_message_to_group(winner,"game_end")
         await self.perform_cleanup()
 
     async def perform_cleanup(self): # is called after game's end, when the end was triggered by the opponent or from standard cleanup procedure
 
-        if self.game_id is None:
+        if self.game_id is None: # block used when opponents consumer already deleted game and game users' data
             flag = await delete_game_user(self.game_user_id)
             if not flag:
                 logger.warning("Couldnt delete GameUser from db.")
-        else:
+        else: # block used when no cleaning was perfomed by opponent's consumer
             game = await get_game(self.game_id)
             if game is not None:
 
@@ -128,9 +126,9 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
                 flag3 = await delete_game(self.game_id)
 
                 if not flag3:
-                    logger.error("Couldnt delete Game from db.")
+                    logger.debug("Couldnt delete Game from db.")
                 if not flag1 or not flag2:
-                    logger.warning("Couldnt delete GameUser from db.")
+                    logger.debug("Couldnt delete GameUser from db.")
 
     async def disconnect(self, *args):
         
@@ -148,7 +146,6 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         if self.game_id is not None:    # has game started or not
 
             message_type = data.get('type')
-
             game = await get_game(self.game_id)
             game_user = await get_game_user_by_id(self.game_user_id)
             game_stage = check_game_stage(self.moves_table[0])
@@ -159,7 +156,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
                     if (game_stage == GameStage.FIRST_COLLECTING and self.moves_table[0][GameStage.FIRST_COLLECTING] > 0) \
                         or (game_stage == GameStage.SECOND_COLLECTING and self.moves_table[0][GameStage.SECOND_COLLECTING] > 0):   # if the particular stage is in action
-                                                                                                                                # and player has moves left in the stage
+                                                                                                                                   # and player has moves left in the stage
                             # choice = data.get("choice")
 
                             # TODO get appriopriate cards
@@ -227,7 +224,8 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
                         await self.send_message_to_opponent({"action_card":action_card_id}, "opponent_move")
                         
                     else:
-                        self.error("You have no more moves in that stage.")
+                        logger.debug("Too much moves in the stage.")
+                        await self.error("You have no more moves in that stage.")
 
                 elif message_type == MessageType.CLASH_REACTION_MOVE:
 
@@ -237,6 +235,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
                     
                     if game.next_move_type != "reaction":
                         await self.error("Wrong message type. It is time for action.")
+                        logger.debug("Wrong message type.")
                         return
 
                     if (game_stage == GameStage.FIRST_CLASH and self.moves_table[0][GameStage.FIRST_CLASH][1] > 0) \
@@ -279,6 +278,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
                     else:
                         self.error("You have no more moves in that stage.")
+                        logger.debug("No more moves in the stage.")
                     
                 elif message_type == MessageType.SURRENDER_MOVE:
                     self.winner = "student" if game_user.conflict_side == "teacher" else "teacher"
@@ -291,6 +291,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
                     await self.send_message_to_group("Server error occured", "error")
                 else:
                     await self.send_message_to_group(self.winner, "game_end")
+                    logger.debug("Game has ended.")
         else:
             await self.error("The game hasn't started yet.")
 
