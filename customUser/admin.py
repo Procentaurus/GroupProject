@@ -4,7 +4,7 @@ from django.contrib.auth.models import Group
 
 from .models import *
 
-class MyUserAdmin(UserAdmin):
+class MyUserAdmin(UserAdmin): # used in django admin, enables more data for admin's view
     model = MyUser
     list_display = ("email", "username", "phone_number")
     list_filter = ("email", "username")

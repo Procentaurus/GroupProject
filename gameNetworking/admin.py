@@ -1,6 +1,10 @@
 from django.contrib import admin
 from .models import *
 
+#
+# Each class adds one entity class and its elements to django admin, with specified values for display and search
+#
+
 @admin.register(Game)
 class GameAdmin(admin.ModelAdmin):
     list_display = ('id', 'teacher_player', 'student_player', 'start_datetime', 'end_datetime')

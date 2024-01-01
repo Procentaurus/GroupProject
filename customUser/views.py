@@ -10,10 +10,9 @@ from .serializers import *
 from WebGame.permissions import *
 
 
-class CustomTokenObtainPairView(TokenObtainPairView):
+class CustomTokenObtainPairView(TokenObtainPairView): # implementation of endpoint enabling getting of both access and refresh tokens
 
     def post(self, request, *args, **kwargs):
-
 
         email = None if request.data.get('email') is None else bleach.clean(request.data.get('email'))
         password = request.data.get('password')
@@ -31,21 +30,17 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         return Response({'detail': 'Lacking obligatory credentials: email or password.'}, status=status.HTTP_400_BAD_REQUEST)
         
 
-class MyUserList(generics.ListCreateAPIView):
+class MyUserList(generics.ListCreateAPIView): # implementation of CREATE and GET endpoints for MyUser class i.e.
     
-    permission_classes = (IsAuthenticated | (~ChoseSafeMethod),)
+    permission_classes = (IsAuthenticated | (~ChoseSafeMethod),)  # calculating adequate permissions
 
-    def get_serializer_class(self):
+    def get_serializer_class(self): # choosing adequate serializer 
         if self.request.method == 'POST':
             return MyUserCreateUpdateSerializer
         else:
-            if self.request.user.is_admin:
-                return MyUserAccountDataSerializer
-            else:
-                return MyUserPublicListSerializer
+            return MyUserPublicGetSerializer
         
-    def get_queryset(self):
-
+    def get_queryset(self): # filtering objects returned for GET many users endpoint
         objects = MyUser.objects.all()
         
         username = self.request.query_params.get('username', None)
@@ -54,11 +49,11 @@ class MyUserList(generics.ListCreateAPIView):
         
         return objects
     
-    def perform_create(self, serializer):
+    def perform_create(self, serializer): # customized creation of MyUser entity
 
         user = MyUser.objects.create_user(
-            bleach.clean(serializer.validated_data.get('email')),
-            bleach.clean(serializer.validated_data.get('username')),
+            bleach.clean(serializer.validated_data.get('email')),  # filtering possible script injections
+            bleach.clean(serializer.validated_data.get('username')), # filtering possible script injections
             serializer.validated_data.get('password')
         )
 
@@ -74,20 +69,22 @@ class MyUserList(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
 
         serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = self.perform_create(serializer)
+        valid_data = serializer.is_valid()
 
-        dto = MyUserAdminSerializer(user).data if request.user.is_admin else MyUserAccountDataSerializer(user).data
-        
-        return Response(dto, status=status.HTTP_201_CREATED)
+        if valid_data:
+            user = self.perform_create(serializer)
+            dto = MyUserAdminSerializer(user).data if request.user.is_admin else MyUserAccountDataSerializer(user).data
+            return Response(dto, status=status.HTTP_201_CREATED)
+        else:
+            return Response("Passed invalid data", status=status.HTTP_400_BAD_REQUEST)
     
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
 
 
-class MyUserDetail(generics.RetrieveUpdateAPIView):
+class MyUserDetail(generics.RetrieveUpdateAPIView): # implementation of UPDATE and GET endpoints for MyUser class i.e.
 
-    permission_classes = (
+    permission_classes = ( # calculating adequate permissions
         IsAuthenticated &
         ((IsTheVeryUser | IsAdmin) | ChoseSafeMethod),
     )
@@ -99,12 +96,15 @@ class MyUserDetail(generics.RetrieveUpdateAPIView):
         if self.request.method == 'PUT':
             return MyUserCreateUpdateSerializer
         else:
-            if self.request.user.id == self.get_object().id:
-                return MyUserAccountDataSerializer
-            else:
-                return MyUserPublicDetailSerializer
+            return MyUserPublicGetSerializer
             
-    def perform_update(self, serializer):
+    def get_output_serializer_class(self):
+        if self.request.user.id == self.get_object().id:
+            return MyUserAccountDataSerializer
+        else:
+            return MyUserPublicDetailSerializer
+            
+    def perform_update(self, serializer):  # customized update of MyUser entity
         instance = self.get_object()
 
         email = serializer.validated_data.get("email")
@@ -134,12 +134,15 @@ class MyUserDetail(generics.RetrieveUpdateAPIView):
 
         instance = self.get_object()
 
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        user = self.perform_update(serializer)
+        serializer = self.get_serializer(instance, data=request.data, partial=True) # getting data from request and enabling partial update
+        is_valid = serializer.is_valid()
 
-        dto = MyUserAccountDataSerializer(user).data
-        
-        return Response(dto, status=status.HTTP_201_CREATED)
+        if is_valid:
+            user = self.perform_update(serializer)
 
+            serializer_class = self.get_output_serializer_class()
+            dto = serializer_class(user).data
+            return Response(dto, status=status.HTTP_201_CREATED)
+        else:
+            return Response("Passed invalid data", status=status.HTTP_400_BAD_REQUEST)
 
