@@ -1,7 +1,6 @@
-from channels.db import database_sync_to_async
 from django.contrib.auth.models import AnonymousUser
 
-from .queries import *
+from .mechanics.queries import *
 
 class GameAuthenticationTokenMiddleware:
     def __init__(self, inner):

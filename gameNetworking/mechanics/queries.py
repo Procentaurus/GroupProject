@@ -3,7 +3,7 @@ from channels.db import database_sync_to_async
 from django.contrib.auth.models import AnonymousUser
 from django.db.models import Q
 
-from .models import GameAuthenticationToken, GameUser, Game
+from ..models import GameAuthenticationToken, GameUser, Game
 from gameMechanics.models import ActionCard, ReactionCard
 
 
