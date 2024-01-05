@@ -19,7 +19,7 @@ async def connect_impl(consumer): # main implementation function
     
     game_user = await create_game_user(access_token, conflict_side, consumer.channel_name)
     is_teacher = True if game_user.conflict_side == "teacher" else False
-    consumer.game_user_id = game_user.id
+    consumer.set_game_user_id(game_user.id)
     # await delete_game_token(game_user)
 
     number_of_teachers_waiting = await get_number_of_waiting_game_users("teacher")
@@ -41,18 +41,19 @@ async def initialize_game(consumer, game_user, is_teacher):
     player2.in_game = True
 
     # creating game object
+    game_id = consumer.get_game_id()
     consumer.logger.debug("The game has started")
     game = await create_game(player1, player2)
-    consumer.game_id = game.id
-    consumer.opponent_channel_name = player2.channel_name
+    consumer.set_game_id(game_id)
+    consumer.set_opponent_channel_name(player2.channel_name)
     game_serialized = GameSerializer(game).data
 
     # adding both players' channels to one group
-    await consumer.channel_layer.group_add(f"game_{consumer.game_id}", player2.channel_name) # group name is game_{UUID of game entity object}
-    await consumer.channel_layer.group_add(f"game_{consumer.game_id}", player1.channel_name) # -||-
+    await consumer.channel_layer.group_add(f"game_{game_id}", player2.channel_name) # group name is game_{UUID of game entity object}
+    await consumer.channel_layer.group_add(f"game_{game_id}", player1.channel_name) # -||-
 
     # sending info about game to players and opponent's consumer
-    await consumer.send_message_to_opponent({"game_id": str(consumer.game_id), "channel_name": consumer.channel_name}, "game_creation")
+    await consumer.send_message_to_opponent({"game_id": str(game_id), "channel_name": consumer.channel_name}, "game_creation")
     await consumer.send_message_to_group(game_serialized, "game_start")
 
 async def manage_first_tasks(consumer, is_teacher):

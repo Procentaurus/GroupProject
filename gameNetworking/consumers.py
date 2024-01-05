@@ -1,3 +1,4 @@
+from typing import Any
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels.exceptions import StopConsumer
 import logging
@@ -15,19 +16,21 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         self.logger = logging.getLogger(__name__)
 
         # game creation
-        self.game_id = None
-        self.game_user_id = None
-        self.opponent_channel_name = None
+        self.__game_id = None
+        self.__game_user_id = None
+        self.__opponent_channel_name = None
 
         # game closure
-        self.winner = None
-        self.closure_from_user_side = True
+        self.__winner = None
+        self.__closure_from_user_side = True
 
         # game run
-        self.number_of_game_iterations = 1
-        self.moves_table = [[2,[2,2],1,[1,1]]*self.number_of_game_iterations]
-
-        self.last_move_send_time = None
+        self.__last_move_send_time = None
+        self.__number_of_game_iterations = 1
+        self.__moves_table = [[2, [2,2], 1, [1,1]] * self.get_number_of_game_iterations()] # this table represents number of moves that player can perform in each game stage
+        # elems of indexes 0 and 2 are number of moves in first collecting phase and second collecting phase
+        # elems of indexes 1 and 3 are sets that represent number of moves in first and second clash stage,
+        # in each set the elem of index 0 is the number of action moves and the one of index 1 is the number of reaction moves
 
     async def connect(self):
         await connect_impl(self)
@@ -71,3 +74,39 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     async def error(self, info):
         await error_impl(self, info)
+
+    def get_game_id(self):
+        return self.__game_id
+
+    def get_game_user_id(self):
+        return self.__game_user_id
+
+    def get_opponent_channel_name(self):
+        return self.__opponent_channel_name
+
+    def get_winner(self):
+        return self.__winner
+
+    def is_closure_from_user_side(self):
+        return self.__closure_from_user_side
+
+    def get_number_of_game_iterations(self):
+        return self.__number_of_game_iterations
+
+    def get_moves_table(self):
+        return self.__moves_table
+
+    def get_last_move_send_time(self):
+        return self.__last_move_send_time
+    
+    def set_game_id(self, game_id):
+        self.__game_id = game_id
+    
+    def set_game_user_id(self, game_user_id):
+        self.__game_user_id = game_user_id
+
+    def set_opponent_channel_name(self, opponent_channel_name):
+        self.__opponent_channel_name = opponent_channel_name
+
+    def set_winner(self, winner):
+        self.__winner = winner
