@@ -62,7 +62,8 @@ async def game_end_impl(consumer, data):
 
 async def game_creation_impl(consumer, data):
     data = data['data']
-    consumer.game_id = data["game_id"]
+    
+    consumer.set_game_id(data["game_id"])
     consumer.opponent_channel_name = data["channel_name"]
 
 async def error_impl(consumer, info):
