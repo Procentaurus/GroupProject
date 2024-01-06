@@ -64,7 +64,7 @@ async def game_creation_impl(consumer, data):
     data = data['data']
     
     consumer.set_game_id(data["game_id"])
-    consumer.opponent_channel_name = data["channel_name"]
+    consumer.set_opponent_channel_name(data["channel_name"])
 
 async def error_impl(consumer, info):
     await consumer.send_json({

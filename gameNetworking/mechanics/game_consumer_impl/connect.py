@@ -17,6 +17,7 @@ async def connect_impl(consumer): # main implementation function
         await consumer.close()
         return
     
+    await consumer.accept()
     game_user = await create_game_user(access_token, conflict_side, consumer.channel_name)
     is_teacher = True if game_user.conflict_side == "teacher" else False
     consumer.set_game_user_id(game_user.id)
@@ -29,7 +30,7 @@ async def connect_impl(consumer): # main implementation function
         await initialize_game(consumer, game_user, is_teacher)
         await manage_first_tasks(consumer, is_teacher)
     else:
-        await consumer.accept() # accepting user's connection to websocket
+        pass
 
 async def initialize_game(consumer, game_user, is_teacher):
 
@@ -41,20 +42,24 @@ async def initialize_game(consumer, game_user, is_teacher):
     player2.in_game = True
 
     # creating game object
-    game_id = consumer.get_game_id()
-    consumer.logger.debug("The game has started")
     game = await create_game(player1, player2)
-    consumer.set_game_id(game_id)
+    consumer.set_game_id(game.id)
+    consumer.logger.debug("The game has started")
+
     consumer.set_opponent_channel_name(player2.channel_name)
+    consumer.logger.debug(consumer.get_opponent_channel_name())
     game_serialized = GameSerializer(game).data
 
     # adding both players' channels to one group
+    game_id = consumer.get_game_id()
     await consumer.channel_layer.group_add(f"game_{game_id}", player2.channel_name) # group name is game_{UUID of game entity object}
     await consumer.channel_layer.group_add(f"game_{game_id}", player1.channel_name) # -||-
 
     # sending info about game to players and opponent's consumer
     await consumer.send_message_to_opponent({"game_id": str(game_id), "channel_name": consumer.channel_name}, "game_creation")
-    await consumer.send_message_to_group(game_serialized, "game_start")
+    await consumer.send_message_to_opponent(game_serialized, "game_start")
+    game_serialized["type"] = "game_start"
+    await consumer.send_json(game_serialized)
 
 async def manage_first_tasks(consumer, is_teacher):
 
@@ -67,6 +72,5 @@ async def manage_first_tasks(consumer, is_teacher):
     my_task = initial_task_for_teacher if is_teacher else initial_task_for_student
 
     # sending initial tasks to players
-    await consumer.send_message_to_opponent({"task": opponent_task}, "collect_action")
-    await consumer.accept() # accepting user's connection to websocket 
     await consumer.send_json({"type": "collect_action", "task": my_task})
+    await consumer.send_message_to_opponent({"task": opponent_task}, "collect_action")

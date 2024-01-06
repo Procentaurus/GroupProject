@@ -49,8 +49,8 @@ async def collecting_stage_impl(consumer, message_type, game_user, game_stage):
     if message_type == MessageType.COLLECTING_MOVE:
         await collecting_move_mechanics(consumer, game_stage)
     elif message_type == MessageType.SURRENDER_MOVE:
-        winner = consumer.get_winner()
         winner = "student" if game_user.conflict_side == "teacher" else "teacher"
+        consumer.set_winner(winner)
         await consumer.cleanup()
     else:
         await consumer.error("Wrong message type in the current game stage.")
