@@ -41,7 +41,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     async def perform_cleanup(self): # is called after game's end, when the end was triggered by the opponent or from standard cleanup procedure
         await perform_cleanup_impl(self)
 
-    async def disconnect(self, *args):
+    async def disconnect(self, *args): # is called when the user disconnests from socket
         await disconnect_impl(self)            
         raise StopConsumer()
 
@@ -87,7 +87,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     def get_winner(self):
         return self.__winner
 
-    def is_closure_from_user_side(self):
+    def get_closure_from_user_side(self):
         return self.__closure_from_user_side
 
     def get_number_of_game_iterations(self):
