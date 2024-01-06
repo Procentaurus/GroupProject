@@ -40,7 +40,7 @@ async def disconnect_impl(consumer):
 
     game_id = consumer.get_game_id()
 
-    if consumer.closure_from_user_side:  # disconnnect from user side
+    if consumer.get_closure_from_user_side():  # disconnnect from user side
         if game_id is not None:
             await consumer.send_message_to_opponent(None, "game_end")
         await consumer.perform_cleanup()
