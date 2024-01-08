@@ -165,8 +165,6 @@ DATABASES = {
         'PASSWORD': 'postgres',
         'HOST': 'localhost',  # Use 'db' if using Docker Compose
         'PORT': '5431',
-        # 'ENGINE': 'django.db.backends.sqlite3',
-        # 'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
