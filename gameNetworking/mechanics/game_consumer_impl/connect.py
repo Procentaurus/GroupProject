@@ -1,5 +1,4 @@
 from gameNetworking.mechanics.queries import *
-from gameNetworking.serializers import GameSerializer
 
 
 async def connect_impl(consumer): # main implementation function
@@ -17,7 +16,6 @@ async def connect_impl(consumer): # main implementation function
         await consumer.close()
         return
     
-    await consumer.accept()
     game_user = await create_game_user(access_token, conflict_side, consumer.channel_name)
     is_teacher = True if game_user.conflict_side == "teacher" else False
     consumer.set_game_user_id(game_user.id)
@@ -26,11 +24,10 @@ async def connect_impl(consumer): # main implementation function
     number_of_teachers_waiting = await get_number_of_waiting_game_users("teacher")
     number_of_students_waiting = await get_number_of_waiting_game_users("student")
 
+    await consumer.accept()
     if number_of_teachers_waiting > 0 and number_of_students_waiting > 0: # initialization of the game if there are mininimum 2 players waiting
         await initialize_game(consumer, game_user, is_teacher)
         await manage_first_tasks(consumer, is_teacher)
-    else:
-        pass
 
 async def initialize_game(consumer, game_user, is_teacher):
 
@@ -47,8 +44,6 @@ async def initialize_game(consumer, game_user, is_teacher):
     consumer.logger.debug("The game has started")
 
     consumer.set_opponent_channel_name(player2.channel_name)
-    consumer.logger.debug(consumer.get_opponent_channel_name())
-    game_serialized = GameSerializer(game).data
 
     # adding both players' channels to one group
     game_id = consumer.get_game_id()
@@ -57,20 +52,18 @@ async def initialize_game(consumer, game_user, is_teacher):
 
     # sending info about game to players and opponent's consumer
     await consumer.send_message_to_opponent({"game_id": str(game_id), "channel_name": consumer.channel_name}, "game_creation")
-    await consumer.send_message_to_opponent(game_serialized, "game_start")
-    game_serialized["type"] = "game_start"
-    await consumer.send_json(game_serialized)
+    await consumer.send_message_to_opponent(None, "game_start")
+    await consumer.send_json({'type': "game_start"})
 
 async def manage_first_tasks(consumer, is_teacher):
 
     # TODO get first task to each player
-    initial_task_for_student = None
-    initial_task_for_teacher = None
+    initial_task_for_teacher, initial_task_for_student = None, None
     opponent_task, my_task = None, None
 
     opponent_task = initial_task_for_student if is_teacher else initial_task_for_teacher
     my_task = initial_task_for_teacher if is_teacher else initial_task_for_student
 
     # sending initial tasks to players
-    await consumer.send_json({"type": "collect_action", "task": my_task})
-    await consumer.send_message_to_opponent({"task": opponent_task}, "collect_action")
+    await consumer.send_json({"type": "task_action", "task": my_task})
+    await consumer.send_message_to_opponent({"task": opponent_task}, "task_action")

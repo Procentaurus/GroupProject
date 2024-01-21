@@ -1,5 +1,9 @@
 from autobahn.exception import Disconnected
 
+from gameMechanics.enums import PlayerState
+
+from ..queries import get_game_user
+
 #
 # Functions that manage messages from opponents and group,
 # each function handles one message type that is the function's name
@@ -31,21 +35,44 @@ async def clash_result_impl(consumer, data):
         'teacher_new_morale': teacher_new_morale,
     })
 
-async def collect_action_impl(consumer, data):
+async def task_action_impl(consumer, data):
     data = data['data']
     task = data['task']
     await consumer.send_json({
-        'type': "collect_action",
+        'type': "task_action",
         'task': task,
     })
 
-async def game_start_impl(consumer, data):
-    game_data = data['data']
+async def card_action_impl(consumer, data):
+    data = data['data']
+    card = data['card']
+    await consumer.send_json({
+        'type': "collect_action",
+        'card': card,
+    })
+
+async def game_start_impl(consumer):
 
     await consumer.send_json({
         'type': "game_start",
-        'next_move': game_data.get("next_move_player"),
-        'start_datetime': game_data.get("start_datetime"),
+    })
+
+async def clash_start_impl(consumer, data):
+    data = data['data']
+    game_user = await get_game_user(consumer.get_game_user_id())
+    await game_user.set_current_state(PlayerState.IN_CLASH)
+
+    await consumer.send_json({
+        'type': "clash_start",
+        'next_move': data.get("next_move_player"),
+    })
+
+async def clash_end_impl(consumer):
+    game_user = await get_game_user(consumer.get_game_user_id())
+    await game_user.set_current_state(PlayerState.IN_COLLECTING)
+
+    await consumer.send_json({
+        'type': "clash_end",
     })
 
 async def game_end_impl(consumer, data):
