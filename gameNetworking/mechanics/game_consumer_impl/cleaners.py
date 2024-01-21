@@ -2,7 +2,6 @@ from gameNetworking.mechanics.queries import *
 
 
 async def cleanup_impl(consumer): # standard cleanup procedure that should be triggered after consumer.close()
-
         consumer.closure_from_user_side = False
 
         # sending end info with the all data (for now only winner)
@@ -19,10 +18,12 @@ async def perform_cleanup_impl(consumer): # is called after game's end, when the
         if not flag:
             consumer.logger.warning("Couldnt delete GameUser from db.")
     else: # block used when no cleaning was perfomed by opponent's consumer
+        
         game = await get_game(game_id)
         if game is not None:
 
-            teacher_player, student_player = await get_both_players_from_game(game_id)
+            teacher_player = await game.get_teacher_player()
+            student_player = await game.get_student_player()
             flag1, flag2, flag3 = None, None, None
 
             if student_player is not None:
