@@ -1,8 +1,8 @@
 from gameMechanics.enums import PlayerState, GameStage
 from gameMechanics.functions import check_game_stage
 
-from gameNetworking.mechanics.enums import MessageType
-from gameNetworking.mechanics.queries import *
+from gameNetworking.enums import MessageType
+from gameNetworking.queries import *
 
 
 async def main_game_loop_impl(consumer, data): # responsible for managing current user messages, effectively main game loop function
