@@ -5,6 +5,8 @@ from channels.db import database_sync_to_async
 from customUser.models import MyUser
 from gameMechanics.models import *
 
+from implementations.models_impl.game_user_impl import *
+from implementations.models_impl.game_impl import *
 
 #
 # Implementation of all entity classes crucial for the module
@@ -57,84 +59,33 @@ class GameUser(models.Model): # user has new instance of GameUser created for ev
 
     @database_sync_to_async
     def check_if_own_action_card(self, action_card_id):
-        try:
-            self.action_cards.get(id=action_card_id)
-            return True
-        except ActionCard.DoesNotExist:
-            return False
+        result = check_if_own_action_card_impl(self, action_card_id)
+        return result
 
     @database_sync_to_async
     def remove_action_card(self, action_card_id):
-        try:
-            action_card = ActionCard.objects.get(uuid=action_card_id)
-            self.action_cards.remove(action_card)
-            self.save()
-            return True
-        except ActionCard.DoesNotExist:
-            return False
+        result = remove_action_card_impl(self, action_card_id)
+        return result
         
     @database_sync_to_async
     def add_action_card(self, action_card_id):
-        try:
-            action_card = ActionCard.objects.get(uuid=action_card_id)
-            self.action_cards.add(action_card)
-            self.save()
-            return True
-        except ActionCard.DoesNotExist:
-            return False
+        result = add_action_card_impl(self, action_card_id)
+        return result
         
     @database_sync_to_async
     def check_if_own_reaction_card(self, reaction_card_id, amount=1):
-        return GameUser.objects.filter(
-            id=self.id,
-            owned_cards__card_id=reaction_card_id,
-            owned_cards__amount__gte=amount
-        ).exists()
+        result = check_if_own_reaction_card_impl(self, reaction_card_id, amount)
+        return result
 
     @database_sync_to_async
     def remove_reaction_card(self, reaction_card_id, amount=1):
+        result = remove_reaction_card_impl(self, reaction_card_id, amount)
+        return result
 
-        reaction_card, owned_card = None, None
-
-        try:
-            reaction_card = ReactionCard.objects.get(id=reaction_card_id)
-        except ReactionCard.DoesNotExist:
-            return "ReactionCard.DoesNotExist"
-        
-        try:
-            owned_card = OwnedReactionCard.objects.get(
-                gameUser=self,
-                reaction_card=reaction_card,
-            )
-        except OwnedReactionCard.DoesNotExist:
-            return "OwnedReactionCard.DoesNotExist"
-        
-        if owned_card.amount > amount:
-            owned_card.amount -= amount
-            owned_card.save()
-            return True
-        else:
-            return "Not enough cards."
-        
     @database_sync_to_async
     def add_reaction_card(self, reaction_card_id, amount=1):
-        try:
-            reaction_card = ReactionCard.objects.get(id=reaction_card_id)
-
-            # Retrieve the OwnedReactionCard instance or create a new one if it doesn't exist
-            owned_card, _ = OwnedReactionCard.objects.get_or_create(
-                gameUser=self,
-                reaction_card=reaction_card,
-            )
-
-            # Increment the amount
-            owned_card.amount += amount
-            owned_card.save()
-
-            return True
-        
-        except ReactionCard.DoesNotExist:
-            return False
+        result = add_reaction_card_impl(self, reaction_card_id, amount)
+        return result
             
 
 class Game(models.Model):
@@ -160,12 +111,8 @@ class Game(models.Model):
     
     @database_sync_to_async
     def get_opponent_player(self, game_user_id):
-
-        print(game_user_id)
-        if game_user_id == self.student_player.id:
-            return self.teacher_player
-        else:
-            return self.student_player
+        result = get_opponent_player_impl(self, game_user_id)
+        return result
     
 
 class GameAuthenticationToken(models.Model):  # entity class of single-use tokens needed to authenticate to websocket
