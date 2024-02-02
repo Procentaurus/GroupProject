@@ -1,4 +1,4 @@
-from gameNetworking.mechanics.queries import *
+from gameNetworking.queries import *
 
 
 async def connect_impl(consumer): # main implementation function

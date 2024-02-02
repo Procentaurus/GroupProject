@@ -1,4 +1,4 @@
-from gameNetworking.mechanics.queries import *
+from gameNetworking.queries import *
 
 
 async def cleanup_impl(consumer): # standard cleanup procedure that should be triggered after consumer.close()
