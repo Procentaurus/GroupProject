@@ -9,7 +9,7 @@ from implementations.models_impl.game_user_impl import *
 from implementations.models_impl.game_impl import *
 
 #
-# Implementation of all entity classes crucial for the module
+# Implementation of all entity classes needed for the module
 #
 
 CONFLICT_SIDES = (
@@ -40,9 +40,10 @@ class GameUser(models.Model): # user has new instance of GameUser created for ev
 
     current_state = models.CharField(choices=PLAYER_STATES, default='in_collecting', null=False, blank=False)
     morale = models.PositiveSmallIntegerField(default=100, null=False, blank=False)
+    currency = models.PositiveSmallIntegerField(default=500, null=False, blank=False)
     conflict_side = models.CharField(choices=CONFLICT_SIDES, null=False, max_length=15)
     action_cards = models.ManyToManyField(ActionCard)
-    owned_reaction_cards = models.ManyToManyField(OwnedReactionCard, related_name='gameUser', blank=True)
+    reaction_cards = models.ManyToManyField(OwnedReactionCard, related_name='gameUser', blank=True)
 
     class Meta:
         ordering = ["started_waiting"]
