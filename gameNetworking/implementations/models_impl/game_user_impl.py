@@ -1,6 +1,6 @@
 from channels.db import database_sync_to_async
 from gameMechanics.models import *
-from gameNetworking.models import GameUser
+
 
 @database_sync_to_async
 def check_if_own_action_card_impl(game_user, action_card_id):
@@ -32,11 +32,13 @@ def add_action_card_impl(game_user, action_card_id):
     
 @database_sync_to_async
 def check_if_own_reaction_card_impl(game_user, reaction_card_id, amount=1):
-    return GameUser.objects.filter(
-        id=game_user.id,
-        owned_cards__card_id=reaction_card_id,
-        owned_cards__amount__gte=amount
+
+    is_owning_card = game_user.reaction_cards.filter(
+        reaction_card__id=reaction_card_id,
+        amount__gte=amount
     ).exists()
+
+    return is_owning_card
 
 @database_sync_to_async
 def remove_reaction_card_impl(game_user, reaction_card_id, amount=1):

@@ -5,8 +5,8 @@ from channels.db import database_sync_to_async
 from customUser.models import MyUser
 from gameMechanics.models import *
 
-from implementations.models_impl.game_user_impl import *
-from implementations.models_impl.game_impl import *
+from .implementations.models_impl.game_user_impl import *
+from .implementations.models_impl.game_impl import *
 
 #
 # Implementation of all entity classes needed for the module
