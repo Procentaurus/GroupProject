@@ -1,13 +1,12 @@
-from typing import Any
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels.exceptions import StopConsumer
 import logging
 
-from .mechanics.game_consumer_impl.connect import connect_impl
-from .mechanics.game_consumer_impl.message_handlers import *
-from .mechanics.game_consumer_impl.message_senders import *
-from .mechanics.game_consumer_impl.receive_json import main_game_loop_impl
-from .mechanics.game_consumer_impl.cleaners import *
+from .implementations.game_consumer_impl.connect import connect_impl
+from .implementations.game_consumer_impl.message_handlers import *
+from .implementations.game_consumer_impl.message_senders import *
+from .implementations.game_consumer_impl.receive_json import main_game_loop_impl
+from .implementations.game_consumer_impl.cleaners import *
 
 class GameConsumer(AsyncJsonWebsocketConsumer):
 

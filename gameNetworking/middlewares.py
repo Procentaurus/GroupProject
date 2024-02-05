@@ -1,6 +1,4 @@
-from django.contrib.auth.models import AnonymousUser
-
-from .mechanics.queries import *
+from .queries import *
 
 class GameAuthenticationTokenMiddleware:
     def __init__(self, inner):

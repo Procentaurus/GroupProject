@@ -2,7 +2,7 @@ from autobahn.exception import Disconnected
 
 from gameMechanics.enums import PlayerState
 
-from ..queries import get_game_user
+from gameNetworking.queries import get_game_user
 
 #
 # Functions that manage messages from opponents and group,
