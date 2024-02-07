@@ -3,10 +3,11 @@ from channels.exceptions import StopConsumer
 import logging
 
 from .implementations.game_consumer_impl.connect import connect_impl
-from .implementations.game_consumer_impl.message_handlers import *
-from .implementations.game_consumer_impl.message_senders import *
+from .implementations.game_consumer_impl.message_handling import *
+from .implementations.game_consumer_impl.message_sending import *
 from .implementations.game_consumer_impl.receive_json import main_game_loop_impl
-from .implementations.game_consumer_impl.cleaners import *
+from .implementations.game_consumer_impl.clean import *
+from .implementations.game_consumer_impl.internal import *
 
 class GameConsumer(AsyncJsonWebsocketConsumer):
 
@@ -25,11 +26,10 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
         # game run
         self.__last_move_send_time = None
-        self.__number_of_game_iterations = 1
-        self.__moves_table = [[2, [2,2], 1, [1,1]] * self.get_number_of_game_iterations()] # this table represents number of moves that player can perform in each game stage
-        # elems of indexes 0 and 2 are number of moves in first collecting phase and second collecting phase
-        # elems of indexes 1 and 3 are sets that represent number of moves in first and second clash stage,
-        # in each set the elem of index 0 is the number of action moves and the one of index 1 is the number of reaction moves
+        self.__action_multiplier = 1 # specifies how many action moves can be done in 1 clash 
+        self.__turns_after_action_multiplier_must_be_incremented = 5
+        self.__moves_table = [1, 1] # this table represents number of moves that player performs in each clash
+                                    # first number represent number of actions and the second number of reactions
 
     async def connect(self):
         await connect_impl(self)
@@ -60,10 +60,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         await clash_result_impl(self, data)
 
     async def card_action(self, data):
-        await card_action_impl(self,data)
-
-    async def task_action(self, data):
-        await task_action_impl(self,data)
+        await card_action_impl(self, data)
 
     async def game_start(self, data = None):
         await game_start_impl(self)
@@ -98,9 +95,6 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     def get_closure_from_user_side(self):
         return self.__closure_from_user_side
 
-    def get_number_of_game_iterations(self):
-        return self.__number_of_game_iterations
-
     def get_moves_table(self):
         return self.__moves_table
 
@@ -118,3 +112,9 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     def set_winner(self, winner):
         self.__winner = winner
+    
+    def init_table_for_new_clash(self):
+        init_table_for_new_clash_impl(self)
+
+    def update_action_multiplier(self):
+        update_action_multiplier_impl(self)
