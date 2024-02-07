@@ -1,5 +1,4 @@
 from gameMechanics.enums import PlayerState, GameStage
-from gameMechanics.functions import check_game_stage
 
 from gameNetworking.enums import MessageType
 from gameNetworking.queries import *
@@ -12,12 +11,12 @@ async def main_game_loop_impl(consumer, data): # responsible for managing curren
         message_type = data.get('type')
         game_id = consumer.get_game_id()
         game_user = await get_game_user(consumer.get_game_user_id())
-        game_stage = check_game_stage(consumer.get_moves_table()[0])
+        game_stage = check_game_stage(game_user.current_state)
 
-        if game_stage == GameStage.FIRST_COLLECTING or game_stage == GameStage.SECOND_COLLECTING:
-            await collecting_stage_impl(consumer, game_id, message_type, game_user, game_stage) 
-        elif game_stage == GameStage.FIRST_CLASH or game_stage == GameStage.SECOND_CLASH:
-            await clash_stage_impl(consumer, message_type, game_id, game_user, game_stage, data) 
+        if game_stage == GameStage.HUB:
+            await hub_stage_impl(consumer, game_id, message_type, game_user, data) 
+        elif game_stage == GameStage.CLASH:
+            await clash_stage_impl(consumer, game_id, message_type, game_user, data) 
         else:
             winner = consumer.get_winner()
             if winner is None:
@@ -30,14 +29,14 @@ async def main_game_loop_impl(consumer, data): # responsible for managing curren
     else:
         await consumer.error("The game hasn't started yet.")
 
-async def clash_stage_impl(consumer, message_type, game_id, game_user, game_stage, data):
+async def clash_stage_impl(consumer, message_type, game_id, game_user, data):
 
     if message_type == MessageType.CLASH_ACTION_MOVE:
         action_card_id = data.get("action_card")
-        await clash_action_move_mechanics(consumer, game_id, game_user, game_stage, action_card_id)
+        await clash_action_move_mechanics(consumer, game_id, game_user, action_card_id)
     elif message_type == MessageType.CLASH_REACTION_MOVE:
         reaction_cards_ids = data.get("reaction_cards")
-        await clash_reaction_move_mechanics(consumer, game_id, game_user, game_stage, reaction_cards_ids)
+        await clash_reaction_move_mechanics(consumer, game_id, game_user, reaction_cards_ids)
     elif message_type == MessageType.SURRENDER_MOVE:
         winner = "student" if game_user.conflict_side == "teacher" else "teacher"
         consumer.set_winner(winner)
@@ -45,10 +44,12 @@ async def clash_stage_impl(consumer, message_type, game_id, game_user, game_stag
     else:
         await consumer.error("Wrong message type in the current game stage.")
         
-async def collecting_stage_impl(consumer, game_id, message_type, game_user, game_stage):
+async def hub_stage_impl(consumer, game_id, message_type, game_user, data):
 
-    if message_type == MessageType.COLLECTING_MOVE:
-        await collecting_move_mechanics(consumer, game_id, game_stage, game_user)
+    if message_type == MessageType.PURCHASE_MOVE:
+        await purchase_move_mechanics(consumer, game_id, game_user, data)
+    elif message_type == MessageType.READY_MOVE:
+        pass
     elif message_type == MessageType.SURRENDER_MOVE:
         winner = "student" if game_user.conflict_side == "teacher" else "teacher"
         consumer.set_winner(winner)
@@ -57,41 +58,28 @@ async def collecting_stage_impl(consumer, game_id, message_type, game_user, game
         await consumer.error("Wrong message type in the current game stage.")
         consumer.logger.debug("Wrong message type")
 
-async def collecting_move_mechanics(consumer, game_id, game_stage, game_user):
-
-    moves_table = consumer.get_moves_table()
+async def purchase_move_mechanics(consumer, game_id, game_stage, game_user, data):
     
-    if (game_stage == GameStage.FIRST_COLLECTING and moves_table[0][GameStage.FIRST_COLLECTING] > 0) \
-    or (game_stage == GameStage.SECOND_COLLECTING and moves_table[0][GameStage.SECOND_COLLECTING] > 0):   # if the collecting stage is in action
-                                                                                                          # and player has moves left in the stage
-        # choice = data.get("choice")
+    if game_user.current_state == PlayerState.IN_HUB:
 
-        # TODO get appriopriate cards
-        cards = None
+        # action_cards = data.get("action_cards")
+        # reaction_cards = data.get("reaction_cards")
+
+        # check if cards exists
+        # check if cards are in player's shop
         # TODO save these cards' connection with gameuser
 
-        moves_table[0][game_stage] -= 1
+        game = await get_game(game_id)
+        opponent = await game.get_opponent_player(game_user.id)
 
-        await consumer.send_json({"type": "card_action", "cards": cards})
-
-        if moves_table[0][game_stage] > 0: # only enters when player should obtain more tasks
-            # TODO get a new task
-            next_task = None
-            await consumer.send_json({"type": "task_action", "task": next_task})
+        if opponent.current_state == PlayerState.IN_HUB:
+            await game_user.set_current_state(PlayerState.AWAIT_CLASH_START)
+        elif opponent.current_state == PlayerState.AWAIT_CLASH_START:
+            await consumer.send_message_to_group({"next_move_player" : game.next_move_player}, "clash_start")
         else:
-            game = await get_game(game_id)
-            opponent = await game.get_opponent_player(game_user.id)
-
-            consumer.logger.debug(game_user.id)
-            consumer.logger.debug(opponent.id)
-            if opponent.current_state == PlayerState.IN_COLLECTING:
-                await game_user.set_current_state(PlayerState.AWAIT_CLASH_START)
-            elif opponent.current_state == PlayerState.AWAIT_CLASH_START:
-                await consumer.send_message_to_group({"next_move_player" : game.next_move_player}, "clash_start")
-            else:
-                consumer.logger.error("Improper player state.")
-                await consumer.error("Server error occured.")
-                consumer.close()
+            consumer.logger.error("Improper player state.")
+            await consumer.error("Server error occured.")
+            consumer.close()
 
     else:
         consumer.logger.debug("Too much moves in the game stage.")
@@ -139,20 +127,6 @@ async def clash_action_move_mechanics(consumer, game_id, game_user, game_stage, 
     else:
         consumer.logger.debug("Too much moves in the stage.")
         await consumer.error("You have no more moves in that stage.")
-
-
-async def is_action_card_valid(consumer, game_user, action_card_id):
-
-    # action_card_exist = await check_action_card_exist(action_card_id)
-    # if not action_card_exist:
-    #     await consumer.error("Provided card doesnt exist")
-    #     return False
-    
-    # action_card_owned = await game_user.check_if_own_action_card(action_card_id)
-    # if not action_card_owned:
-    #     await consumer.error("You do not own this card")
-    #     return False
-    return True
 
 async def clash_reaction_move_mechanics(consumer, game_id, game_user, game_stage, reaction_cards_ids):
 
@@ -208,18 +182,22 @@ async def clash_reaction_move_mechanics(consumer, game_id, game_user, game_stage
 
 async def are_reaction_cards_valid(consumer, game_user, reaction_cards_ids):
 
-    # all_reaction_cards_exist = await check_reaction_cards_exist(reaction_cards_ids)
-    # if not all_reaction_cards_exist:
-    #     await consumer.error("Some of provided cards dont exist")
-    #     return False
-    
-    # all_reaction_cards_owned = True
-    # for reaction_card_id in reaction_cards_ids:
-    #     all_reaction_cards_owned = all_reaction_cards_owned and await game_user.check_if_own_reaction_card(reaction_card_id)
+    all_reaction_cards_exist = True
+    for reaction_card_id in reaction_cards_ids:
+        all_reaction_cards_exist = all_reaction_cards_exist and check_reaction_card_exist(reaction_card_id)
 
-    # if not all_reaction_cards_owned:
-    #     await consumer.error("You do not own all of used reaction cards")
-    #     return False
+    if not all_reaction_cards_exist:
+        await consumer.error("Some of provided cards dont exist")
+        return False
+    
+    all_reaction_cards_owned = True
+    for reaction_card_id in reaction_cards_ids:
+        all_reaction_cards_owned = all_reaction_cards_owned and await game_user.check_if_own_reaction_card(reaction_card_id)
+
+    if not all_reaction_cards_owned:
+        await consumer.error("You do not own all of used reaction cards")
+        return False
+    
     return True
 
 async def send_clash_result_info(consumer, reaction_cards_ids, student_new_morale, teacher_new_morale):

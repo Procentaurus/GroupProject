@@ -35,14 +35,6 @@ async def clash_result_impl(consumer, data):
         'teacher_new_morale': teacher_new_morale,
     })
 
-async def task_action_impl(consumer, data):
-    data = data['data']
-    task = data['task']
-    await consumer.send_json({
-        'type': "task_action",
-        'task': task,
-    })
-
 async def card_action_impl(consumer, data):
     data = data['data']
     card = data['card']
@@ -69,7 +61,7 @@ async def clash_start_impl(consumer, data):
 
 async def clash_end_impl(consumer):
     game_user = await get_game_user(consumer.get_game_user_id())
-    await game_user.set_current_state(PlayerState.IN_COLLECTING)
+    await game_user.set_current_state(PlayerState.IN_HUB)
 
     await consumer.send_json({
         'type': "clash_end",
