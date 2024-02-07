@@ -124,25 +124,5 @@ def update_game_turn(game_id):
         return True
     except Game.DoesNotExist:
         return False
-                
-
-
-########### Action card ###########
-
-@database_sync_to_async
-def check_action_card_exist(action_card_uuid):
-    try:
-        card = ActionCard.objects.get(action_card_uuid)
-        return True
-    except ActionCard.DoesNotExist:
-        return False            
-
-
-
-########### Rection card ###########
-
-@database_sync_to_async
-def check_reaction_cards_exist(reaction_card_uuids):
-    all_cards_exist = ReactionCard.objects.filter(uuid__in=reaction_card_uuids).count() == len(reaction_card_uuids)
-    return all_cards_exist
+    
 
