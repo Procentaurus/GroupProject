@@ -77,8 +77,22 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     async def game_creation(self, data):
         await game_creation_impl(self, data)
 
-    async def error(self, info):
-        await error_impl(self, info)
+    # Used for player's mistakes during game flow
+    # that do not require complex response
+    # Performs: logging and sending info to player
+    async def perform_error_handling(self, message, log_message = None):
+        await perform_error_handling_impl(self, message, log_message)
+
+    # Used for player's mistakes during game flow
+    # that do require complex response
+    # Performs: logging and sending info to player
+    async def perform_complex_error_handling(self, data,  message, log_message = None):
+        await perform_complex_error_handling_impl(self, data, message, log_message)
+
+    # Used for game flow errors
+    # Performs: logging, sending info to player and closing connection
+    async def perform_critical_error_handling(self, log_message):
+        await perform_critical_error_handling_impl(self, log_message)
 
     def get_game_id(self):
         return self.__game_id

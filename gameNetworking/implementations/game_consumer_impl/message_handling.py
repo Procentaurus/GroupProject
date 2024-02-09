@@ -85,8 +85,35 @@ async def game_creation_impl(consumer, data):
     consumer.set_game_id(data["game_id"])
     consumer.set_opponent_channel_name(data["channel_name"])
 
-async def error_impl(consumer, info):
+async def perform_error_handling_impl(consumer, message, log_message):    
     await consumer.send_json({
         'type': "error",
-        'info': info,
+        'info': message,
     })
+    
+    if log_message is None:
+        consumer.logger.warning(message)
+    else:
+        consumer.logger.warning(log_message)
+
+async def perform_complex_error_handling_impl(consumer, data, message, log_message):
+    data = data['data']
+
+    await consumer.send_json({
+        'type': "error",
+        'info': message,
+        **data,
+    })
+
+    if log_message is None:
+        consumer.logger.warning(message)
+    else:
+        consumer.logger.warning(log_message)
+
+async def perform_critical_error_handling_impl(consumer, log_message):
+    await consumer.send_json({
+        'type': "error",
+        'info': "SERVER ERROR OCCURED",
+    })
+
+    consumer.logger.error(log_message)
