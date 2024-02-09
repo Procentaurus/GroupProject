@@ -11,6 +11,7 @@ from gameNetworking.queries import get_game_user
 
 async def opponent_move_impl(consumer, data):
     data = data['data']
+
     if data.get("action_card") is not None:
         await consumer.send_json({
             'type': "opponent_move",
@@ -26,6 +27,7 @@ async def opponent_move_impl(consumer, data):
 
 async def clash_result_impl(consumer, data):
     data = data["data"]
+
     student_new_morale = data["student_new_morale"]
     teacher_new_morale = data["teacher_new_morale"]
 
@@ -37,22 +39,24 @@ async def clash_result_impl(consumer, data):
 
 async def card_action_impl(consumer, data):
     data = data['data']
-    card = data['card']
+
+    cards = data['card']
     await consumer.send_json({
         'type': "collect_action",
-        'card': card,
+        'cards': cards,
     })
 
 async def game_start_impl(consumer):
-
     await consumer.send_json({
         'type': "game_start",
     })
 
 async def clash_start_impl(consumer, data):
     data = data['data']
+
     game_user = await get_game_user(consumer.get_game_user_id())
     await game_user.set_current_state(PlayerState.IN_CLASH)
+    consumer.update_game_stage()
 
     await consumer.send_json({
         'type': "clash_start",
@@ -61,18 +65,20 @@ async def clash_start_impl(consumer, data):
 
 async def clash_end_impl(consumer):
     game_user = await get_game_user(consumer.get_game_user_id())
-    await game_user.set_current_state(PlayerState.IN_HUB)
+    await game_user.set_state(PlayerState.IN_HUB)
+    consumer.update_game_stage()
 
     await consumer.send_json({
         'type': "clash_end",
     })
 
 async def game_end_impl(consumer, data):
-    winner = data['data']
+    data = data['data']
+
     try:
         await consumer.send_json({
             'type': "game_end",
-            'winner': winner,
+            'winner': data.get("winner"),
         })
     except Disconnected:
         consumer.logger.warning("Tried to sent through closed socket.")

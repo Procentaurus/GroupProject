@@ -25,29 +25,35 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         self.__closure_from_user_side = True
 
         # game run
+        self.__game_stage = GameStage.HUB
         self.__last_move_send_time = None
         self.__action_multiplier = 1 # specifies how many action moves can be done in 1 clash 
-        self.__turns_after_action_multiplier_must_be_incremented = 5
+        self.__turns_after_action_multiplier_is_incremented = 5
         self.__moves_table = [1, 1] # this table represents number of moves that player performs in each clash
                                     # first number represent number of actions and the second number of reactions
 
     async def connect(self):
         await connect_impl(self)
 
-    async def cleanup(self): # standard cleanup procedure that should be triggered after self.close()
+    # standard cleanup procedure that should be triggered after self.close()
+    async def cleanup(self):
         await cleanup_impl(self)
 
-    async def perform_cleanup(self): # is called after game's end, when the end was triggered by the opponent or from standard cleanup procedure
+    # is called after game's end, when the end was triggered by the opponent or from standard cleanup procedure
+    async def perform_cleanup(self):
         await perform_cleanup_impl(self)
 
-    async def disconnect(self, *args): # is called when the user disconnests from socket
+    # is called when the user disconnests from socket
+    async def disconnect(self, *args):
         await disconnect_impl(self)            
         raise StopConsumer()
 
-    async def receive_json(self, data): # responsible for managing current user messages, effectively main game loop function
+    # responsible for managing current user messages, effectively main game loop function
+    async def receive_json(self, data):
         await main_game_loop_impl(self, data)
 
-    async def send_message_to_group(self, data, event): # sends messages to both players' clients
+    # sends messages to both players' mailboxes
+    async def send_message_to_group(self, data, event):
         await send_message_to_group_impl(self, data, event)
 
     async def send_message_to_opponent(self, data, event):
@@ -99,6 +105,9 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     def get_game_user_id(self):
         return self.__game_user_id
+    
+    def get_game_stage(self):
+        return self.__game_stage
 
     def get_opponent_channel_name(self):
         return self.__opponent_channel_name
@@ -132,3 +141,6 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     def update_action_multiplier(self):
         update_action_multiplier_impl(self)
+
+    def update_game_stage(self):
+        update_game_stage_impl(self)
