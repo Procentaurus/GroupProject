@@ -35,11 +35,10 @@ class GameUser(models.Model): # user has new instance of GameUser created for ev
 
     started_waiting = models.DateTimeField(auto_now_add=True)
     channel_name = models.CharField(null=False, max_length=100)
-    in_game = models.BooleanField(default=False)
 
     state = models.CharField(choices=PLAYER_STATES, default='in_collecting', null=False, blank=False)
     morale = models.PositiveSmallIntegerField(default=100, null=False, blank=False)
-    currency = models.PositiveSmallIntegerField(default=500, null=False, blank=False)
+    money = models.PositiveSmallIntegerField(default=500, null=False, blank=False)
     conflict_side = models.CharField(choices=CONFLICT_SIDES, null=False, max_length=15)
 
     owned_action_cards = models.ManyToManyField(ActionCard, related_name="owned_action_cards")
@@ -49,18 +48,22 @@ class GameUser(models.Model): # user has new instance of GameUser created for ev
         ordering = ["started_waiting"]
 
     @database_sync_to_async
+    def get_user(self):
+        return self.user
+
+    @database_sync_to_async
     def set_morale(self, morale):
         self.morale = morale
         self.save()
 
     @database_sync_to_async
-    def add_currency(self, amount):
-        self.currency += amount
+    def add_money(self, amount):
+        self.money += amount
         self.save()
 
     @database_sync_to_async
-    def subtract_currency(self, amount):
-        self.currency -= amount
+    def subtract_money(self, amount):
+        self.money -= amount
         self.save()
 
     @database_sync_to_async
