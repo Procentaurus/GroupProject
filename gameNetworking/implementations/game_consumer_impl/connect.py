@@ -25,45 +25,52 @@ async def connect_impl(consumer): # main implementation function
     number_of_students_waiting = await get_number_of_waiting_game_users("student")
 
     await consumer.accept()
-    if number_of_teachers_waiting > 0 and number_of_students_waiting > 0: # initialization of the game if there are mininimum 2 players waiting
+
+    # initialization of the game if there are mininimum 2 players waiting
+    if number_of_teachers_waiting > 0 and number_of_students_waiting > 0:
         await initialize_game(consumer, game_user, is_teacher)
-        await manage_first_tasks(consumer, is_teacher)
+        # await initialize_game_archive()
+        await manage_first_card_sets(consumer, is_teacher)
 
+# Main initialization of the game game
 async def initialize_game(consumer, game_user, is_teacher):
-
-    # Initializing game
+    
     player2 = await get_longest_waiting_game_user("student") if is_teacher else await get_longest_waiting_game_user("teacher")
     player1 = game_user
 
-    player1.in_game = True
-    player2.in_game = True
+    player1.get_user().in_game = True
+    player2.get_user().in_game = True
 
     # creating game object
     game = await create_game(player1, player2)
     consumer.set_game_id(game.id)
-    consumer.logger.debug("The game has started")
-
-    consumer.set_opponent_channel_name(player2.channel_name)
+    consumer.logger.debug("The game has started.")
 
     # adding both players' channels to one group
     game_id = consumer.get_game_id()
-    await consumer.channel_layer.group_add(f"game_{game_id}", player2.channel_name) # group name is game_{UUID of game entity object}
-    await consumer.channel_layer.group_add(f"game_{game_id}", player1.channel_name) # -||-
 
-    # sending info about game to players and opponent's consumer
+    # group name is game_{UUID of game entity object}
+    await consumer.channel_layer.group_add(f"game_{game_id}", player2.channel_name)
+    await consumer.channel_layer.group_add(f"game_{game_id}", player1.channel_name)
+
+    consumer.set_opponent_channel_name(player2.channel_name)
+
+    # Triggering initialization on opponent site
     await consumer.send_message_to_opponent({"game_id": str(game_id), "channel_name": consumer.channel_name}, "game_creation")
+
+    # Sending initial message about game start
     await consumer.send_message_to_opponent(None, "game_start")
     await consumer.send_json({'type': "game_start"})
 
-async def manage_first_tasks(consumer, is_teacher):
+async def manage_first_card_sets(consumer, is_teacher):
 
-    # TODO get first task to each player
-    initial_task_for_teacher, initial_task_for_student = None, None
-    opponent_task, my_task = None, None
+    # TODO get cards to send for both players
+    initial_cards_for_teacher = None
+    initial_cards_for_student = None
 
-    opponent_task = initial_task_for_student if is_teacher else initial_task_for_teacher
-    my_task = initial_task_for_teacher if is_teacher else initial_task_for_student
+    opponent_cards = initial_cards_for_student if is_teacher else initial_cards_for_teacher
+    my_cards = initial_cards_for_teacher if is_teacher else initial_cards_for_student
 
-    # sending initial tasks to players
-    await consumer.send_json({"type": "task_action", "task": my_task})
-    await consumer.send_message_to_opponent({"task": opponent_task}, "task_action")
+    # sending initial sets of cards to players
+    await consumer.send_json({"type": "card_action", "cards": my_cards})
+    await consumer.send_message_to_opponent({"cards": opponent_cards}, "card_action")
