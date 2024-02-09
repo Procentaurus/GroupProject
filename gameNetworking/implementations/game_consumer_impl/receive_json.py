@@ -1,31 +1,23 @@
 from gameMechanics.enums import PlayerState, GameStage
 
+from gameNetworking.implementations.game_consumer_impl.purchasing import *
 from gameNetworking.enums import MessageType
 from gameNetworking.queries import *
 
 
 async def main_game_loop_impl(consumer, data): # responsible for managing current user messages, effectively main game loop function
 
-    if consumer.get_game_id() is not None:    # has game started or not
+    if consumer.get_game_id() is not None: # has game started or not
 
         message_type = data.get('type')
         game_id = consumer.get_game_id()
         game_user = await get_game_user(consumer.get_game_user_id())
-        game_stage = check_game_stage(game_user.current_state)
+        game_stage = consumer.get_game_stage()
 
         if game_stage == GameStage.HUB:
             await hub_stage_impl(consumer, game_id, message_type, game_user, data) 
-        elif game_stage == GameStage.CLASH:
-            await clash_stage_impl(consumer, game_id, message_type, game_user, data) 
         else:
-            winner = consumer.get_winner()
-            if winner is None:
-                consumer.logger.error("Neither game stage is taking place.")
-                await consumer.send_message_to_group("Server error occured", "error")
-                consumer.close()
-            else:
-                await consumer.send_message_to_group(winner, "game_end")
-                consumer.logger.debug("Game has ended.")
+            await clash_stage_impl(consumer, game_id, message_type, game_user, data)
     else:
         await consumer.error("The game hasn't started yet.")
 
@@ -41,6 +33,7 @@ async def clash_stage_impl(consumer, message_type, game_id, game_user, data):
         winner = "student" if game_user.conflict_side == "teacher" else "teacher"
         consumer.set_winner(winner)
         await consumer.cleanup()
+        #TODO Probably needed extra functionalities to end game
     else:
         await consumer.error("Wrong message type in the current game stage.")
         
@@ -49,7 +42,7 @@ async def hub_stage_impl(consumer, game_id, message_type, game_user, data):
     if message_type == MessageType.PURCHASE_MOVE:
         await purchase_move_mechanics(consumer, game_id, game_user, data)
     elif message_type == MessageType.READY_MOVE:
-        pass
+        await ready_move_mechanics(consumer, game_id, game_user, data)
     elif message_type == MessageType.SURRENDER_MOVE:
         winner = "student" if game_user.conflict_side == "teacher" else "teacher"
         consumer.set_winner(winner)
@@ -58,32 +51,56 @@ async def hub_stage_impl(consumer, game_id, message_type, game_user, data):
         await consumer.error("Wrong message type in the current game stage.")
         consumer.logger.debug("Wrong message type")
 
-async def purchase_move_mechanics(consumer, game_id, game_stage, game_user, data):
-    
-    if game_user.current_state == PlayerState.IN_HUB:
+async def ready_move_mechanics(consumer, game_id, game_user, data):
+    pass #TODO Need to implement all of the stuff
+    game = await get_game(game_id)
+    opponent = await game.get_opponent_player(game_user.id)
 
-        # action_cards = data.get("action_cards")
-        # reaction_cards = data.get("reaction_cards")
-
-        # check if cards exists
-        # check if cards are in player's shop
-        # TODO save these cards' connection with gameuser
-
-        game = await get_game(game_id)
-        opponent = await game.get_opponent_player(game_user.id)
-
-        if opponent.current_state == PlayerState.IN_HUB:
-            await game_user.set_current_state(PlayerState.AWAIT_CLASH_START)
-        elif opponent.current_state == PlayerState.AWAIT_CLASH_START:
-            await consumer.send_message_to_group({"next_move_player" : game.next_move_player}, "clash_start")
-        else:
-            consumer.logger.error("Improper player state.")
-            await consumer.error("Server error occured.")
-            consumer.close()
-
+    if opponent.state == PlayerState.IN_HUB:
+        await game_user.set_state(PlayerState.AWAIT_CLASH_START)
+    elif opponent.state == PlayerState.AWAIT_CLASH_START:
+        await consumer.send_message_to_group({"next_move_player" : game.next_move_player}, "clash_start")
     else:
-        consumer.logger.debug("Too much moves in the game stage.")
-        consumer.error("You have no more moves in that stage.")
+        consumer.logger.error("Improper player state.")
+        await consumer.error("Server error occured.")
+        consumer.close()
+
+async def purchase_move_mechanics(consumer, game_id, game_user, data):
+    action_cards_data = data.get("action_cards")
+    reaction_cards_data = data.get("reaction_cards")
+    all_action_cards_purchase_succesful = True
+    all_reaction_cards_purchase_succesful = True
+
+    for action_card in action_cards:
+        purchase_succesful = await purchase_action_card(consumer, game_user, action_card)
+        all_action_cards_purchase_succesful = all_action_cards_purchase_succesful and purchase_succesful
+
+    for reaction_card, amount in reaction_cards:
+        purchase_succesful = await purchase_reaction_card(consumer, game_user, reaction_card, amount)
+        all_reaction_cards_purchase_succesful = all_reaction_cards_purchase_succesful and purchase_succesful
+
+    all_cards_be_purchased = True
+
+    if all_cards_be_purchased:
+        # purchasing all cards
+        # send summary
+    else:
+        await consumer.error("Cannot afford to buy all chcosen cards.")
+
+    
+
+
+    game = await get_game(game_id)
+    opponent = await game.get_opponent_player(game_user.id)
+
+    if opponent.state == PlayerState.IN_HUB:
+        await game_user.set_state(PlayerState.AWAIT_CLASH_START)
+    elif opponent.state == PlayerState.AWAIT_CLASH_START:
+        await consumer.send_message_to_group({"next_move_player" : game.next_move_player}, "clash_start")
+    else:
+        consumer.logger.error("Improper player state.")
+        await consumer.error("Server error occured.")
+        consumer.close()
 
 async def clash_action_move_mechanics(consumer, game_id, game_user, game_stage, action_card_id):
 
@@ -120,7 +137,7 @@ async def clash_action_move_mechanics(consumer, game_id, game_user, game_stage, 
             else:
                 await consumer.send_message_to_opponent({"action_card" : action_card_id}, "opponent_move")
                 if moves_table[0][game_stage][0] == 0 and moves_table[0][game_stage][1] == 0: # player has no more moves in the current clash
-                    await game_user.set_current_state(PlayerState.AWAIT_CLASH_END)
+                    await game_user.set_state(PlayerState.AWAIT_CLASH_END)
         else:
             consumer.logger.debug("You used illegal card.")
             await consumer.error("You used illegal card.")
@@ -168,9 +185,9 @@ async def clash_reaction_move_mechanics(consumer, game_id, game_user, game_stage
 
         opponent = await game.get_opponent_player(game_user.id)
         
-        if opponent.current_state == PlayerState.AWAIT_CLASH_END:
+        if opponent.state == PlayerState.AWAIT_CLASH_END:
             await consumer.send_message_to_group(None, "clash_end")
-        elif opponent.current_state != PlayerState.IN_CLASH:
+        elif opponent.state != PlayerState.IN_CLASH:
             consumer.logger.error("Improper player state.")
             await consumer.error("Server error occured.")
             consumer.close()
@@ -206,4 +223,16 @@ async def send_clash_result_info(consumer, reaction_cards_ids, student_new_moral
     await consumer.send_message_to_group({ # sends results of clash to both players
         "student_new_morale": student_new_morale,
         "teacher_new_morale": teacher_new_morale,
-    }, "clash_result")  
+    }, "clash_result") 
+
+
+
+
+        # winner = consumer.get_winner()
+        # if winner is None:
+        #     consumer.logger.error("Neither game stage is taking place.")
+        #     await consumer.send_message_to_group("Server error occured", "error")
+        #     consumer.close()
+        # else:
+        #     await consumer.send_message_to_group(winner, "game_end")
+        #     consumer.logger.debug("Game has ended.")

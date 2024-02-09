@@ -124,5 +124,3 @@ def update_game_turn(game_id):
         return True
     except Game.DoesNotExist:
         return False
-    
-

@@ -21,9 +21,17 @@ def calculate_change_in_morale(action_card, reaction_cards):
 ########### Action card ###########
 
 @database_sync_to_async
-def check_action_card_exist(action_card_uuid):
+def get_action_card(action_card_id):
     try:
-        _ = ActionCard.objects.get(action_card_uuid)
+        card = ActionCard.objects.get(action_card_id)
+        return card
+    except ActionCard.DoesNotExist:
+        return None  
+
+@database_sync_to_async
+def check_action_card_exist(action_card_id):
+    try:
+        _ = ActionCard.objects.get(action_card_id)
         return True
     except ActionCard.DoesNotExist:
         return False            
@@ -32,9 +40,17 @@ def check_action_card_exist(action_card_uuid):
 ########### Reaction card ###########
 
 @database_sync_to_async
-def check_reaction_card_exist(reaction_card_uuid):
+def check_reaction_card_exist(reaction_card_id):
     try:
-        _ = ReactionCard.objects.get(reaction_card_uuid)
+        _ = ReactionCard.objects.get(reaction_card_id)
         return True
     except ReactionCard.DoesNotExist:
-        return False  
+        return False
+    
+@database_sync_to_async
+def get_reaction_card(reaction_card_id):
+    try:
+        card = ReactionCard.objects.get(reaction_card_id)
+        return card
+    except ReactionCard.DoesNotExist:
+        return None  
