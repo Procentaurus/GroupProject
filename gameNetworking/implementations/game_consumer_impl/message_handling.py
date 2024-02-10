@@ -25,6 +25,13 @@ async def opponent_move_impl(consumer, data):
     else:
         consumer.logger.debug("Wrong type of move.")
 
+
+async def purchase_result_impl(consumer, data):
+    await consumer.send_json({
+        "type" : "purchase_result",
+        "new_money_amount" : data["new_money_amount"]
+    })
+
 async def clash_result_impl(consumer, data):
     data = data["data"]
 

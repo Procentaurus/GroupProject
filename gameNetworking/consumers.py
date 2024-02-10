@@ -21,7 +21,6 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         self.__opponent_channel_name = None
 
         # game closure
-        self.__winner = None
         self.__closure_from_user_side = True
 
         # game run
@@ -61,6 +60,9 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     async def opponent_move(self, data):
         await opponent_move_impl(self, data)
+
+    async def purchase_result(self, data):
+        await purchase_result_impl(self, data)
 
     async def clash_result(self, data):
         await clash_result_impl(self, data)
@@ -112,9 +114,6 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     def get_opponent_channel_name(self):
         return self.__opponent_channel_name
 
-    def get_winner(self):
-        return self.__winner
-
     def get_closure_from_user_side(self):
         return self.__closure_from_user_side
 
@@ -132,9 +131,6 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     def set_opponent_channel_name(self, opponent_channel_name):
         self.__opponent_channel_name = opponent_channel_name
-
-    def set_winner(self, winner):
-        self.__winner = winner
     
     def init_table_for_new_clash(self):
         init_table_for_new_clash_impl(self)
