@@ -74,16 +74,16 @@ async def check_game_user_can_afford_all_cards(consumer, game_user, action_cards
     for action_card_id in action_cards_ids:
         action_card = await get_action_card(action_card_id)
         if action_card is None:
-            consumer.simple_error("Server error occured")
-            consumer.logger.error(f"Not existing card passed validation: {action_card_id}")
+            await consumer.perform_critical_error_handling(
+                f"Not existing card passed validation: {action_card_id}")
         else:
             action_cards_total_price += action_card.price
 
     for reaction_card_data in reaction_cards_data:
         reaction_card = await get_reaction_card(reaction_card_data["reaction_card_id"])
         if reaction_card is None:
-            consumer.simple_error("Server error occured")
-            consumer.logger.error(f"Not existing card passed validation: {reaction_card_data['reaction_card_id']}")
+            await consumer.perform_critical_error_handling(
+                f"Not existing card passed validation: {reaction_card_data['reaction_card_id']}")
         else:
             reaction_cards_total_price += reaction_card.price
 

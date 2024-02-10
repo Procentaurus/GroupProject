@@ -2,12 +2,8 @@ from gameNetworking.queries import *
 
 
 async def cleanup_impl(consumer): # standard cleanup procedure that should be triggered after consumer.close()
-        consumer.closure_from_user_side = False
-
-        # sending end info with the all data (for now only winner)
-        winner = consumer.get_winner()
-        await consumer.send_message_to_group(winner, "game_end")
-        await consumer.perform_cleanup()
+    consumer.closure_from_user_side = False
+    await consumer.perform_cleanup()
 
 async def perform_cleanup_impl(consumer): # is called after game's end, when the end was triggered by the opponent or from standard cleanup procedure
 

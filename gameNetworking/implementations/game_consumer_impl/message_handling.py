@@ -36,20 +36,20 @@ async def clash_result_impl(consumer, data):
 
     await consumer.send_json({
         'type': "clash_result",
-        'student_new_morale': student_new_morale,
-        'teacher_new_morale': teacher_new_morale,
+        'student_new_morale' : student_new_morale,
+        'teacher_new_morale' : teacher_new_morale,
     })
 
 async def card_action_impl(consumer, data):
     cards = data['card']
     await consumer.send_json({
-        'type': "collect_action",
-        'cards': cards,
+        'type' : "collect_action",
+        'cards' : cards,
     })
 
 async def game_start_impl(consumer):
     await consumer.send_json({
-        'type': "game_start",
+        'type' : "game_start",
     })
 
 async def clash_start_impl(consumer, data):
@@ -58,8 +58,8 @@ async def clash_start_impl(consumer, data):
     consumer.update_game_stage()
 
     await consumer.send_json({
-        'type': "clash_start",
-        'next_move': data.get("next_move_player"),
+        'type' : "clash_start",
+        'next_move' : data.get("next_move_player"),
     })
 
 async def clash_end_impl(consumer):
@@ -68,14 +68,14 @@ async def clash_end_impl(consumer):
     consumer.update_game_stage()
 
     await consumer.send_json({
-        'type': "clash_end",
+        'type' : "clash_end",
     })
 
 async def game_end_impl(consumer, data):
     try:
         await consumer.send_json({
-            'type': "game_end",
-            'winner': data.get("winner"),
+            'type' : "game_end",
+            'winner' : data.get("winner"),
         })
     except Disconnected:
         consumer.logger.warning("Tried to sent through closed socket.")
@@ -88,8 +88,8 @@ async def game_creation_impl(consumer, data):
 
 async def perform_error_handling_impl(consumer, message, log_message):    
     await consumer.send_json({
-        'type': "error",
-        'info': message,
+        'type' : "error",
+        'info' : message,
     })
     
     if log_message is None:
@@ -99,8 +99,8 @@ async def perform_error_handling_impl(consumer, message, log_message):
 
 async def perform_complex_error_handling_impl(consumer, data, message, log_message):
     await consumer.send_json({
-        'type': "error",
-        'info': message,
+        'type' : "error",
+        'info' : message,
         **data,
     })
 
@@ -111,8 +111,8 @@ async def perform_complex_error_handling_impl(consumer, data, message, log_messa
 
 async def perform_critical_error_handling_impl(consumer, log_message):
     await consumer.send_json({
-        'type': "error",
-        'info': "SERVER ERROR OCCURED",
+        'type' : "error",
+        'info' : "SERVER ERROR OCCURED",
     })
 
     consumer.logger.error(log_message)

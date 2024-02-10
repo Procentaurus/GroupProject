@@ -17,7 +17,7 @@ async def connect_impl(consumer): # main implementation function
         return
     
     game_user = await create_game_user(access_token, conflict_side, consumer.channel_name)
-    is_teacher = True if game_user.conflict_side == "teacher" else False
+    is_current_game_user_teacher = True if game_user.conflict_side == "teacher" else False
     consumer.set_game_user_id(game_user.id)
     # await delete_game_token(game_user)
 
@@ -28,21 +28,25 @@ async def connect_impl(consumer): # main implementation function
 
     # initialization of the game if there are mininimum 2 players waiting
     if number_of_teachers_waiting > 0 and number_of_students_waiting > 0:
-        await initialize_game(consumer, game_user, is_teacher)
+        await initialize_game(consumer, game_user, is_current_game_user_teacher)
         # await initialize_game_archive()
-        await manage_first_card_sets(consumer, is_teacher)
+        await send_first_card_sets_to_shop(consumer, is_current_game_user_teacher)
 
-# Main initialization of the game game
-async def initialize_game(consumer, game_user, is_teacher):
+# Main initialization of the game
+async def initialize_game(consumer, game_user, is_current_game_user_teacher):
     
-    player2 = await get_longest_waiting_game_user("student") if is_teacher else await get_longest_waiting_game_user("teacher")
-    player1 = game_user
+    player_1 = game_user
+    player_2 = None
+    if is_current_game_user_teacher:
+        player_2 = await get_longest_waiting_game_user("student")
+    else:
+        player_2 = await get_longest_waiting_game_user("teacher")
 
-    player1.get_user().in_game = True
-    player2.get_user().in_game = True
+    player_1.get_user().in_game = True
+    player_2.get_user().in_game = True
 
     # creating game object
-    game = await create_game(player1, player2)
+    game = await create_game(player_1, player_2)
     consumer.set_game_id(game.id)
     consumer.logger.debug("The game has started.")
 
@@ -50,27 +54,45 @@ async def initialize_game(consumer, game_user, is_teacher):
     game_id = consumer.get_game_id()
 
     # group name is game_{UUID of game entity object}
-    await consumer.channel_layer.group_add(f"game_{game_id}", player2.channel_name)
-    await consumer.channel_layer.group_add(f"game_{game_id}", player1.channel_name)
+    await consumer.channel_layer.group_add(f"game_{game_id}", player_2.channel_name)
+    await consumer.channel_layer.group_add(f"game_{game_id}", player_1.channel_name)
 
-    consumer.set_opponent_channel_name(player2.channel_name)
+    consumer.set_opponent_channel_name(player_2.channel_name)
 
     # Triggering initialization on opponent site
-    await consumer.send_message_to_opponent({"game_id": str(game_id), "channel_name": consumer.channel_name}, "game_creation")
+    await consumer.send_message_to_opponent(
+        {"game_id": str(game_id), "channel_name": consumer.channel_name},
+        "game_creation")
 
     # Sending initial message about game start
-    await consumer.send_message_to_opponent(None, "game_start")
-    await consumer.send_json({'type': "game_start"})
+    await consumer.send_message_to_opponent(
+        {"initial_money_amount" : player_2.money,
+        "initial_morale" : player_2.morale},
+        "game_start")
+    await consumer.game_start(
+        {"initial_money_amount" : player_1.money,
+        "initial_morale" : player_1.morale})
 
-async def manage_first_card_sets(consumer, is_teacher):
+async def send_first_card_sets_to_shop(consumer, is_current_game_user_teacher):
 
     # TODO get cards to send for both players
-    initial_cards_for_teacher = None
-    initial_cards_for_student = None
-
-    opponent_cards = initial_cards_for_student if is_teacher else initial_cards_for_teacher
-    my_cards = initial_cards_for_teacher if is_teacher else initial_cards_for_student
+    initial_action_cards_for_teacher, initial_reaction_cards_for_teacher = None, None
+    initial_action_cards_for_student, initial_reaction_cards_for_student = None, None
 
     # sending initial sets of cards to players
-    await consumer.send_json({"type": "card_action", "cards": my_cards})
-    await consumer.send_message_to_opponent({"cards": opponent_cards}, "card_action")
+    if is_current_game_user_teacher:
+        await consumer.card_action(
+            {"action_cards" : initial_action_cards_for_teacher,
+            "reaction_cards" : initial_reaction_cards_for_teacher})
+        await consumer.send_message_to_opponent(
+            {"action_cards" : initial_action_cards_for_student,
+            "reaction_cards" : initial_reaction_cards_for_student},
+            "card_action")
+    else:
+        await consumer.card_action(
+            {"action_cards" : initial_action_cards_for_student,
+            "reaction_cards" : initial_reaction_cards_for_student})
+        await consumer.send_message_to_opponent(
+            {"action_cards" : initial_action_cards_for_teacher,
+            "reaction_cards" : initial_reaction_cards_for_teacher},
+            "card_action")
