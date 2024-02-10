@@ -9,6 +9,10 @@ class ActionCard(Card):
 class ReactionCard(Card):
     pass
 
+class OwnedReactionCard(models.Model):
+    reaction_card = models.ForeignKey(ReactionCard, on_delete=models.CASCADE, null=False, blank=False)
+    amount = models.PositiveSmallIntegerField(default=0)
+
 class Task(models.Model):
     pass
 

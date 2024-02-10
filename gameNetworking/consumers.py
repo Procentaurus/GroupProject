@@ -1,13 +1,12 @@
-from typing import Any
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels.exceptions import StopConsumer
 import logging
 
-from .mechanics.game_consumer_impl.connect import connect_impl
-from .mechanics.game_consumer_impl.message_handlers import *
-from .mechanics.game_consumer_impl.message_senders import *
-from .mechanics.game_consumer_impl.receive_json import main_game_loop_impl
-from .mechanics.game_consumer_impl.cleaners import *
+from .implementations.game_consumer_impl.connect import connect_impl
+from .implementations.game_consumer_impl.message_handlers import *
+from .implementations.game_consumer_impl.message_senders import *
+from .implementations.game_consumer_impl.receive_json import main_game_loop_impl
+from .implementations.game_consumer_impl.cleaners import *
 
 class GameConsumer(AsyncJsonWebsocketConsumer):
 
@@ -60,11 +59,20 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     async def clash_result(self, data):
         await clash_result_impl(self, data)
 
-    async def collect_action(self, data):
-        await collect_action_impl(self,data)
+    async def card_action(self, data):
+        await card_action_impl(self,data)
 
-    async def game_start(self, data):
-        await game_start_impl(self, data)
+    async def task_action(self, data):
+        await task_action_impl(self,data)
+
+    async def game_start(self, data = None):
+        await game_start_impl(self)
+
+    async def clash_start(self, data):
+        await clash_start_impl(self, data)
+
+    async def clash_end(self, data = None):
+        await clash_end_impl(self)
 
     async def game_end(self, data):
         await game_end_impl(self, data)
