@@ -10,17 +10,15 @@ from gameNetworking.queries import get_game_user
 #
 
 async def opponent_move_impl(consumer, data):
-    data = data['data']
-
     if data.get("action_card") is not None:
         await consumer.send_json({
-            'type': "opponent_move",
-            'action_card':  data['action_card'],
+            'type' : "opponent_move",
+            'action_card' : data['action_card'],
         })
     elif data.get("reaction_cards") is not None:
         await consumer.send_json({
-            'type': "opponent_move",
-            'reaction_cards':  data["reaction_cards"],
+            'type' : "opponent_move",
+            'reaction_cards' : data["reaction_cards"],
         })
     else:
         consumer.logger.debug("Wrong type of move.")
@@ -33,8 +31,6 @@ async def purchase_result_impl(consumer, data):
     })
 
 async def clash_result_impl(consumer, data):
-    data = data["data"]
-
     student_new_morale = data["student_new_morale"]
     teacher_new_morale = data["teacher_new_morale"]
 
@@ -45,8 +41,6 @@ async def clash_result_impl(consumer, data):
     })
 
 async def card_action_impl(consumer, data):
-    data = data['data']
-
     cards = data['card']
     await consumer.send_json({
         'type': "collect_action",
@@ -59,8 +53,6 @@ async def game_start_impl(consumer):
     })
 
 async def clash_start_impl(consumer, data):
-    data = data['data']
-
     game_user = await get_game_user(consumer.get_game_user_id())
     await game_user.set_current_state(PlayerState.IN_CLASH)
     consumer.update_game_stage()
@@ -80,8 +72,6 @@ async def clash_end_impl(consumer):
     })
 
 async def game_end_impl(consumer, data):
-    data = data['data']
-
     try:
         await consumer.send_json({
             'type': "game_end",
@@ -93,8 +83,6 @@ async def game_end_impl(consumer, data):
     await consumer.close()
 
 async def game_creation_impl(consumer, data):
-    data = data['data']
-    
     consumer.set_game_id(data["game_id"])
     consumer.set_opponent_channel_name(data["channel_name"])
 
@@ -110,8 +98,6 @@ async def perform_error_handling_impl(consumer, message, log_message):
         consumer.logger.warning(log_message)
 
 async def perform_complex_error_handling_impl(consumer, data, message, log_message):
-    data = data['data']
-
     await consumer.send_json({
         'type': "error",
         'info': message,

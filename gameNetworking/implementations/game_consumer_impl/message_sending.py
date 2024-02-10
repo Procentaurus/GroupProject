@@ -3,7 +3,7 @@ async def send_message_to_group_impl(consumer, data, event):
         f"game_{consumer.get_game_id()}",
         {
             'type': event,
-            'data': data,
+            **data,
         }
     )
 
@@ -13,6 +13,6 @@ async def send_message_to_opponent_impl(consumer, data, event):
         opponent_channel_name,
         {
             'type': event,
-            'data': data,
+            **data,
         }
     )
