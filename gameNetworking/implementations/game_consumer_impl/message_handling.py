@@ -40,10 +40,10 @@ async def clash_result_impl(consumer, data):
         'teacher_new_morale' : teacher_new_morale,
     })
 
-async def card_action_impl(consumer, data):
+async def card_package_impl(consumer, data):
     cards = data['card']
     await consumer.send_json({
-        'type' : "collect_action",
+        'type' : "card_package",
         'cards' : cards,
     })
 

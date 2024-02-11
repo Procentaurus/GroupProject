@@ -81,18 +81,18 @@ async def send_first_card_sets_to_shop(consumer, is_current_game_user_teacher):
 
     # sending initial sets of cards to players
     if is_current_game_user_teacher:
-        await consumer.card_action(
+        await consumer.card_package(
             {"action_cards" : initial_action_cards_for_teacher,
             "reaction_cards" : initial_reaction_cards_for_teacher})
         await consumer.send_message_to_opponent(
             {"action_cards" : initial_action_cards_for_student,
             "reaction_cards" : initial_reaction_cards_for_student},
-            "card_action")
+            "card_package")
     else:
-        await consumer.card_action(
+        await consumer.card_package(
             {"action_cards" : initial_action_cards_for_student,
             "reaction_cards" : initial_reaction_cards_for_student})
         await consumer.send_message_to_opponent(
             {"action_cards" : initial_action_cards_for_teacher,
             "reaction_cards" : initial_reaction_cards_for_teacher},
-            "card_action")
+            "card_package")
