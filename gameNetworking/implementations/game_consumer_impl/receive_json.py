@@ -62,6 +62,21 @@ async def ready_move_mechanics(consumer, game_id, game_user):
     game = await get_game(game_id)
     opponent = await game.get_opponent_player(game_user.id)
 
+    # Check if player is in the state after reporting readiness 
+    if game_user.state == PlayerState.AWAIT_CLASH_START:
+        await consumer.perform_error_handling_impl(
+            consumer, "You have already declared readyness.",
+            f"{game_user.conflict_side} tried to declare readiness \
+            for the clash afresh.")
+        return
+    
+    # Check if player is in the hub stage, if not then flow error occured
+    if game_user.state != PlayerState.IN_HUB:
+        await consumer.perform_critical_error_handling_impl(consumer,
+            f"Improper state {game_user.state} of {game_user.conflict_side} \
+            player in ready_move.")
+        return
+    
     if opponent.state == PlayerState.IN_HUB:
         await game_user.set_state(PlayerState.AWAIT_CLASH_START)
     elif opponent.state == PlayerState.AWAIT_CLASH_START:
@@ -73,6 +88,21 @@ async def ready_move_mechanics(consumer, game_id, game_user):
             f"Improper opponent player state: {opponent.state}")
 
 async def purchase_move_mechanics(consumer, game_user, data):
+
+    # Check if player is in the state after reporting readiness 
+    if game_user.state == PlayerState.AWAIT_CLASH_START:
+        await consumer.perform_error_handling_impl(
+            consumer, "You cannot purchase cards after declaring readiness for clash.",
+            f"{game_user.conflict_side} tried to purchase cards after declaring readiness.")
+        return
+    
+    # Check if player is in the hub stage, if not then flow error occured
+    if game_user.state != PlayerState.IN_HUB:
+        await consumer.perform_critical_error_handling_impl(consumer,
+            f"Improper state {game_user.state} of {game_user.conflict_side} \
+            player in purchase_move.")
+        return
+
     action_cards_ids = data.get("action_cards")
     reaction_cards_data = data.get("reaction_cards")
     reaction_cards_ids = {x.get("reaction_card_id") for x in reaction_cards_data}
