@@ -1,10 +1,11 @@
 from gameMechanics.enums import PlayerState, GameStage
 
 from gameNetworking.implementations.game_consumer_impl.purchasing import *
+from gameNetworking.implementations.game_consumer_impl.checkers import *
 from gameNetworking.enums import MessageType
 from gameNetworking.queries import *
 
-# main game loop function responsible for taking care of user requests to socket
+# Main game loop function responsible for taking care of user requests to socket
 async def main_game_loop_impl(consumer, data):
 
     if consumer.get_game_id() is not None: # has game started or not
@@ -19,8 +20,8 @@ async def main_game_loop_impl(consumer, data):
         else:
             await clash_stage_impl(consumer, game_id, message_type, game_user, data)
     else:
-        await consumer.perform_error_handling(
-            f"{game_user.conflict_side} made move before the game has started")
+        await consumer.error(
+            f"{game_user.conflict_side} player made move before the game has started")
 
 async def clash_stage_impl(consumer, message_type, game_id, game_user, data):
 
@@ -28,12 +29,13 @@ async def clash_stage_impl(consumer, message_type, game_id, game_user, data):
         action_card_id = data.get("action_card")
         await clash_action_move_mechanics(consumer, game_id, game_user, action_card_id)
     elif message_type == MessageType.CLASH_REACTION_MOVE:
-        reaction_cards_ids = data.get("reaction_cards")
-        await clash_reaction_move_mechanics(consumer, game_id, game_user, reaction_cards_ids)
+        reaction_cards_data = data.get("reaction_cards")
+        await clash_reaction_move_mechanics(
+            consumer, game_id, game_user, reaction_cards_data)
     elif message_type == MessageType.SURRENDER_MOVE:
         await surrender_move_mechanics(consumer, game_user)
     else:
-        await consumer.perform_error_handling(
+        await consumer.error(
             f"Wrong message type in the {consumer.get_game_stage()} game stage.")
         
 async def hub_stage_impl(consumer, game_id, message_type, game_user, data):
@@ -45,11 +47,11 @@ async def hub_stage_impl(consumer, game_id, message_type, game_user, data):
     elif message_type == MessageType.SURRENDER_MOVE:
         await surrender_move_mechanics(consumer, game_user)
     else:
-        await consumer.perform_error_handling(
+        await consumer.error(
             f"Wrong message type in the {consumer.get_game_stage()} game stage.")
 
 async def surrender_move_mechanics(consumer, game_user):
-    consumer.logger.info(f"{game_user.conflict_side} has surrendered.")
+    consumer.logger.info(f"{game_user.conflict_side} player has surrendered.")
 
     winner = "student" if game_user.conflict_side == "teacher" else "teacher"
     await consumer.send_message_to_group(
@@ -64,15 +66,15 @@ async def ready_move_mechanics(consumer, game_id, game_user):
 
     # Check if player is in the state after reporting readiness 
     if game_user.state == PlayerState.AWAIT_CLASH_START:
-        await consumer.perform_error_handling_impl(
-            consumer, "You have already declared readyness.",
-            f"{game_user.conflict_side} tried to declare readiness \
+        await consumer.error(consumer,
+            "You have already declared readyness.",
+            f"{game_user.conflict_side} player tried to declare readiness \
             for the clash afresh.")
         return
     
     # Check if player is in the hub stage, if not then flow error occured
     if game_user.state != PlayerState.IN_HUB:
-        await consumer.perform_critical_error_handling_impl(consumer,
+        await consumer.critical_error(consumer,
             f"Improper state {game_user.state} of {game_user.conflict_side} \
             player in ready_move.")
         return
@@ -84,21 +86,22 @@ async def ready_move_mechanics(consumer, game_id, game_user):
             {"next_move_player" : game.next_move_player},
             "clash_start")
     else:
-        await consumer.perform_critical_error_handling(
+        await consumer.critical_error(
             f"Improper opponent player state: {opponent.state}")
 
 async def purchase_move_mechanics(consumer, game_user, data):
 
     # Check if player is in the state after reporting readiness 
     if game_user.state == PlayerState.AWAIT_CLASH_START:
-        await consumer.perform_error_handling_impl(
-            consumer, "You cannot purchase cards after declaring readiness for clash.",
-            f"{game_user.conflict_side} tried to purchase cards after declaring readiness.")
+        await consumer.error(consumer,
+            "You cannot purchase cards after declaring readiness for clash.",
+            f"{game_user.conflict_side} player tried to purchase \
+            cards after declaring readiness.")
         return
     
     # Check if player is in the hub stage, if not then flow error occured
     if game_user.state != PlayerState.IN_HUB:
-        await consumer.perform_critical_error_handling_impl(consumer,
+        await consumer.critical_error(consumer,
             f"Improper state {game_user.state} of {game_user.conflict_side} \
             player in purchase_move.")
         return
@@ -107,9 +110,13 @@ async def purchase_move_mechanics(consumer, game_user, data):
     reaction_cards_data = data.get("reaction_cards")
     reaction_cards_ids = {x.get("reaction_card_id") for x in reaction_cards_data}
 
-    all_cards_exist = await check_all_cards_exist(
-        consumer, action_cards_ids, reaction_cards_ids)
-    if not all_cards_exist: return
+    all_action_cards_exist = await check_all_action_cards_exist(
+        consumer, action_cards_ids)
+    if not all_action_cards_exist: return
+
+    all_reaction_cards_exist = await check_all_reaction_cards_exist(
+        consumer, reaction_cards_ids)
+    if not all_reaction_cards_exist: return
 
     all_cards_are_in_shop = await check_all_cards_are_in_shop(
         consumer, game_user, action_cards_ids, reaction_cards_data)
@@ -124,8 +131,8 @@ async def purchase_move_mechanics(consumer, game_user, data):
 
     for reaction_card_data in reaction_cards_data:
         _ = await purchase_reaction_card(
-            consumer, game_user, reaction_card_data["reaction_card_id"],
-            reaction_card_data["amount"])
+            consumer, game_user, reaction_card_data.get("reaction_card_id"),
+            reaction_card_data.get("amount"))
         
     await consumer.purchase_result({"new_money_amount" : game_user.money})
 
