@@ -11,12 +11,12 @@ from gameNetworking.queries import get_game_user
 
 async def opponent_move_impl(consumer, data):
     if data.get("action_card") is not None:
-        consumer.set_action_card_played_by_opponent(data.get("action_card"))
+        consumer.__action_card_played_by_opponent = data.get("action_card")
         await consumer.send_json({
             'type' : "opponent_move",
             'action_card' : data['action_card'],
         })
-    else :
+    elif data.get("reaction_cards") is not None:
         await consumer.send_json({
             'type' : "opponent_move",
             'reaction_cards' : data["reaction_cards"],
@@ -31,7 +31,7 @@ async def purchase_result_impl(consumer, data):
         "new_money_amount" : data["new_money_amount"]
     })
 
-async def clash_result_impl(consumer, **data):
+async def clash_result_impl(consumer, data):
     await consumer.send_json({
         'type': "clash_result",
         **data
@@ -83,7 +83,7 @@ async def game_creation_impl(consumer, data):
     consumer.set_game_id(data["game_id"])
     consumer.set_opponent_channel_name(data["channel_name"])
 
-async def perform_error_handling_impl(consumer, message, log_message):    
+async def error_impl(consumer, message, log_message):    
     await consumer.send_json({
         'type' : "error",
         'info' : message,
@@ -94,7 +94,7 @@ async def perform_error_handling_impl(consumer, message, log_message):
     else:
         consumer.logger.warning(log_message)
 
-async def perform_complex_error_handling_impl(consumer, data, message, log_message):
+async def complex_error_impl(consumer, data, message, log_message):
     await consumer.send_json({
         'type' : "error",
         'info' : message,
@@ -106,7 +106,7 @@ async def perform_complex_error_handling_impl(consumer, data, message, log_messa
     else:
         consumer.logger.warning(log_message)
 
-async def perform_critical_error_handling_impl(consumer, log_message):
+async def critical_error_impl(consumer, log_message):
     await consumer.send_json({
         'type' : "error",
         'info' : "SERVER ERROR OCCURED",
