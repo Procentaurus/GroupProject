@@ -24,5 +24,5 @@ async def purchase_reaction_card(consumer, game_user, reaction_card_id, amount):
         return True
     else:
         await consumer.critical_error(
-            f"Too expensive action card: {reaction_card_id} passed validation.")
+            f"Too expensive reaction card: {reaction_card_id} passed validation.")
         return False

@@ -159,14 +159,6 @@ async def clash_action_move_mechanics(consumer, game_id, game_user, action_card_
             player in clash action move.")
         return
     
-    # Check if player have any action moves left in the clash
-    if moves_table[0] == 0:
-        await consumer.error(
-            "You have no more action moves in this clash."
-            f"{game_user.conflict_side} player performed action move while he had \
-            none left")
-        return
-    
     action_card_exist = await check_all_action_cards_exist(consumer, [action_card_id])
     if not action_card_exist: return
 
@@ -228,11 +220,13 @@ async def clash_reaction_move_mechanics(
 
     moves_table[1] -= 1 # 1 is index of reaction moves
 
-    #TODO call functiosn that return needed values
+    #TODO call functions that return needed values
     new_player_morale, new_opponent_morale = None, None
     money_player_gained, money_opponent_gained = None, None
     action_cards_player_gained, action_cards_opponent_gained = None, None
     reaction_cards_player_gained, reaction_cards_opponent_gained = None, None
+
+    #TODO Check the winner
 
     for reaction_card_data in reaction_cards_data:
         await game_user.remove_reaction_card(game_user,
@@ -276,7 +270,6 @@ async def clash_reaction_move_mechanics(
             consumer.critical_error(
             f"Improper state {game_user.state} of {game_user.conflict_side} \
             player in clash reaction move.")
-
 
 async def add_gains_to_account(
         user, new_morale, money_gained, action_cards_gained, reaction_cards_gained):
