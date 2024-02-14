@@ -26,14 +26,15 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         self.__last_move_send_time = None
 
         # Specifies how many action moves can be done in 1 clash 
-        self.__action_moves_per_clash = 1
+        self.__moves_per_clash = 1
+        self.__max_moves_per_clash = 3
 
         # Number of turns that specify how often action_moves_per_clash
         # is incremented
-        self.__turns_between_incrementations = 5
+        self.__turns_between_incrementations = (5 - 1)
 
         #Number of turns until the next incrementation
-        self.__turns_to_incrementation = 5
+        self.__turns_to_incrementation = (5 - 1)
 
         # This table represents number of moves that
         # player performs in each clash.
@@ -146,9 +147,6 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     
     def init_table_for_new_clash(self):
         init_table_for_new_clash_impl(self)
-
-    def update_action_moves_per_clash(self):
-        update_action_moves_per_clash_impl(self)
 
     def update_game_stage(self):
         update_game_stage_impl(self)

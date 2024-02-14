@@ -11,7 +11,6 @@ from gameNetworking.queries import get_game_user
 
 async def opponent_move_impl(consumer, data):
     if data.get("action_card") is not None:
-        consumer.__action_card_played_by_opponent = data.get("action_card")
         await consumer.send_json({
             'type' : "opponent_move",
             'action_card' : data['action_card'],
@@ -32,6 +31,9 @@ async def purchase_result_impl(consumer, data):
     })
 
 async def clash_result_impl(consumer, data):
+    student_new_morale = data["student_new_morale"]
+    teacher_new_morale = data["teacher_new_morale"]
+
     await consumer.send_json({
         'type': "clash_result",
         **data

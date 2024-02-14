@@ -14,14 +14,13 @@ def init_table_for_new_clash_impl(consumer):
             return False
         
         consumer.__turns_to_incrementation = consumer.__turns_between_incrementations
-        for i in range(2):
-            consumer.__moves_table[i] = consumer.__action_moves_per_clash
+        if consumer.__action_moves_per_clash < consumer.__max_moves_per_clash:
+            consumer.__action_moves_per_clash += 1
+
+    for i in range(2):
+        consumer.__moves_table[i] = consumer.__action_moves_per_clash
 
     return True
-
-def update_action_moves_per_clash_impl(consumer):
-    if consumer.__action_moves_per_clash < 3:
-        consumer.__action_moves_per_clash += 1
 
 def update_game_stage_impl(consumer):
     if consumer.__game_stage == GameStage.HUB:

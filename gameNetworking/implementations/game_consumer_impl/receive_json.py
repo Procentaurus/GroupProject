@@ -226,7 +226,7 @@ async def clash_reaction_move_mechanics(
         await consumer.critical_error("Updating game turn impossible.")
         return
 
-    moves_table[1] -= 1 # 0 is index of reaction moves
+    moves_table[1] -= 1 # 1 is index of reaction moves
 
     #TODO call functiosn that return needed values
     new_player_morale, new_opponent_morale = None, None
@@ -257,12 +257,16 @@ async def clash_reaction_move_mechanics(
         "reaction_cards_gained" : reaction_cards_opponent_gained
     },"clash_result")
 
-    #TODO add gained stuff to players' accounts
+    opponent = await game.get_opponent_player(game_user.id)
+    await add_gains_to_account(
+        game_user, new_player_morale, money_player_gained,
+        action_cards_player_gained, reaction_cards_player_gained)
+    await add_gains_to_account(
+        opponent, new_opponent_morale, money_opponent_gained,
+        action_cards_opponent_gained, reaction_cards_opponent_gained)
 
     # player has no more moves in the current clash
-    if moves_table[0] == 0 and moves_table[1] == 0:
-        opponent = await game.get_opponent_player(game_user.id)
-        
+    if moves_table[0] == 0 and moves_table[1] == 0:        
         if opponent.state == PlayerState.AWAIT_CLASH_END:
             new_clash_initiated = consumer.init_table_for_new_clash()
             if not new_clash_initiated: return
@@ -272,3 +276,18 @@ async def clash_reaction_move_mechanics(
             consumer.critical_error(
             f"Improper state {game_user.state} of {game_user.conflict_side} \
             player in clash reaction move.")
+
+
+async def add_gains_to_account(
+        user, new_morale, money_gained, action_cards_gained, reaction_cards_gained):
+
+    await user.set_morale(new_morale)
+    await user.add_money(money_gained)
+    
+    for action_card in action_cards_gained:
+        await user.add_action_card(action_card)
+
+    for reaction_card_data in reaction_cards_gained:
+        await user.add_reaction_card(
+            reaction_card_data.get("reaction_card_id"),
+            reaction_card_data.get("amount"))

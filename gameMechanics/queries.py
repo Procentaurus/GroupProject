@@ -53,4 +53,4 @@ def get_reaction_card(reaction_card_id):
         card = ReactionCard.objects.get(reaction_card_id)
         return card
     except ReactionCard.DoesNotExist:
-        return None  
+        return None
