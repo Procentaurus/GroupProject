@@ -11,25 +11,35 @@ from .implementations.game_consumer_impl.internal import *
 
 class GameConsumer(AsyncJsonWebsocketConsumer):
 
-    def __init__(self, *args, **kwargs): # intialization of variables used only by the current user
+    # intialization of variables used only by the current user
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.logger = logging.getLogger(__name__)
 
-        # game creation
         self.__game_id = None
         self.__game_user_id = None
         self.__opponent_channel_name = None
-
-        # game closure
         self.__closure_from_user_side = True
 
-        # game run
         self.__game_stage = GameStage.HUB
+        self.__action_card_played_by_opponent = None
         self.__last_move_send_time = None
-        self.__action_multiplier = 1 # specifies how many action moves can be done in 1 clash 
-        self.__turns_after_action_multiplier_is_incremented = 5
-        self.__moves_table = [1, 1] # this table represents number of moves that player performs in each clash
-                                    # first number represent number of actions and the second number of reactions
+
+        # Specifies how many action moves can be done in 1 clash 
+        self.__action_moves_per_clash = 1
+
+        # Number of turns that specify how often action_moves_per_clash
+        # is incremented
+        self.__turns_between_incrementations = 5
+
+        #Number of turns until the next incrementation
+        self.__turns_to_incrementation = 5
+
+        # This table represents number of moves that
+        # player performs in each clash.
+        # Index 0 represent number of actions
+        # and index 1 number of reactions
+        self.__moves_table = [1, 1]
 
     async def connect(self):
         await connect_impl(self)
@@ -38,7 +48,8 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     async def cleanup(self):
         await cleanup_impl(self)
 
-    # is called after game's end, when the end was triggered by the opponent or from standard cleanup procedure
+    # is called after game's end, when the end was triggered
+    # by the opponent or from standard cleanup procedure
     async def perform_cleanup(self):
         await perform_cleanup_impl(self)
 
@@ -47,7 +58,8 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         await disconnect_impl(self)            
         raise StopConsumer()
 
-    # responsible for managing current user messages, effectively main game loop function
+    # responsible for managing current user messages,
+    # effectively main game loop function
     async def receive_json(self, data):
         await main_game_loop_impl(self, data)
 
@@ -88,19 +100,19 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     # Used for player's mistakes during game flow
     # that do not require complex response
     # Performs: logging and sending info to player
-    async def perform_error_handling(self, message, log_message = None):
-        await perform_error_handling_impl(self, message, log_message)
+    async def error(self, message, log_message = None):
+        await error_impl(self, message, log_message)
 
     # Used for player's mistakes during game flow
     # that do require complex response
     # Performs: logging and sending info to player
-    async def perform_complex_error_handling(self, data,  message, log_message = None):
-        await perform_complex_error_handling_impl(self, data, message, log_message)
+    async def complex_error(self, data,  message, log_message = None):
+        await complex_error_impl(self, data, message, log_message)
 
     # Used for game flow errors
     # Performs: logging, sending info to player and closing connection
-    async def perform_critical_error_handling(self, log_message):
-        await perform_critical_error_handling_impl(self, log_message)
+    async def critical_error(self, log_message):
+        await critical_error_impl(self, log_message)
 
     def get_game_id(self):
         return self.__game_id
@@ -135,8 +147,8 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     def init_table_for_new_clash(self):
         init_table_for_new_clash_impl(self)
 
-    def update_action_multiplier(self):
-        update_action_multiplier_impl(self)
+    def update_action_moves_per_clash(self):
+        update_action_moves_per_clash_impl(self)
 
     def update_game_stage(self):
         update_game_stage_impl(self)

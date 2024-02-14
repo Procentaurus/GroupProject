@@ -11,11 +11,12 @@ from gameNetworking.queries import get_game_user
 
 async def opponent_move_impl(consumer, data):
     if data.get("action_card") is not None:
+        consumer.set_action_card_played_by_opponent(data.get("action_card"))
         await consumer.send_json({
             'type' : "opponent_move",
             'action_card' : data['action_card'],
         })
-    elif data.get("reaction_cards") is not None:
+    else :
         await consumer.send_json({
             'type' : "opponent_move",
             'reaction_cards' : data["reaction_cards"],
@@ -30,14 +31,10 @@ async def purchase_result_impl(consumer, data):
         "new_money_amount" : data["new_money_amount"]
     })
 
-async def clash_result_impl(consumer, data):
-    student_new_morale = data["student_new_morale"]
-    teacher_new_morale = data["teacher_new_morale"]
-
+async def clash_result_impl(consumer, **data):
     await consumer.send_json({
         'type': "clash_result",
-        'student_new_morale' : student_new_morale,
-        'teacher_new_morale' : teacher_new_morale,
+        **data
     })
 
 async def card_package_impl(consumer, data):
@@ -116,3 +113,4 @@ async def perform_critical_error_handling_impl(consumer, log_message):
     })
 
     consumer.logger.error(log_message)
+    consumer.close()
