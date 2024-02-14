@@ -136,113 +136,139 @@ async def purchase_move_mechanics(consumer, game_user, data):
         
     await consumer.purchase_result({"new_money_amount" : game_user.money})
 
-async def clash_action_move_mechanics(consumer, game_id, game_user, game_stage, action_card_id):
+async def clash_action_move_mechanics(consumer, game_id, game_user, action_card_id):
 
     game = await get_game(game_id)
+    moves_table = consumer.get_moves_table()
+    if game.next_move_player != game_user.conflict_side:
+        await consumer.error("Not your turn.",
+            f"{game_user.conflict_side} player performed move \
+            while it was not his turn.")
+        return
+
     if game.next_move_type != "action":
-        await consumer.error("Wrong message type. It is time for reaction.")
+        await consumer.error(
+            "Wrong move. It is time for reaction."
+            f"{game_user.conflict_side} player performed move of wrong type.")
         return
+    
+    # Check if player is in the clash stage, if not then flow error occured
+    if game_user.state != PlayerState.IN_CLASH:
+        await consumer.critical_error(consumer,
+            f"Improper state {game_user.state} of {game_user.conflict_side} \
+            player in clash action move.")
+        return
+    
+    # Check if player have any action moves left in the clash
+    if moves_table[0] == 0:
+        await consumer.error(
+            "You have no more action moves in this clash."
+            f"{game_user.conflict_side} player performed action move while he had \
+            none left")
+        return
+    
+    action_card_exist = await check_all_action_cards_exist(consumer, [action_card_id])
+    if not action_card_exist: return
 
-    if game.next_move_player != game_user.conflict_side:
-        await consumer.error("Not your turn.")
-        return
-    
-    moves_table = consumer.get_moves_table()
-    
-    if (game_stage == GameStage.FIRST_CLASH and moves_table[0][GameStage.FIRST_CLASH][0] > 0) \
-        or (game_stage == GameStage.SECOND_CLASH and moves_table[0][GameStage.SECOND_CLASH][0] > 0): # if the clash stage is in action
-                                                                                                     # and player has moves left in the stage
-        is_card_valid = await is_action_card_valid(consumer, game_user, action_card_id)
-        
-        if is_card_valid:
-            # succesful_removal = await remove_action_card_connection(game_user, action_card_id)
-            # if not succesful_removal:
-            #     consumer.logger.error("Couldnt delete action cards from user")
-            #     consumer.error("Server error occured")
-            #     consumer.close()
-            
-            moves_table[0][game_stage][0] -= 1
-            flag = await update_game_turn(consumer.get_game_id())
-            
-            if not flag:
-                consumer.logger.error("Couldnt update game turn")
-                await consumer.send_message_to_group("Server error occured", "error")
-                consumer.close()
-            else:
-                await consumer.send_message_to_opponent({"action_card" : action_card_id}, "opponent_move")
-                if moves_table[0][game_stage][0] == 0 and moves_table[0][game_stage][1] == 0: # player has no more moves in the current clash
-                    await game_user.set_state(PlayerState.AWAIT_CLASH_END)
-        else:
-            consumer.logger.debug("You used illegal card.")
-            await consumer.error("You used illegal card.")
+    action_card_is_owned = await check_game_user_own_action_card(
+        consumer, game_user, action_card_id)
+    if not action_card_is_owned: return
+
+    moves_table[0] -= 1 # 0 is index of action moves
+
+    updated_game_turn = await update_game_turn(game_id)
+    if not updated_game_turn:
+        await consumer.critical_error("Updating game turn impossible.")
     else:
-        consumer.logger.debug("Too much moves in the stage.")
-        await consumer.error("You have no more moves in that stage.")
+        await game_user.remove_action_card(action_card_id)
+        await consumer.send_message_to_opponent(
+            {"action_card" : action_card_id},
+            "opponent_move")
+        if moves_table[0] == 0: # player has no more action moves in the current clash
+            await game_user.set_state(PlayerState.AWAIT_CLASH_END)
 
-async def clash_reaction_move_mechanics(consumer, game_id, game_user, game_stage, reaction_cards_ids):
+async def clash_reaction_move_mechanics(
+        consumer, game_id, game_user, reaction_cards_data):
 
     game = await get_game(game_id)
-    if game.next_move_type != "reaction":
-        await consumer.error("Wrong message type. It is time for action.")
+    moves_table = consumer.get_moves_table()
+    if game.next_move_player != game_user.conflict_side:
+        await consumer.error("Not your turn.",
+            f"{game_user.conflict_side} player performed move \
+            while it was not his turn.")
         return
 
-    if game.next_move_player != game_user.conflict_side:
-        await consumer.error("Not your turn.")
+    if game.next_move_type != "action":
+        await consumer.error(
+            "Wrong move. It is time for action."
+            f"{game_user.conflict_side} player performed move of wrong type.")
         return
     
-    moves_table = consumer.get_moves_table()
+    # Check if player is in the clash stage, if not then flow error occured
+    if game_user.state != PlayerState.IN_CLASH \
+        and game_user.state != PlayerState.AWAIT_CLASH_END:
+        await consumer.critical_error(consumer,
+            f"Improper state {game_user.state} of {game_user.conflict_side} \
+            player in clash action move.")
+        return
+    
+    reaction_cards_ids = {x.get("reaction_card_id") for x in reaction_cards_data}
+    reaction_card_exist = await check_all_reaction_cards_exist(
+        consumer, reaction_cards_ids)
+    if not reaction_card_exist: return
 
-    if (game_stage == GameStage.FIRST_CLASH and moves_table[0][GameStage.FIRST_CLASH][1] > 0) \
-        or (game_stage == GameStage.SECOND_CLASH and moves_table[0][GameStage.SECOND_CLASH][1] > 0): # if the clash stage is in action
-                                                                                                              # and player has moves left in the stage
-        await are_reaction_cards_valid(consumer, game_user, reaction_cards_ids)
+    reaction_cards_are_owned = await check_game_user_own_reaction_cards(
+        consumer, game_user, reaction_cards_data)
+    if not reaction_cards_are_owned: return
 
-        # TODO calculate changes in morale
+    updated_game_turn = await update_game_turn(game_id)
+    if not updated_game_turn:
+        await consumer.critical_error("Updating game turn impossible.")
+        return
 
-        # for reaction_card_id in reaction_cards_ids:
-        #     result = game_user.remove_action_card(reaction_card_id)
-        #     if result == False:
-        #         consumer.logger.error(f"Couldnt delete reaction card of id {reaction_card_id} from user.")
-        #         consumer.error("Server error occured")
-        #         consumer.close()
+    moves_table[1] -= 1 # 0 is index of reaction moves
 
-        student_new_morale, teacher_new_morale = None, None
+    #TODO call functiosn that return needed values
+    new_player_morale, new_opponent_morale = None, None
+    money_player_gained, money_opponent_gained = None, None
+    action_cards_player_gained, action_cards_opponent_gained = None, None
+    reaction_cards_player_gained, reaction_cards_opponent_gained = None, None
 
-        moves_table[0][game_stage][1] -= 1
-        flag = await update_game_turn(game.id)
-        if not flag:
-            consumer.logger.error("Couldnt update game turn.")
-            await consumer.send_message_to_group("Server error occured.","error")
-            consumer.close()
+    for reaction_card_data in reaction_cards_data:
+        await game_user.remove_reaction_card(game_user,
+            reaction_card_data.get("reaction_card_id"),
+            reaction_card_data.get("amount"))
 
-        await send_clash_result_info(consumer, reaction_cards_ids, student_new_morale, teacher_new_morale)
+    await consumer.send_message_to_opponent(
+        {"reaction_cards" : reaction_cards_data},
+        "opponent_move")
+    await consumer.clash_result({
+        "new_player_morale" : new_player_morale,
+        "new_opponent_morale" : new_opponent_morale,
+        "money_gained" : money_player_gained,
+        "action_cards_gained" : action_cards_player_gained,
+        "reaction_cards_gained" : reaction_cards_player_gained
+    })
+    await consumer.send_message_to_opponent({
+        "new_player_morale" : new_opponent_morale,
+        "new_opponent_morale" : new_player_morale,
+        "money_gained" : money_opponent_gained,
+        "action_cards_gained" : action_cards_opponent_gained,
+        "reaction_cards_gained" : reaction_cards_opponent_gained
+    },"clash_result")
 
+    #TODO add gained stuff to players' accounts
+
+    # player has no more moves in the current clash
+    if moves_table[0] == 0 and moves_table[1] == 0:
         opponent = await game.get_opponent_player(game_user.id)
         
         if opponent.state == PlayerState.AWAIT_CLASH_END:
+            new_clash_initiated = consumer.init_table_for_new_clash()
+            if not new_clash_initiated: return
+
             await consumer.send_message_to_group(None, "clash_end")
-        elif opponent.state != PlayerState.IN_CLASH:
-            consumer.logger.error("Improper player state.")
-            await consumer.error("Server error occured.")
-            consumer.close()
-
-    else:
-        await consumer.error("You have no more moves in that stage.")
-        consumer.logger.debug("No more moves in the stage.")
-
-async def send_clash_result_info(consumer, reaction_cards_ids, student_new_morale, teacher_new_morale):
-
-    await consumer.send_message_to_opponent({"reaction_cards": reaction_cards_ids}, "opponent_move") # sends info to opponent about used reaction cards
-    await consumer.send_message_to_group({ # sends results of clash to both players
-        "student_new_morale": student_new_morale,
-        "teacher_new_morale": teacher_new_morale,
-    }, "clash_result") 
-
-    #     game = await get_game(game_id)
-    # opponent = await game.get_opponent_player(game_user.id)
-
-    # if opponent.state == PlayerState.IN_HUB:
-    #     await game_user.set_state(PlayerState.AWAIT_CLASH_START)
-    # elif opponent.state == PlayerState.AWAIT_CLASH_START:
-    #     await consumer.send_message_to_group({"next_move_player" : game.next_move_player}, "clash_start")
-    # else:
+        else:
+            consumer.critical_error(
+            f"Improper state {game_user.state} of {game_user.conflict_side} \
+            player in clash reaction move.")
