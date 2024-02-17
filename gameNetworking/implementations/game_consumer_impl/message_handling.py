@@ -4,6 +4,7 @@ from gameMechanics.enums import PlayerState
 
 from gameNetworking.queries import get_game_user
 
+
 #
 # Functions that manage messages from opponents and group,
 # each function handles one message type that is the function's name
@@ -65,9 +66,7 @@ async def clash_end_impl(consumer):
         'type' : "clash_end",
     })
 
-async def game_end_impl(consumer, data):
-    consumer.set_game_id(None)
-    
+async def game_end_impl(consumer, data):  
     try:
         await consumer.send_json({
             'type' : "game_end",

@@ -1,6 +1,7 @@
 from django.contrib import admin
 from .models import *
 
+
 #
 # Each class adds one entity class and its elements to django admin, with specified values for display and search
 #

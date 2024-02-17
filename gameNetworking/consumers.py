@@ -5,9 +5,9 @@ import logging
 from .implementations.game_consumer_impl.connect import connect_impl
 from .implementations.game_consumer_impl.message_handling import *
 from .implementations.game_consumer_impl.message_sending import *
-from .implementations.game_consumer_impl.receive_json import main_game_loop_impl
-from .implementations.game_consumer_impl.clean import *
-from .implementations.game_consumer_impl.internal import *
+from .implementations.game_consumer_impl.main_game_loop import main_game_loop_impl
+from .implementations.game_consumer_impl.clean import disconnect_impl
+from .implementations.game_consumer_impl.sync_methods import *
 
 class GameConsumer(AsyncJsonWebsocketConsumer):
 
@@ -45,17 +45,8 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
         await connect_impl(self)
 
-    # standard cleanup procedure that should be triggered after self.close()
-    async def cleanup(self):
-        await cleanup_impl(self)
-
-    # is called after game's end, when the end was triggered
-    # by the opponent or from standard cleanup procedure
-    async def perform_cleanup(self):
-        await perform_cleanup_impl(self)
-
-    # is called when the user disconnests from socket
-    async def disconnect(self, *args):
+    # is called when socket connection is close
+    async def disconnect(self):
         await disconnect_impl(self)            
         raise StopConsumer()
 

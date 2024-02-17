@@ -108,9 +108,8 @@ def get_opponent_player(game_id, conflict_side):
         return game.teacher_player
     
 @database_sync_to_async
-def update_game_turn(game_id):
+def update_game_turn(game):
     try:
-        game = Game.objects.get(id=game_id)
         current_move_player = game.next_move_player
         current_move_type = game.next_move_type
 

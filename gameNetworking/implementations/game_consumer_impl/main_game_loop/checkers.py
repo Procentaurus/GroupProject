@@ -1,5 +1,7 @@
 from gameMechanics.queries import *
 
+from gameMechanics.enums import PlayerState
+
 
 async def check_all_action_cards_exist(consumer, action_cards_ids):
     not_existing_action_cards = []
@@ -139,5 +141,82 @@ async def check_game_user_own_reaction_cards(consumer, game_user, reaction_cards
             "You don't own the used reaction card",
             f"Player chose cards outside his shop: {', '.join(reaction_cards_not_owned)}",
             response_body)
+        return False
+    return True
+
+async def check_action_move_can_be_performed(consumer, game, game_user):
+    
+    is_player_turn = check_is_player_turn(consumer, game, game_user)
+    if not is_player_turn: return False
+
+    if game.next_move_type != "action":
+        await consumer.error(
+            "Wrong move. It is time for reaction."
+            f"{game_user.conflict_side} player performed move of wrong type.")
+        return False
+    
+    # Check if player is in the clash stage, if not then flow error occured
+    if game_user.state != PlayerState.IN_CLASH:
+        await consumer.critical_error(consumer,
+            f"Improper state {game_user.state} of {game_user.conflict_side} \
+            player in clash action move.")
+        return False
+    
+    return True
+
+async def check_reaction_move_can_be_performed(
+    consumer, game, game_user, reaction_cards_data):
+
+    is_player_turn = check_is_player_turn(consumer, game, game_user)
+    if not is_player_turn: return False
+
+    if game.next_move_type != "action":
+        await consumer.error(
+            "Wrong move. It is time for action."
+            f"{game_user.conflict_side} player performed move of wrong type.")
+        return False
+    
+    # Check if player is in the clash stage, if not then flow error occured
+    if game_user.state != PlayerState.IN_CLASH \
+        and game_user.state != PlayerState.AWAIT_CLASH_END:
+        await consumer.critical_error(consumer,
+            f"Improper state {game_user.state} of {game_user.conflict_side} \
+            player in clash action move.")
+        return False
+    
+    reaction_cards_ids = {x.get("reaction_card_id") for x in reaction_cards_data}
+    reaction_card_exist = await check_all_reaction_cards_exist(
+        consumer, reaction_cards_ids)
+    if not reaction_card_exist: return False
+
+    reaction_cards_are_owned = await check_game_user_own_reaction_cards(
+        consumer, game_user, reaction_cards_data)
+    if not reaction_cards_are_owned: return False
+
+    return True
+
+async def check_there_is_winner(
+        consumer, game_user, opponent, new_player_morale, new_opponent_morale):
+    
+    if new_opponent_morale == 0:
+        await announce_winner(consumer, game_user)
+        return True
+    elif new_player_morale == 0:
+        await announce_winner(consumer, opponent)
+        return True
+    else: 
+        return False
+    
+async def announce_winner(consumer, user):
+    consumer.set_closure_from_user_side(False)
+    await consumer.send_message_to_group(
+        {"winner" : user.get_conflict_side()},
+        "game_end")
+    
+async def check_is_player_turn(consumer, game, game_user):
+    if game.next_move_player != game_user.conflict_side:
+        await consumer.error("Not your turn.",
+            f"{game_user.conflict_side} player performed move \
+            while it was not his turn.")
         return False
     return True
