@@ -16,8 +16,9 @@ async def connect_impl(consumer): # main implementation function
         await consumer.close()
         return
     
-    game_user = await create_game_user(access_token, conflict_side, consumer.channel_name)
-    is_current_game_user_teacher = True if game_user.conflict_side == "teacher" else False
+    game_user = await create_game_user(
+        access_token, conflict_side, consumer.channel_name)
+    is_game_user_teacher = True if game_user.conflict_side == "teacher" else False
     consumer.set_game_user_id(game_user.id)
     # await delete_game_token(game_user)
 
@@ -28,16 +29,15 @@ async def connect_impl(consumer): # main implementation function
 
     # initialization of the game if there are mininimum 2 players waiting
     if number_of_teachers_waiting > 0 and number_of_students_waiting > 0:
-        await initialize_game(consumer, game_user, is_current_game_user_teacher)
+        await initialize_game(consumer, game_user, is_game_user_teacher)
         # await initialize_game_archive()
-        await send_first_card_sets_to_shop(consumer, is_current_game_user_teacher)
+        await send_first_card_sets_to_shop(consumer, is_game_user_teacher)
 
 # Main initialization of the game
-async def initialize_game(consumer, game_user, is_current_game_user_teacher):
-    
+async def initialize_game(consumer, game_user, is_game_user_teacher):
     player_1 = game_user
     player_2 = None
-    if is_current_game_user_teacher:
+    if is_game_user_teacher:
         player_2 = await get_longest_waiting_game_user("student")
     else:
         player_2 = await get_longest_waiting_game_user("teacher")
@@ -45,23 +45,22 @@ async def initialize_game(consumer, game_user, is_current_game_user_teacher):
     player_1.get_user().in_game = True
     player_2.get_user().in_game = True
 
-    # creating game object
+    # Creating game object in DB
     game = await create_game(player_1, player_2)
     consumer.set_game_id(game.id)
-    consumer.logger.debug("The game has started.")
+    consumer.logger.info("The game has started.")
 
     # adding both players' channels to one group
-    game_id = consumer.get_game_id()
-
     # group name is game_{UUID of game entity object}
-    await consumer.channel_layer.group_add(f"game_{game_id}", player_2.channel_name)
-    await consumer.channel_layer.group_add(f"game_{game_id}", player_1.channel_name)
+    await consumer.channel_layer.group_add(f"game_{game.id}", player_2.channel_name)
+    await consumer.channel_layer.group_add(f"game_{game.id}", player_1.channel_name)
 
+    # Saves info about opponent's channels name
     consumer.set_opponent_channel_name(player_2.channel_name)
 
     # Triggering initialization on opponent site
     await consumer.send_message_to_opponent(
-        {"game_id": str(game_id), "channel_name": consumer.channel_name},
+        {"game_id": str(game.id), "channel_name": consumer.channel_name},
         "game_creation")
 
     # Sending initial message about game start

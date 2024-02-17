@@ -126,8 +126,8 @@ class Game(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
 
-    teacher_player = models.OneToOneField(GameUser, related_name="teacher_player", on_delete=models.SET_NULL, null=True)
-    student_player = models.OneToOneField(GameUser, related_name="student_player", on_delete=models.SET_NULL, null=True)
+    teacher_player = models.OneToOneField(GameUser, related_name="teacher_player", on_delete=models.CASCADE, null=True)
+    student_player = models.OneToOneField(GameUser, related_name="student_player", on_delete=models.CASCADE, null=True)
 
     next_move_player = models.CharField(choices=CONFLICT_SIDES, max_length=15, null=False)
     next_move_type = models.CharField(choices=MOVE_TYPES, max_length=15, null=False, default="action")

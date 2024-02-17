@@ -83,8 +83,8 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     async def card_package(self, data):
         await card_package_impl(self, data)
 
-    async def game_start(self, data = None):
-        await game_start_impl(self)
+    async def game_start(self, data):
+        await game_start_impl(self, data)
 
     async def clash_start(self, data):
         await clash_start_impl(self, data)
@@ -138,6 +138,9 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     def get_last_move_send_time(self):
         return self.__last_move_send_time
+    
+    def set_closure_from_user_side(self, closure_from_user_side):
+        self.__closure_from_user_side = closure_from_user_side
     
     def set_game_id(self, game_id):
         self.__game_id = game_id

@@ -40,9 +40,10 @@ async def card_package_impl(consumer, data):
         **data
     })
 
-async def game_start_impl(consumer):
+async def game_start_impl(consumer, data):
     await consumer.send_json({
         'type' : "game_start",
+        **data
     })
 
 async def clash_start_impl(consumer, data):
@@ -65,10 +66,12 @@ async def clash_end_impl(consumer):
     })
 
 async def game_end_impl(consumer, data):
+    consumer.set_game_id(None)
+    
     try:
         await consumer.send_json({
             'type' : "game_end",
-            'winner' : data.get("winner"),
+            **data
         })
     except Disconnected:
         consumer.logger.warning("Tried to sent through closed socket.")

@@ -7,64 +7,70 @@ from gameNetworking.queries import *
 
 # Main game loop function responsible for taking care of user requests to socket
 async def main_game_loop_impl(consumer, data):
+    game_id = consumer.get_game_id()
 
-    if consumer.get_game_id() is not None: # has game started or not
+    # enters when game object exists and the game has started
+    if game_id is not None:
 
         message_type = data.get('type')
-        game_id = consumer.get_game_id()
+        game = get_game(game_id)
         game_user = await get_game_user(consumer.get_game_user_id())
         game_stage = consumer.get_game_stage()
 
         if game_stage == GameStage.HUB:
-            await hub_stage_impl(consumer, game_id, message_type, game_user, data) 
+            await hub_stage_impl(
+                consumer, game, game_stage, message_type, game_user, data) 
         else:
-            await clash_stage_impl(consumer, game_id, message_type, game_user, data)
+            await clash_stage_impl(
+                consumer, game, game_stage, message_type, game_user, data)
     else:
         await consumer.error(
             f"{game_user.conflict_side} player made move before the game has started")
 
-async def clash_stage_impl(consumer, message_type, game_id, game_user, data):
+async def clash_stage_impl(consumer, game, game_stage, message_type, game_user, data):
 
     if message_type == MessageType.CLASH_ACTION_MOVE:
         action_card_id = data.get("action_card")
-        await clash_action_move_mechanics(consumer, game_id, game_user, action_card_id)
+        await clash_action_move_mechanics(consumer, game, game_user, action_card_id)
     elif message_type == MessageType.CLASH_REACTION_MOVE:
         reaction_cards_data = data.get("reaction_cards")
         await clash_reaction_move_mechanics(
-            consumer, game_id, game_user, reaction_cards_data)
+            consumer, game, game_user, reaction_cards_data)
     elif message_type == MessageType.SURRENDER_MOVE:
         await surrender_move_mechanics(consumer, game_user)
     else:
         await consumer.error(
-            f"Wrong message type in the {consumer.get_game_stage()} game stage.")
+            f"Wrong message type in the {game_stage} game stage.")
         
-async def hub_stage_impl(consumer, game_id, message_type, game_user, data):
+async def hub_stage_impl(consumer, game, game_stage, message_type, game_user, data):
 
     if message_type == MessageType.PURCHASE_MOVE:
-        await purchase_move_mechanics(consumer, game_user, data)
+        action_cards_ids = data.get("action_cards")
+        reaction_cards_data = data.get("reaction_cards")
+        await purchase_move_mechanics(
+            consumer, game_user, action_cards_ids, reaction_cards_data)
     elif message_type == MessageType.READY_MOVE:
-        await ready_move_mechanics(consumer, game_id, game_user, data)
+        await ready_move_mechanics(consumer, game, game_user)
     elif message_type == MessageType.SURRENDER_MOVE:
         await surrender_move_mechanics(consumer, game_user)
     else:
         await consumer.error(
-            f"Wrong message type in the {consumer.get_game_stage()} game stage.")
+            f"Wrong message type in the {game_stage} game stage.")
 
 async def surrender_move_mechanics(consumer, game_user):
     consumer.logger.info(f"{game_user.conflict_side} player has surrendered.")
 
     winner = "student" if game_user.conflict_side == "teacher" else "teacher"
     await consumer.send_message_to_group(
-        {"winner": winner, 
-        "after_surrender": True},
+        {"winner" : winner, "after_surrender" : True},
         "game_end")
-    await consumer.cleanup()
+    consumer.set_closure_from_user_side(False)
+    await consumer.close()
 
-async def ready_move_mechanics(consumer, game_id, game_user):
-    game = await get_game(game_id)
+async def ready_move_mechanics(consumer, game, game_user):
     opponent = await game.get_opponent_player(game_user.id)
 
-    # Check if player is in the state after reporting readiness 
+    # Check if player is in the state after reporting readyness 
     if game_user.state == PlayerState.AWAIT_CLASH_START:
         await consumer.error(consumer,
             "You have already declared readyness.",
@@ -89,7 +95,8 @@ async def ready_move_mechanics(consumer, game_id, game_user):
         await consumer.critical_error(
             f"Improper opponent player state: {opponent.state}")
 
-async def purchase_move_mechanics(consumer, game_user, data):
+async def purchase_move_mechanics(
+        consumer, game_user, action_cards_ids, reaction_cards_data):
 
     # Check if player is in the state after reporting readiness 
     if game_user.state == PlayerState.AWAIT_CLASH_START:
@@ -106,8 +113,6 @@ async def purchase_move_mechanics(consumer, game_user, data):
             player in purchase_move.")
         return
 
-    action_cards_ids = data.get("action_cards")
-    reaction_cards_data = data.get("reaction_cards")
     reaction_cards_ids = {x.get("reaction_card_id") for x in reaction_cards_data}
 
     all_action_cards_exist = await check_all_action_cards_exist(
@@ -227,7 +232,6 @@ async def clash_reaction_move_mechanics(
     reaction_cards_player_gained, reaction_cards_opponent_gained = None, None
 
     #TODO Check the winner
-
     for reaction_card_data in reaction_cards_data:
         await game_user.remove_reaction_card(game_user,
             reaction_card_data.get("reaction_card_id"),
@@ -258,6 +262,21 @@ async def clash_reaction_move_mechanics(
     await add_gains_to_account(
         opponent, new_opponent_morale, money_opponent_gained,
         action_cards_opponent_gained, reaction_cards_opponent_gained)
+    
+    if new_opponent_morale == 0:
+        await consumer.send_message_to_group(
+            {"winner" : game_user.get_conflict_side()},
+            "game_end")
+        consumer.set_closure_from_user_side(False)
+        await consumer.close()
+        return
+    elif new_player_morale == 0:
+        await consumer.send_message_to_group(
+            {"winner" : opponent.get_conflict_side()},
+            "game_end")
+        consumer.set_closure_from_user_side(False)
+        await consumer.close()
+        return
 
     # player has no more moves in the current clash
     if moves_table[0] == 0 and moves_table[1] == 0:        
