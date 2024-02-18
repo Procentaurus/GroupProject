@@ -1,7 +1,7 @@
 from django.db import models
 
 class Card(models.Model):
-    price = models.PositiveIntegerField(null=False, blank=False)
+    price = models.PositiveIntegerField(default=0)
     pass
 
 class ActionCard(Card):

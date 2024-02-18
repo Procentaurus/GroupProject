@@ -8,19 +8,21 @@ from .models import *
 
 @admin.register(Game)
 class GameAdmin(admin.ModelAdmin):
-    list_display = ('id', 'teacher_player', 'student_player', 'start_datetime', 'end_datetime')
-    readonly_fields = ('id', 'start_datetime', 'end_datetime')
-    ordering = ("-start_datetime",)
+    list_display = ('id', 'teacher_player', 'student_player')
+    readonly_fields = ('id',)
     add_fieldsets = (
-        ("Main section", {"fields": ("teacher_player",'student_player', "next_move")}),
+        ("Main section", {"fields": (
+            "teacher_player",'student_player',
+            "next_move_player", "next_move_type")
+        }),
     )
 
 @admin.register(GameUser)
 class GameUserAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'conflict_side', 'in_game')
+    list_display = ('id', 'user', 'conflict_side')
     readonly_fields = ('id',)
     add_fieldsets = (
-        ("Main section", {"fields": ("user",'conflict_side', 'in_game')}),
+        ("Main section", {"fields": ("user",'conflict_side')}),
     )
 
 @admin.register(GameAuthenticationToken)

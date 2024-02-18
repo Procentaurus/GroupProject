@@ -1,6 +1,7 @@
+from django.apps import apps
 from channels.db import database_sync_to_async
+
 from gameMechanics.models import *
-from gameNetworking.models import OwnedReactionCard, ReactionCardInShop
 
 
 @database_sync_to_async
@@ -62,59 +63,40 @@ def add_action_card_to_shop_impl(game_user, action_card_id):
 # Before usage check if reaction card of passed id exists
 @database_sync_to_async
 def check_if_own_reaction_card_impl(game_user, reaction_card_id, amount):  
-    try:
-        owned_card = OwnedReactionCard.objects.get(
-            game_user=game_user,
-            reaction_card=ReactionCard.objects.get(id=reaction_card_id),
-        )
+    owned_card = game_user.owned_reaction_cards.filter(
+        reaction_card__id=reaction_card_id).first()
+    if owned_card is not None:
         return True if owned_card.amount >= amount else False
+    else: return False
     
-    except OwnedReactionCard.DoesNotExist:
-        return False
-
 # Before usage check if reaction card of passed id exists
 @database_sync_to_async
 def check_if_have_reaction_card_in_shop_impl(game_user, reaction_card_id, amount):   
-    try:
-        card_in_shop = ReactionCardInShop.objects.get(
-            game_user=game_user,
-            reaction_card=ReactionCard.objects.get(id=reaction_card_id),
-        )
-        return True if card_in_shop.amount >= amount else False
+    card_in_shop = game_user.reaction_cards_in_shop.filter(
+        reaction_card__id=reaction_card_id).first()
     
-    except OwnedReactionCard.DoesNotExist:
+    if card_in_shop is not None:
+            return True if card_in_shop.amount >= amount else False
+    else:
         return False
-
+    
 # Before usage check if reaction card of passed id exists
 @database_sync_to_async
 def remove_reaction_card_impl(game_user, reaction_card_id, amount):
+    owned_card = game_user.owned_reaction_cards.filter(
+        reaction_card__id=reaction_card_id).first()
 
-    owned_card = None
-    reaction_card = ReactionCard.objects.get(id=reaction_card_id)
-    try:
-        owned_card = OwnedReactionCard.objects.get(
-            game_user=game_user,
-            reaction_card=reaction_card,
-        )
-    except OwnedReactionCard.DoesNotExist:
+    if owned_card is not None:
+        result = decrease_card_amount(owned_card, amount)
+        return result
+    else:
         return False
-
-    result = decrease_card_amount(owned_card, amount)
-    return result
-    
+        
 # Before usage check if reaction card of passed id exists
 @database_sync_to_async
 def remove_reaction_card_from_shop_impl(game_user, reaction_card_id, amount):
-
-    card_in_shop = None
-    reaction_card = ReactionCard.objects.get(id=reaction_card_id)
-    try:
-        card_in_shop = ReactionCardInShop.objects.get(
-            game_user=game_user,
-            reaction_card=reaction_card,
-        )
-    except OwnedReactionCard.DoesNotExist:
-        return False
+    card_in_shop = game_user.reaction_cards_in_shop.filter(
+        reaction_card__id=reaction_card_id).first()
 
     result = decrease_card_amount(card_in_shop, amount)
     return result
@@ -123,9 +105,10 @@ def remove_reaction_card_from_shop_impl(game_user, reaction_card_id, amount):
 @database_sync_to_async
 def add_reaction_card_impl(game_user, reaction_card_id, amount):
     reaction_card = ReactionCard.objects.get(id=reaction_card_id)
+    owned_reaction_card_model = apps.get_model('your_app_name', 'OwnedReactionCard')
 
     # Retrieve the OwnedReactionCard instance or create a new one if it doesn't exist
-    owned_card, had_card_earlier = OwnedReactionCard.objects.get_or_create(
+    owned_card, had_card_earlier = owned_reaction_card_model.objects.get_or_create(
         game_user=game_user,
         reaction_card=reaction_card,
     )
@@ -135,12 +118,13 @@ def add_reaction_card_impl(game_user, reaction_card_id, amount):
 # Before usage check if reaction card of passed id exists 
 @database_sync_to_async
 def add_reaction_card_to_shop_impl(game_user, reaction_card_id, amount):
-    reaction_card = ReactionCard.objects.get(id=reaction_card_id)
-
+    reaction_card_in_shop_model = apps.get_model(
+        'your_app_name', 'ReactionCardInShop')
+    
     # Retrieve the OwnedReactionCard instance or create a new one if it doesn't exist
-    card_in_shop, had_card_earlier = ReactionCardInShop.objects.get_or_create(
+    card_in_shop, had_card_earlier = reaction_card_in_shop_model.objects.get_or_create(
         game_user=game_user,
-        reaction_card=reaction_card,
+        reaction_card__id=reaction_card_id,
     )
 
     increase_card_amount(had_card_earlier, card_in_shop, amount)
