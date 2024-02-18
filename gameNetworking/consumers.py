@@ -2,12 +2,13 @@ from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels.exceptions import StopConsumer
 import logging
 
+from .implementations.game_consumer_impl.clean import disconnect_impl
+from .implementations.game_consumer_impl.sync_methods import *
 from .implementations.game_consumer_impl.connect import connect_impl
 from .implementations.game_consumer_impl.message_handling import *
 from .implementations.game_consumer_impl.message_sending import *
-from .implementations.game_consumer_impl.main_game_loop import main_game_loop_impl
-from .implementations.game_consumer_impl.clean import disconnect_impl
-from .implementations.game_consumer_impl.sync_methods import *
+from .implementations.game_consumer_impl.main_game_loop.main_game_loop_impl \
+    import main_game_loop_impl
 
 class GameConsumer(AsyncJsonWebsocketConsumer):
 
@@ -17,6 +18,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         self.logger = logging.getLogger(__name__)
 
         self.__game_id = None
+        self.__winner = None
         self.__game_user_id = None
         self.__opponent_channel_name = None
         self.__closure_from_user_side = True
@@ -46,7 +48,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         await connect_impl(self)
 
     # is called when socket connection is close
-    async def disconnect(self):
+    async def disconnect(self, *args):
         await disconnect_impl(self)            
         raise StopConsumer()
 
@@ -111,6 +113,9 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     def get_game_user_id(self):
         return self.__game_user_id
+
+    def get_winner(self):
+        return self.__winner
     
     def get_action_card_played_by_opponent(self):
         return self.__action_card_played_by_opponent
@@ -135,6 +140,9 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     
     def set_game_id(self, game_id):
         self.__game_id = game_id
+
+    def set_winner(self, winner):
+        self.__winner = winner
 
     def set_action_card_played_by_opponent(self, action_card_id):
         self.__action_card_played_by_opponent = action_card_id

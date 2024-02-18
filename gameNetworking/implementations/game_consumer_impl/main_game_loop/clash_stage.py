@@ -72,7 +72,7 @@ async def clash_reaction_move_mechanics(
         {"reaction_cards" : reaction_cards_data},
         "opponent_move")
     
-    there_is_winner = await check_there_is_winner(
+    there_is_winner = await check_winner(
         consumer, game_user, opponent, new_player_morale, new_opponent_morale)
     if there_is_winner: return
 
@@ -102,7 +102,7 @@ async def clash_reaction_move_mechanics(
             new_clash_initiated = consumer.init_table_for_new_clash()
             if not new_clash_initiated: return
 
-            await consumer.send_message_to_group(None, "clash_end")
+            await consumer.send_message_to_group({}, "clash_end")
         else:
             consumer.critical_error(
             f"Improper state {game_user.state} of {game_user.conflict_side} \

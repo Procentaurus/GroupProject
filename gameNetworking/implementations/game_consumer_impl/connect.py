@@ -42,8 +42,8 @@ async def initialize_game(consumer, game_user, is_game_user_teacher):
     else:
         player_2 = await get_longest_waiting_game_user("teacher")
 
-    player_1.get_user().in_game = True
-    player_2.get_user().in_game = True
+    (await player_1.get_user()).in_game = True
+    (await player_2.get_user()).in_game = True
 
     # Creating game object in DB
     game = await create_game(player_1, player_2)

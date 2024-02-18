@@ -1,7 +1,5 @@
 from random import randint
 from channels.db import database_sync_to_async
-from django.contrib.auth.models import AnonymousUser
-from django.db.models import Q
 
 from .models import GameAuthenticationToken, GameUser, Game
 from gameMechanics.models import ActionCard, ReactionCard
@@ -25,7 +23,7 @@ def get_longest_waiting_game_user(conflict_side):
 
 @database_sync_to_async
 def get_number_of_waiting_game_users(conflict_side):
-    return GameUser.objects.filter(Q(in_game=False) & Q(conflict_side=conflict_side)).count()
+    return GameUser.objects.filter(conflict_side=conflict_side).count()
 
 @database_sync_to_async
 def create_game_user(token, conflict_side, channel_name):

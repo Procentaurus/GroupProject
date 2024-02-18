@@ -195,22 +195,24 @@ async def check_reaction_move_can_be_performed(
 
     return True
 
-async def check_there_is_winner(
-        consumer, game_user, opponent, new_player_morale, new_opponent_morale):
+async def check_winner(
+    consumer, game_user, opponent, new_player_morale, new_opponent_morale):
     
     if new_opponent_morale == 0:
+        consumer.set_winner(game_user.get_conflict_side())
         await announce_winner(consumer, game_user)
         return True
     elif new_player_morale == 0:
+        consumer.set_winner(opponent.get_conflict_side())
         await announce_winner(consumer, opponent)
         return True
     else: 
         return False
     
-async def announce_winner(consumer, user):
+async def announce_winner(consumer):
     consumer.set_closure_from_user_side(False)
     await consumer.send_message_to_group(
-        {"winner" : user.get_conflict_side()},
+        {"winner" : consumer.__winner},
         "game_end")
     
 async def check_is_player_turn(consumer, game, game_user):
