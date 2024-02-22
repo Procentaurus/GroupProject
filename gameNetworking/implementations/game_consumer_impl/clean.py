@@ -1,5 +1,6 @@
 from gameNetworking.queries import *
 
+
 async def disconnect_impl(consumer):
 
     game_id = consumer.get_game_id()

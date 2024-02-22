@@ -1,7 +1,5 @@
-from gameMechanics.enums import PlayerState
-
-from gameNetworking.enums import MessageType
-from gameNetworking.queries import get_game, update_game_turn
+from gameNetworking.enums import MessageType, PlayerState
+from gameNetworking.queries import update_game_turn
 from .surrender import surrender_move_mechanics
 from .checkers import *
 

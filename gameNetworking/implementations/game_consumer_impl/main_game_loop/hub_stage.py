@@ -1,6 +1,4 @@
-from gameMechanics.enums import PlayerState
-
-from gameNetworking.enums import MessageType
+from gameNetworking.enums import PlayerState, MessageType
 from .checkers import *
 from .purchasing_cards import purchase_action_card, purchase_reaction_card
 from .surrender import surrender_move_mechanics

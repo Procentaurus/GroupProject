@@ -1,5 +1,6 @@
 from .queries import *
 
+
 class GameAuthenticationTokenMiddleware:
     def __init__(self, inner):
         self.inner = inner

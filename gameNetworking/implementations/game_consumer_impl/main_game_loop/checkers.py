@@ -1,6 +1,6 @@
 from gameMechanics.queries import *
 
-from gameMechanics.enums import PlayerState
+from gameNetworking.enums import PlayerState
 
 
 async def check_all_action_cards_exist(consumer, action_cards_ids):

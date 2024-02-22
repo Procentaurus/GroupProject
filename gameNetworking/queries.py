@@ -2,7 +2,6 @@ from random import randint
 from channels.db import database_sync_to_async
 
 from .models import GameAuthenticationToken, GameUser, Game
-from gameMechanics.models import ActionCard, ReactionCard
 
 
 ########### GameUser ###########

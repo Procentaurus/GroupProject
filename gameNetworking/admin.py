@@ -3,7 +3,8 @@ from .models import *
 
 
 #
-# Each class adds one entity class and its elements to django admin, with specified values for display and search
+# Each class adds one entity class and its elements to django admin,
+# with specified values for display and search
 #
 
 @admin.register(Game)
@@ -20,9 +21,14 @@ class GameAdmin(admin.ModelAdmin):
 @admin.register(GameUser)
 class GameUserAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'conflict_side')
-    readonly_fields = ('id',)
+    readonly_fields = ('id', 'user')
     add_fieldsets = (
-        ("Main section", {"fields": ("user",'conflict_side')}),
+        ("Main", {"fields": ("id", "user")}),
+        ("Game Data", {"fields": (
+            "state", "morale", "money", "conflict_side")}),
+        ("Cards", {"fields":(
+            "owned_action_cards", "action_cards_in_shop"
+        )})
     )
 
 @admin.register(GameAuthenticationToken)

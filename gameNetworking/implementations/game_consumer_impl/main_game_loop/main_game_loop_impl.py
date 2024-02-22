@@ -1,10 +1,8 @@
-from gameMechanics.enums import GameStage
-
-from .purchasing_cards import *
-from .checkers import *
-from gameNetworking.queries import *
+from gameNetworking.enums import GameStage
+from gameNetworking.queries import get_game, get_game_user
 from .hub_stage import hub_stage_impl
 from .clash_stage import clash_stage_impl
+
 
 # Main game loop function responsible for taking care of user requests to socket
 async def main_game_loop_impl(consumer, data):

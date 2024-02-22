@@ -1,4 +1,4 @@
-from gameMechanics.enums import GameStage
+from gameNetworking.enums import GameStage
 
 
 def init_table_for_new_clash_impl(consumer):

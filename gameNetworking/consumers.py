@@ -10,6 +10,7 @@ from .implementations.game_consumer_impl.message_sending import *
 from .implementations.game_consumer_impl.main_game_loop.main_game_loop_impl \
     import main_game_loop_impl
 
+
 class GameConsumer(AsyncJsonWebsocketConsumer):
 
     # intialization of variables used only by the current user

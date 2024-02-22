@@ -1,7 +1,6 @@
 from autobahn.exception import Disconnected
 
-from gameMechanics.enums import PlayerState
-
+from gameNetworking.enums import PlayerState
 from gameNetworking.queries import get_game_user
 
 

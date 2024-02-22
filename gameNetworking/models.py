@@ -3,6 +3,7 @@ from django.db import models
 from channels.db import database_sync_to_async
 
 from customUser.models import MyUser
+from gameMechanics.models import ActionCard, ReactionCard
 
 from .implementations.game_user_impl import *
 from .implementations.game_impl import *
@@ -145,7 +146,8 @@ class Game(models.Model):
     def get_opponent_player(self, game_user_id):
         result = get_opponent_player_impl(self, game_user_id)
         return result
-    
+
+
 class GameArchive(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
@@ -178,6 +180,7 @@ class OwnedReactionCard(models.Model):
     reaction_card = models.ForeignKey(ReactionCard, on_delete=models.CASCADE, null=False, blank=False)
     game_user = models.ForeignKey(GameUser, on_delete=models.CASCADE, null=False, blank=False)
     amount = models.PositiveSmallIntegerField(default=0)
+
 
 class ReactionCardInShop(models.Model):
     reaction_card = models.ForeignKey(ReactionCard, on_delete=models.CASCADE, null=False, blank=False)

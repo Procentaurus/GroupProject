@@ -9,7 +9,7 @@ def check_if_own_action_card_impl(game_user, action_card_id):
     try:
         game_user.owned_action_cards.get(id=action_card_id)
         return True
-    except ActionCard.DoesNotExist:
+    except Exception as e:
         return False
     
 @database_sync_to_async
@@ -17,7 +17,7 @@ def check_if_have_action_card_in_shop_impl(game_user, action_card_id):
     try:
         game_user.action_cards_in_shop.get(id=action_card_id)
         return True
-    except ActionCard.DoesNotExist:
+    except Exception as e:
         return False
 
 @database_sync_to_async
@@ -27,7 +27,7 @@ def remove_action_card_impl(game_user, action_card_id):
         game_user.owned_action_cards.remove(action_card)
         game_user.save()
         return True
-    except ActionCard.DoesNotExist:
+    except Exception as e:
         return False
     
 @database_sync_to_async
@@ -37,7 +37,7 @@ def remove_action_card_from_shop_impl(game_user, action_card_id):
         game_user.action_cards_in_shop.remove(action_card)
         game_user.save()
         return True
-    except ActionCard.DoesNotExist:
+    except Exception as e:
         return False
     
 @database_sync_to_async
@@ -47,7 +47,7 @@ def add_action_card_impl(game_user, action_card_id):
         game_user.owned_action_cards.add(action_card)
         game_user.save()
         return True
-    except ActionCard.DoesNotExist:
+    except Exception as e:
         return False
     
 @database_sync_to_async
@@ -57,7 +57,7 @@ def add_action_card_to_shop_impl(game_user, action_card_id):
         game_user.action_cards_in_shop.add(action_card)
         game_user.save()
         return True
-    except ActionCard.DoesNotExist:
+    except Exception as e:
         return False
 
 # Before usage check if reaction card of passed id exists
@@ -104,13 +104,12 @@ def remove_reaction_card_from_shop_impl(game_user, reaction_card_id, amount):
 # Before usage check if reaction card of passed id exists 
 @database_sync_to_async
 def add_reaction_card_impl(game_user, reaction_card_id, amount):
-    reaction_card = ReactionCard.objects.get(id=reaction_card_id)
     owned_reaction_card_model = apps.get_model('your_app_name', 'OwnedReactionCard')
 
     # Retrieve the OwnedReactionCard instance or create a new one if it doesn't exist
     owned_card, had_card_earlier = owned_reaction_card_model.objects.get_or_create(
         game_user=game_user,
-        reaction_card=reaction_card,
+        reaction_card__id=reaction_card_id,
     )
 
     increase_card_amount(had_card_earlier, owned_card, amount)

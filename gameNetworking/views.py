@@ -6,6 +6,7 @@ import logging
 from WebGame.permissions import *
 from .serializers import *
 
+
 logger = logging.getLogger(__name__)
 
 class GameAuthenticationTokenList(generics.ListCreateAPIView):
