@@ -38,7 +38,7 @@ class GameUser(models.Model): # user has new instance of GameUser created for ev
     started_waiting = models.DateTimeField(auto_now_add=True)
     channel_name = models.CharField(null=False, max_length=100)
 
-    state = models.CharField(choices=PLAYER_STATES, default='in_collecting', null=False, blank=False)
+    state = models.CharField(choices=PLAYER_STATES, default='in_hub', null=False, blank=False)
     morale = models.PositiveSmallIntegerField(default=100, null=False, blank=False)
     money = models.PositiveSmallIntegerField(default=500, null=False, blank=False)
     conflict_side = models.CharField(choices=CONFLICT_SIDES, null=False, max_length=15)
