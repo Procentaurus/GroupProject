@@ -101,8 +101,8 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     # Used for player's mistakes during game flow
     # that do require complex response
     # Performs: logging and sending info to player
-    async def complex_error(self, data,  message, log_message = None):
-        await complex_error_impl(self, data, message, log_message)
+    async def complex_error(self, message, log_message = None, **data):
+        await complex_error_impl(self, message, log_message, data)
 
     # Used for game flow errors
     # Performs: logging, sending info to player and closing connection

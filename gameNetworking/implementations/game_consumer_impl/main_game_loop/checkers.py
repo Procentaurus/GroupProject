@@ -151,13 +151,13 @@ async def check_action_move_can_be_performed(consumer, game, game_user):
 
     if game.next_move_type != "action":
         await consumer.error(
-            "Wrong move. It is time for reaction."
+            "Wrong move. It is time for reaction.",
             f"{game_user.conflict_side} player performed move of wrong type.")
         return False
     
     # Check if player is in the clash stage, if not then flow error occured
     if game_user.state != PlayerState.IN_CLASH:
-        await consumer.critical_error(consumer,
+        await consumer.critical_error(
             f"Improper state {game_user.state} of {game_user.conflict_side} \
             player in clash action move.")
         return False
@@ -172,14 +172,14 @@ async def check_reaction_move_can_be_performed(
 
     if game.next_move_type != "action":
         await consumer.error(
-            "Wrong move. It is time for action."
+            "Wrong move. It is time for action.",
             f"{game_user.conflict_side} player performed move of wrong type.")
         return False
     
     # Check if player is in the clash stage, if not then flow error occured
     if game_user.state != PlayerState.IN_CLASH \
         and game_user.state != PlayerState.AWAIT_CLASH_END:
-        await consumer.critical_error(consumer,
+        await consumer.critical_error(
             f"Improper state {game_user.state} of {game_user.conflict_side} \
             player in clash action move.")
         return False

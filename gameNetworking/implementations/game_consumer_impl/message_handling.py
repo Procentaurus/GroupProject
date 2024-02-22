@@ -91,7 +91,7 @@ async def error_impl(consumer, message, log_message):
     else:
         consumer.logger.warning(log_message)
 
-async def complex_error_impl(consumer, data, message, log_message):
+async def complex_error_impl(consumer, message, log_message, **data):
     await consumer.send_json({
         'type' : "error",
         'info' : message,

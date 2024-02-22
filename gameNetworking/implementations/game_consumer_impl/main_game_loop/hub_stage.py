@@ -23,15 +23,14 @@ async def ready_move_mechanics(consumer, game, game_user):
 
     # Check if player is in the state after reporting readyness 
     if game_user.state == PlayerState.AWAIT_CLASH_START:
-        await consumer.error(consumer,
-            "You have already declared readyness.",
+        await consumer.error("You have already declared readyness.",
             f"{game_user.conflict_side} player tried to declare readiness \
             for the clash afresh.")
         return
     
     # Check if player is in the hub stage, if not then flow error occured
     if game_user.state != PlayerState.IN_HUB:
-        await consumer.critical_error(consumer,
+        await consumer.critical_error(
             f"Improper state {game_user.state} of {game_user.conflict_side} \
             player in ready_move.")
         return
@@ -51,7 +50,7 @@ async def purchase_move_mechanics(
 
     # Check if player is in the state after reporting readiness 
     if game_user.state == PlayerState.AWAIT_CLASH_START:
-        await consumer.error(consumer,
+        await consumer.error(
             "You cannot purchase cards after declaring readiness for clash.",
             f"{game_user.conflict_side} player tried to purchase \
             cards after declaring readyness.")
@@ -59,7 +58,7 @@ async def purchase_move_mechanics(
     
     # Check if player is in the hub stage, if not then flow error occured
     if game_user.state != PlayerState.IN_HUB:
-        await consumer.critical_error(consumer,
+        await consumer.critical_error(
             f"Improper state {game_user.state} of {game_user.conflict_side} \
             player in purchase_move.")
         return
