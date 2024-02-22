@@ -12,7 +12,7 @@ async def main_game_loop_impl(consumer, data):
     if game_id is not None:
 
         message_type = data.get('type')
-        game = get_game(game_id)
+        game = await get_game(game_id)
         game_user = await get_game_user(consumer.get_game_user_id())
         game_stage = consumer.get_game_stage()
 
