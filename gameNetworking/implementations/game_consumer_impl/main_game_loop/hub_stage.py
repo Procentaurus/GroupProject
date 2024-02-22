@@ -19,7 +19,6 @@ async def hub_stage_impl(consumer, game, game_stage, message_type, game_user, da
             f"Wrong message type in the {game_stage} game stage.")
 
 async def ready_move_mechanics(consumer, game, game_user):
-    opponent = await game.get_opponent_player(game_user.id)
 
     # Check if player is in the state after reporting readyness 
     if game_user.state == PlayerState.AWAIT_CLASH_START:
@@ -35,6 +34,7 @@ async def ready_move_mechanics(consumer, game, game_user):
             player in ready_move.")
         return
     
+    opponent = await game.get_opponent_player(game_user.id)
     if opponent.state == PlayerState.IN_HUB:
         await game_user.set_state(PlayerState.AWAIT_CLASH_START)
     elif opponent.state == PlayerState.AWAIT_CLASH_START:
