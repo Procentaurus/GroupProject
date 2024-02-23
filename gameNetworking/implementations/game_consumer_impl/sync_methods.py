@@ -23,7 +23,7 @@ def init_table_for_new_clash_impl(consumer):
     return True
 
 def update_game_stage_impl(consumer):
-    if consumer.__game_stage == GameStage.HUB:
-        consumer.__game_stage = GameStage.CLASH
+    if consumer.get_game_stage() == GameStage.HUB:
+        consumer.set_game_stage(GameStage.CLASH)
     else:
-        consumer.__game_stage = GameStage.HUB
+        consumer.set_game_stage(GameStage.HUB)

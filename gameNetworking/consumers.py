@@ -145,6 +145,9 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     def set_winner(self, winner):
         self.__winner = winner
 
+    def set_game_stage(self, game_stage):
+        self.__game_stage = game_stage
+
     def set_action_card_played_by_opponent(self, action_card_id):
         self.__action_card_played_by_opponent = action_card_id
     
