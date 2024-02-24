@@ -2,6 +2,7 @@ from autobahn.exception import Disconnected
 
 from gameNetworking.enums import PlayerState
 from gameNetworking.queries import get_game_user
+from .main_game_loop.common import send_card_sets_to_shop
 
 
 #
@@ -56,7 +57,7 @@ async def clash_start_impl(consumer, data):
         'next_move' : data.get("next_move_player"),
     })
 
-async def clash_end_impl(consumer):
+async def clash_end_impl(consumer, data):
     game_user = await get_game_user(consumer.get_game_user_id())
     await game_user.set_state(PlayerState.IN_HUB)
     consumer.update_game_stage()
@@ -64,6 +65,9 @@ async def clash_end_impl(consumer):
     await consumer.send_json({
         'type' : "clash_end",
     })
+    
+    is_teacher = bool(data.get("is_teacher"))
+    await send_card_sets_to_shop(consumer, is_teacher)
 
 async def game_end_impl(consumer, data):  
     try:

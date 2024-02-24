@@ -1,7 +1,7 @@
 from gameNetworking.enums import PlayerState, MessageType
 from .checkers import *
 from .purchasing_cards import purchase_action_card, purchase_reaction_card
-from .surrender import surrender_move_mechanics
+from .common import surrender_move_mechanics
 
 async def hub_stage_impl(consumer, game, game_stage, message_type, game_user, data):
 

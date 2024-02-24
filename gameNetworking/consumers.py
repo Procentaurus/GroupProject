@@ -83,8 +83,8 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     async def clash_start(self, data):
         await clash_start_impl(self, data)
 
-    async def clash_end(self, data = None):
-        await clash_end_impl(self)
+    async def clash_end(self, data):
+        await clash_end_impl(self, data)
 
     async def game_end(self, data):
         await game_end_impl(self, data)

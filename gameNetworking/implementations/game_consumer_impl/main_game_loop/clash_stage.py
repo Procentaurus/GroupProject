@@ -1,6 +1,6 @@
 from gameNetworking.enums import MessageType, PlayerState
 from gameNetworking.queries import update_game_turn
-from .surrender import surrender_move_mechanics
+from .common import surrender_move_mechanics
 from .checkers import *
 
 async def clash_stage_impl(consumer, game, game_stage, message_type, game_user, data):

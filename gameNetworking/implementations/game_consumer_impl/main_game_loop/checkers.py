@@ -198,11 +198,11 @@ async def check_reaction_move_can_be_performed(
 async def check_winner(
     consumer, game_user, opponent, new_player_morale, new_opponent_morale):
     
-    if new_opponent_morale == 0:
+    if new_opponent_morale <= 0:
         consumer.set_winner(game_user.get_conflict_side())
         await announce_winner(consumer, game_user)
         return True
-    elif new_player_morale == 0:
+    elif new_player_morale <= 0:
         consumer.set_winner(opponent.get_conflict_side())
         await announce_winner(consumer, opponent)
         return True

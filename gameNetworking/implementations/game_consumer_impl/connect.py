@@ -1,4 +1,5 @@
 from gameNetworking.queries import *
+from .main_game_loop.common import send_card_sets_to_shop
 
 
 async def connect_impl(consumer): # main implementation function
@@ -31,7 +32,7 @@ async def connect_impl(consumer): # main implementation function
     if number_of_teachers_waiting > 0 and number_of_students_waiting > 0:
         await initialize_game(consumer, game_user, is_game_user_teacher)
         # await initialize_game_archive()
-        await send_first_card_sets_to_shop(consumer, is_game_user_teacher)
+        await send_card_sets_to_shop(consumer, is_game_user_teacher)
 
 # Main initialization of the game
 async def initialize_game(consumer, game_user, is_game_user_teacher):
@@ -71,27 +72,3 @@ async def initialize_game(consumer, game_user, is_game_user_teacher):
     await consumer.game_start(
         {"initial_money_amount" : player_1.money,
         "initial_morale" : player_1.morale})
-
-async def send_first_card_sets_to_shop(consumer, is_current_game_user_teacher):
-
-    # TODO get cards to send for both players
-    initial_action_cards_for_teacher, initial_reaction_cards_for_teacher = None, None
-    initial_action_cards_for_student, initial_reaction_cards_for_student = None, None
-
-    # sending initial sets of cards to players
-    if is_current_game_user_teacher:
-        await consumer.card_package(
-            {"action_cards" : initial_action_cards_for_teacher,
-            "reaction_cards" : initial_reaction_cards_for_teacher})
-        await consumer.send_message_to_opponent(
-            {"action_cards" : initial_action_cards_for_student,
-            "reaction_cards" : initial_reaction_cards_for_student},
-            "card_package")
-    else:
-        await consumer.card_package(
-            {"action_cards" : initial_action_cards_for_student,
-            "reaction_cards" : initial_reaction_cards_for_student})
-        await consumer.send_message_to_opponent(
-            {"action_cards" : initial_action_cards_for_teacher,
-            "reaction_cards" : initial_reaction_cards_for_teacher},
-            "card_package")
