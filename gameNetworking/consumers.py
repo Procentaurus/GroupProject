@@ -3,7 +3,7 @@ from channels.exceptions import StopConsumer
 import logging
 
 from .implementations.game_consumer_impl.clean import disconnect_impl
-from .implementations.game_consumer_impl.sync_methods import *
+from .implementations.game_consumer_impl.complex_methods import *
 from .implementations.game_consumer_impl.connect import connect_impl
 from .implementations.game_consumer_impl.message_handling import *
 from .implementations.game_consumer_impl.message_sending import *
@@ -20,7 +20,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
         self.__game_id = None
         self.__winner = None
-        self.__game_user_id = None
+        self.__game_user = None
         self.__opponent_channel_name = None
         self.__closure_from_user_side = True
 
@@ -112,8 +112,8 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     def get_game_id(self):
         return self.__game_id
 
-    def get_game_user_id(self):
-        return self.__game_user_id
+    def get_game_user(self):
+        return self.__game_user
 
     def get_winner(self):
         return self.__winner
@@ -151,8 +151,8 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     def set_action_card_played_by_opponent(self, action_card_id):
         self.__action_card_played_by_opponent = action_card_id
     
-    def set_game_user_id(self, game_user_id):
-        self.__game_user_id = game_user_id
+    def set_game_user(self, game_user):
+        self.__game_user = game_user
 
     def set_opponent_channel_name(self, opponent_channel_name):
         self.__opponent_channel_name = opponent_channel_name
@@ -162,3 +162,6 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     def update_game_stage(self):
         update_game_stage_impl(self)
+
+    async def refresh_game_user(self):
+        await refresh_game_user_impl(self)

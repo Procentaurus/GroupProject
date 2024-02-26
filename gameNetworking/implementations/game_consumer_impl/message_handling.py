@@ -48,7 +48,7 @@ async def game_start_impl(consumer, data):
     })
 
 async def clash_start_impl(consumer, data):
-    game_user = await get_game_user(consumer.get_game_user_id())
+    game_user = consumer.get_game_user()
     await game_user.set_state(PlayerState.IN_CLASH)
     consumer.update_game_stage()
 
@@ -58,7 +58,7 @@ async def clash_start_impl(consumer, data):
     })
 
 async def clash_end_impl(consumer, data):
-    game_user = await get_game_user(consumer.get_game_user_id())
+    game_user = consumer.get_game_user()
     await game_user.set_state(PlayerState.IN_HUB)
     consumer.update_game_stage()
 

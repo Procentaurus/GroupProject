@@ -20,7 +20,7 @@ async def connect_impl(consumer): # main implementation function
     game_user = await create_game_user(
         access_token, conflict_side, consumer.channel_name)
     is_game_user_teacher = True if game_user.conflict_side == "teacher" else False
-    consumer.set_game_user_id(game_user.id)
+    consumer.set_game_user(game_user)
     # await delete_game_token(game_user)
 
     number_of_teachers_waiting = await get_number_of_waiting_game_users("teacher")
@@ -30,13 +30,13 @@ async def connect_impl(consumer): # main implementation function
 
     # initialization of the game if there are mininimum 2 players waiting
     if number_of_teachers_waiting > 0 and number_of_students_waiting > 0:
-        await initialize_game(consumer, game_user, is_game_user_teacher)
+        await initialize_game(consumer, is_game_user_teacher)
         # await initialize_game_archive()
         await send_card_sets_to_shop(consumer, is_game_user_teacher)
 
 # Main initialization of the game
-async def initialize_game(consumer, game_user, is_game_user_teacher):
-    player_1 = game_user
+async def initialize_game(consumer, is_game_user_teacher):
+    player_1 = consumer.get_game_user()
     player_2 = None
     if is_game_user_teacher:
         player_2 = await get_longest_waiting_game_user("student")

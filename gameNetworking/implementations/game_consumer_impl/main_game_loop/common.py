@@ -29,7 +29,8 @@ async def send_card_sets_to_shop(consumer, is_current_game_user_teacher):
             "reaction_cards" : initial_reaction_cards_for_teacher},
             "card_package")
 
-async def surrender_move_mechanics(consumer, game_user):
+async def surrender_move_mechanics(consumer):
+    game_user = consumer.get_game_user()
     consumer.logger.info(f"{game_user.conflict_side} player has surrendered.")
 
     winner = "student" if game_user.conflict_side == "teacher" else "teacher"

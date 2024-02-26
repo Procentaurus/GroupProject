@@ -50,9 +50,10 @@ async def check_all_reaction_cards_exist(consumer, reaction_cards_ids):
     return True
 
 async def check_all_cards_are_in_shop(
-        consumer, game_user, action_cards_ids, reaction_cards_data):
+    consumer, action_cards_ids, reaction_cards_data):
     
     action_cards_not_in_shop, reaction_cards_not_in_shop = [], []
+    game_user = consumer.get_game_user()
 
     for action_card_id in action_cards_ids:
         action_card_in_shop = await game_user.check_if_have_action_card_in_shop(
@@ -85,7 +86,7 @@ async def check_all_cards_are_in_shop(
     return True
 
 async def check_game_user_can_afford_all_cards(
-        consumer, game_user, action_cards_ids, reaction_cards_data):
+        consumer, action_cards_ids, reaction_cards_data):
 
     action_cards_total_price, action_cards_total_price = 0, 0
 
@@ -106,14 +107,15 @@ async def check_game_user_can_afford_all_cards(
         else:
             reaction_cards_total_price += reaction_card.price
 
-    if game_user.money < action_cards_total_price + action_cards_total_price:
+    if consumer.get_game_user().money < action_cards_total_price + action_cards_total_price:
         await consumer.error(
             "You can not afford to buy all chosen cards.",
             "Player chose cards that he can not afford")
         return False
     return True
 
-async def check_game_user_own_action_card(consumer, game_user, action_card_id):
+async def check_game_user_own_action_card(consumer, action_card_id):
+    game_user = consumer.get_game_user()
     if not await game_user.check_if_own_action_card(action_card_id):
         await consumer.error_impl(
             "You don't own the used action card",
@@ -122,8 +124,9 @@ async def check_game_user_own_action_card(consumer, game_user, action_card_id):
         return False
     return True
 
-async def check_game_user_own_reaction_cards(consumer, game_user, reaction_cards_data):
+async def check_game_user_own_reaction_cards(consumer, reaction_cards_data):
     reaction_cards_not_owned = {}
+    game_user = consumer.get_game_user()
     for reaction_card_data in reaction_cards_data:
         reaction_card_owned = await game_user.check_if_own_reaction_card(
             reaction_card_data["reaction_card_id"], reaction_card_data["amount"])
@@ -144,11 +147,12 @@ async def check_game_user_own_reaction_cards(consumer, game_user, reaction_cards
         return False
     return True
 
-async def check_action_move_can_be_performed(consumer, game, game_user):
+async def check_action_move_can_be_performed(consumer, game):
     
-    is_player_turn = check_is_player_turn(consumer, game, game_user)
+    is_player_turn = check_is_player_turn(consumer, game)
     if not is_player_turn: return False
 
+    game_user = consumer.get_game_user()
     if game.next_move_type != "action":
         await consumer.error(
             "Wrong move. It is time for reaction.",
@@ -165,8 +169,9 @@ async def check_action_move_can_be_performed(consumer, game, game_user):
     return True
 
 async def check_reaction_move_can_be_performed(
-    consumer, game, game_user, reaction_cards_data):
+    consumer, game, reaction_cards_data):
 
+    game_user = consumer.get_game_user()
     is_player_turn = check_is_player_turn(consumer, game, game_user)
     if not is_player_turn: return False
 
@@ -190,17 +195,18 @@ async def check_reaction_move_can_be_performed(
     if not reaction_card_exist: return False
 
     reaction_cards_are_owned = await check_game_user_own_reaction_cards(
-        consumer, game_user, reaction_cards_data)
+        consumer, reaction_cards_data)
     if not reaction_cards_are_owned: return False
 
     return True
 
 async def check_winner(
-    consumer, game_user, opponent, new_player_morale, new_opponent_morale):
+    consumer, opponent, new_player_morale, new_opponent_morale):
     
+    game_user = consumer.get_game_user()
     if new_opponent_morale <= 0:
         consumer.set_winner(game_user.get_conflict_side())
-        await announce_winner(consumer, game_user)
+        await announce_winner(consumer)
         return True
     elif new_player_morale <= 0:
         consumer.set_winner(opponent.get_conflict_side())
@@ -215,7 +221,8 @@ async def announce_winner(consumer):
         {"winner" : consumer.__winner},
         "game_end")
     
-async def check_is_player_turn(consumer, game, game_user):
+async def check_is_player_turn(consumer, game):
+    game_user = consumer.get_game_user()
     if game.next_move_player != game_user.conflict_side:
         await consumer.error("Not your turn.",
             f"{game_user.conflict_side} player performed move \

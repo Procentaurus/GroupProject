@@ -13,15 +13,16 @@ async def main_game_loop_impl(consumer, data):
 
         message_type = data.get('type')
         game = await get_game(game_id)
-        game_user = await get_game_user(consumer.get_game_user_id())
+        await consumer.refresh_game_user()
         game_stage = consumer.get_game_stage()
 
         if game_stage == GameStage.HUB:
             await hub_stage_impl(
-                consumer, game, game_stage, message_type, game_user, data) 
+                consumer, game, game_stage, message_type, data) 
         else:
             await clash_stage_impl(
-                consumer, game, game_stage, message_type, game_user, data)
+                consumer, game, game_stage, message_type, data)
     else:
+        game_user = consumer.get_game_user()
         await consumer.error(
             f"{game_user.conflict_side} player made move before the game has started")

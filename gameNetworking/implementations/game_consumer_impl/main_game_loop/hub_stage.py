@@ -3,22 +3,24 @@ from .checkers import *
 from .purchasing_cards import purchase_action_card, purchase_reaction_card
 from .common import surrender_move_mechanics
 
-async def hub_stage_impl(consumer, game, game_stage, message_type, game_user, data):
+async def hub_stage_impl(consumer, game, game_stage, message_type, data):
 
     if message_type == MessageType.PURCHASE_MOVE:
         action_cards_ids = data.get("action_cards")
         reaction_cards_data = data.get("reaction_cards")
         await purchase_move_mechanics(
-            consumer, game_user, action_cards_ids, reaction_cards_data)
+            consumer, action_cards_ids, reaction_cards_data)
     elif message_type == MessageType.READY_MOVE:
-        await ready_move_mechanics(consumer, game, game_user)
+        await ready_move_mechanics(consumer, game)
     elif message_type == MessageType.SURRENDER_MOVE:
-        await surrender_move_mechanics(consumer, game_user)
+        await surrender_move_mechanics(consumer)
     else:
         await consumer.error(
             f"Wrong message type in the {game_stage} game stage.")
 
-async def ready_move_mechanics(consumer, game, game_user):
+async def ready_move_mechanics(consumer, game):
+
+    game_user = consumer.get_game_user()
 
     # Check if player is in the state after reporting readyness 
     if game_user.state == PlayerState.AWAIT_CLASH_START:
@@ -46,7 +48,9 @@ async def ready_move_mechanics(consumer, game, game_user):
             f"Improper opponent player state: {opponent.state}")
 
 async def purchase_move_mechanics(
-        consumer, game_user, action_cards_ids, reaction_cards_data):
+        consumer, action_cards_ids, reaction_cards_data):
+
+    game_user = consumer.get_game_user()
 
     # Check if player is in the state after reporting readiness 
     if game_user.state == PlayerState.AWAIT_CLASH_START:
@@ -74,19 +78,19 @@ async def purchase_move_mechanics(
     if not all_reaction_cards_exist: return
 
     all_cards_are_in_shop = await check_all_cards_are_in_shop(
-        consumer, game_user, action_cards_ids, reaction_cards_data)
+        consumer, action_cards_ids, reaction_cards_data)
     if not all_cards_are_in_shop: return
 
     user_can_afford_all_cards = await check_game_user_can_afford_all_cards(
-        consumer, game_user, action_cards_ids, reaction_cards_data)
+        consumer, action_cards_ids, reaction_cards_data)
     if not user_can_afford_all_cards: return
 
     for action_card_id in action_cards_ids:
-        _ = await purchase_action_card(consumer, game_user, action_card_id)
+        _ = await purchase_action_card(consumer, action_card_id)
 
     for reaction_card_data in reaction_cards_data:
         _ = await purchase_reaction_card(
-            consumer, game_user, reaction_card_data.get("reaction_card_id"),
+            consumer, reaction_card_data.get("reaction_card_id"),
             reaction_card_data.get("amount"))
         
     await consumer.purchase_result({"new_money_amount" : game_user.money})

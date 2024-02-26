@@ -142,8 +142,8 @@ class Game(models.Model):
     def get_student_player(self):
         return self.student_player
     
-    async def get_opponent_player(self, game_user_id):
-        result = await get_opponent_player_impl(self, game_user_id)
+    async def get_opponent_player(self, game_user):
+        result = await get_opponent_player_impl(self, game_user)
         return result
 
 
