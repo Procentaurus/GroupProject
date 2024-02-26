@@ -1,10 +1,7 @@
 from random import randint
 from channels.db import database_sync_to_async
-from django.contrib.auth.models import AnonymousUser
-from django.db.models import Q
 
 from .models import GameAuthenticationToken, GameUser, Game
-from gameMechanics.models import ActionCard, ReactionCard
 
 
 ########### GameUser ###########
@@ -25,7 +22,7 @@ def get_longest_waiting_game_user(conflict_side):
 
 @database_sync_to_async
 def get_number_of_waiting_game_users(conflict_side):
-    return GameUser.objects.filter(Q(in_game=False) & Q(conflict_side=conflict_side)).count()
+    return GameUser.objects.filter(conflict_side=conflict_side).count()
 
 @database_sync_to_async
 def create_game_user(token, conflict_side, channel_name):
@@ -108,9 +105,8 @@ def get_opponent_player(game_id, conflict_side):
         return game.teacher_player
     
 @database_sync_to_async
-def update_game_turn(game_id):
+def update_game_turn(game):
     try:
-        game = Game.objects.get(id=game_id)
         current_move_player = game.next_move_player
         current_move_type = game.next_move_type
 
@@ -124,25 +120,3 @@ def update_game_turn(game_id):
         return True
     except Game.DoesNotExist:
         return False
-                
-
-
-########### Action card ###########
-
-@database_sync_to_async
-def check_action_card_exist(action_card_uuid):
-    try:
-        card = ActionCard.objects.get(action_card_uuid)
-        return True
-    except ActionCard.DoesNotExist:
-        return False            
-
-
-
-########### Rection card ###########
-
-@database_sync_to_async
-def check_reaction_cards_exist(reaction_card_uuids):
-    all_cards_exist = ReactionCard.objects.filter(uuid__in=reaction_card_uuids).count() == len(reaction_card_uuids)
-    return all_cards_exist
-
