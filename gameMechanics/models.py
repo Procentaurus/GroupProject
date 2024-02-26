@@ -1,11 +1,43 @@
+from uuid import uuid4
 from django.db import models
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 class Card(models.Model):
-    price = models.PositiveIntegerField(default=0)
-    pass
+    pass # TODO: Implement abstraction later
 
-class ActionCard(Card):
-    pass
+class ActionCard(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    name = models.CharField(max_length=20)
+    description = models.CharField(max_length=100)
+    playerType_choices = [
+        ('Student', 'Student'),
+        ('Teacher', 'Teacher')        
+    ]
+    playerType = models.CharField(max_length=20, choices=playerType_choices)
+    cost = models.IntegerField(
+        validators=[MinValueValidator(0), MaxValueValidator(10)]
+    )
+    pressure = models.IntegerField()
 
-class ReactionCard(Card):
-    pass
+class ReactionCard(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    name = models.CharField(max_length=20)
+    description = models.CharField(max_length=100)
+    playerType_choices = [
+        ('Student', 'Student'),
+        ('Teacher', 'Teacher')        
+    ]
+    playerType = models.CharField(max_length=20, choices=playerType_choices)
+    cost = models.IntegerField(
+        validators=[MinValueValidator(0), MaxValueValidator(10)]
+    ) 
+    type_choices = [
+        ('Brute', 'Brute'),
+        ('Influence', 'Influence'),
+        ('Intelligence', 'Intelligence')
+    ]
+    type = models.CharField(max_length=20, choices=type_choices)
+
+class OwnedReactionCard(models.Model):
+    reaction_card = models.ForeignKey(ReactionCard, on_delete=models.CASCADE, null=False, blank=False)
+    amount = models.PositiveSmallIntegerField(default=0)
