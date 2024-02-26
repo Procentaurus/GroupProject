@@ -62,13 +62,14 @@ async def clash_reaction_move_mechanics(consumer, game, reaction_cards_data):
     moves_table = consumer.get_moves_table()
     moves_table[1] -= 1 # 1 is index of reaction moves
 
+    opponent = await game.get_opponent_player(game_user.id)
     new_opp_morale, money_opp_gained, new_player_morale, money_player_gained = (
         get_new_morale(
             game_user, opponent,
             consumer.get_action_card_played_by_opponent, reaction_cards_data)
     )
-    action_cards_player_gained, action_cards_opponent_gained = None, None
-    reaction_cards_player_gained, reaction_cards_opponent_gained = None, None
+    action_cards_player_gained, action_cards_opp_gained = None, None
+    reaction_cards_player_gained, reaction_cards_opp_gained = None, None
 
     await consumer.send_message_to_opponent(
         {"reaction_cards" : reaction_cards_data},
@@ -76,11 +77,7 @@ async def clash_reaction_move_mechanics(consumer, game, reaction_cards_data):
     
     game_user = consumer.get_game_user()
     there_is_winner = await check_winner(
-<<<<<<< Updated upstream
-        consumer, game_user, opponent, new_player_morale, new_opp_morale)
-=======
-        consumer, opponent, new_player_morale, new_opponent_morale)
->>>>>>> Stashed changes
+        consumer, opponent, new_player_morale, new_opp_morale)
     if there_is_winner: return
 
     game_user_message_body = await create_clash_result_response_body(
@@ -88,18 +85,17 @@ async def clash_reaction_move_mechanics(consumer, game, reaction_cards_data):
         action_cards_player_gained, reaction_cards_player_gained)
     await consumer.clash_result(game_user_message_body)
 
-    opponent_message_body = await create_clash_result_response_body(
+    opp_message_body = await create_clash_result_response_body(
         new_opp_morale,  new_player_morale, money_opp_gained,
-        action_cards_opponent_gained, reaction_cards_opponent_gained)
-    await consumer.send_message_to_opponent(opponent_message_body,"clash_result")
+        action_cards_opp_gained, reaction_cards_opp_gained)
+    await consumer.send_message_to_opponent(opp_message_body,"clash_result")
 
-    opponent = await game.get_opponent_player(game_user.id)
     await add_gains_to_account(
         new_player_morale, money_player_gained,
         action_cards_player_gained, reaction_cards_player_gained)
     await add_gains_to_account(
         opponent, new_opp_morale, money_opp_gained,
-        action_cards_opponent_gained, reaction_cards_opponent_gained)
+        action_cards_opp_gained, reaction_cards_opp_gained)
     
     await remove_all_used_reaction_cards(game_user, reaction_cards_data)
 

@@ -1,4 +1,4 @@
-from gameMechanics.sripts.initial_shop import get_initial_shop_for_player
+from gameMechanics.scripts.initial_shop import get_initial_shop_for_player
 
 
 async def send_card_sets_to_shop(consumer, is_current_game_user_teacher):
