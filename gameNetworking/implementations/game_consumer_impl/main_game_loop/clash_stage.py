@@ -1,4 +1,4 @@
-from gameMechanics.scripts import get_new_morale
+from gameMechanics.scripts.basic_mechanics import get_new_morale
 
 from gameNetworking.enums import MessageType, PlayerState
 from gameNetworking.queries import update_game_turn
