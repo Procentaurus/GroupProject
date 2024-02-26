@@ -38,7 +38,3 @@ class ReactionCard(models.Model):
         ('Intelligence', 'Intelligence')
     ]
     type = models.CharField(max_length=20, choices=type_choices)
-
-class OwnedReactionCard(models.Model):
-    reaction_card = models.ForeignKey(ReactionCard, on_delete=models.CASCADE, null=False, blank=False)
-    amount = models.PositiveSmallIntegerField(default=0)
