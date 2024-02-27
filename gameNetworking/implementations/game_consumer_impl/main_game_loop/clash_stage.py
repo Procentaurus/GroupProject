@@ -64,7 +64,7 @@ async def clash_reaction_move_mechanics(consumer, game, reaction_cards_data):
 
     opponent = await game.get_opponent_player(game_user.id)
     new_opp_morale, money_opp_gained, new_player_morale, money_player_gained = (
-        get_new_morale(
+        await get_new_morale(
             game_user, opponent,
             consumer.get_action_card_played_by_opponent, reaction_cards_data)
     )
