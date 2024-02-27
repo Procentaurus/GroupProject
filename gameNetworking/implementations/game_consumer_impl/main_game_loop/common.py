@@ -5,10 +5,10 @@ async def send_card_sets_to_shop(consumer, is_current_game_user_teacher):
 
     # TODO alter the names
     initial_action_cards_for_teacher, initial_reaction_cards_for_teacher = (
-        get_initial_shop_for_player(5, 2, "teacher")
+        await get_initial_shop_for_player(5, 2, "teacher")
     )
     initial_action_cards_for_student, initial_reaction_cards_for_student = (
-        get_initial_shop_for_player(5, 2, "student")
+        await get_initial_shop_for_player(5, 2, "student")
     )
 
     # sending initial sets of cards to players
