@@ -1,6 +1,5 @@
-from django.contrib.auth.models import AnonymousUser
+from .queries import *
 
-from .mechanics.queries import *
 
 class GameAuthenticationTokenMiddleware:
     def __init__(self, inner):
@@ -15,10 +14,13 @@ class GameAuthenticationTokenMiddleware: # implementation of getting data about 
         query_string = scope.get("query_string", b"").decode("utf-8")
         token_string = query_string.split('=')[1]
 
-        token = await get_token(token_string)
-        user = await get_game_user_from_token(token_string)
-        
-        scope['user'] = user
-        scope['token'] = token
+        token = await get_game_token(token_string)
+        if token is not None:
+            user = token.get_game_user()
             
-        return await self.inner(scope, receive, send)
+            scope['user'] = user
+            scope['token'] = token
+                
+            return await self.inner(scope, receive, send)
+        else:
+            return

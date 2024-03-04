@@ -1,5 +1,4 @@
 # Django #
-*.log
 *.pot
 *.pyc
 __pycache__
@@ -71,3 +70,4 @@ venv.bak/
 !.vscode/launch.json 
 !.vscode/extensions.json 
 .history
+.vscode/settings.json

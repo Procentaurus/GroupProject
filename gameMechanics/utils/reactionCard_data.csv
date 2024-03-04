@@ -1,0 +1,21 @@
+name,description,values,cost,playerType,type
+Junior Bully,Redirect 5 damage,redirect=5;block=5,2,Student,Brute
+Freshman Bully,Redirect 10 damage,redirect=10;block=10,4,Student,Brute
+Senior Bully,Redirect 15 damage,redirect=15;block=15,6,Student,Brute
+Drunk Uncle Roger,Add 10 damage to current redirection,redirect=10,5,Student,Brute
+Protein Shake,"If your blocked damage is above 10, redirect 10 at your opponent",conditional_value=blocked;conditional_threshold=10;redirect=10;block=10,5,Student,Brute
+Junior Nerd,Block 5 damage,block=5,2,Student,Intelligence
+Freshman Nerd,Block 10 damage,block=10,4,Student,Intelligence
+Senior Nerd,Block 15 damage,block=15,6,Student,Intelligence
+Math Expert,Block 10% of incoming damage,percentage_value=blocked;percentage=10,5,Student,Intelligence
+Senior's Notebook,"If your redirected damage is above 10, block 10 incoming damage",conditional_value=redirected;conditional_threshold=10;block=10,5,Student,Intelligence
+PE Substitute,Redirect 5 damage,redirect=5;block=5,2,Teacher,Brute
+PE Teacher,Redirect 10 damage,redirect=10;block=10,4,Teacher,Brute
+"Hank, Football Coach",Redirect 15 damage,redirect=15;block=15,6,Teacher,Brute
+Hank's Son,Add 10 damage to current redirection,redirect=10,5,Teacher,Brute
+Training Session,"If your blocked damage is above 10, redirect 10 at your opponent",conditional_value=blocked;conditional_threshold=10;redirect=10;block=10,5,Teacher,Brute
+Science Substitute,Block 5 damage,block=5,2,Teacher,Intelligence
+Science Teacher,Block 10 damage,block=10,4,Teacher,Intelligence
+"Ross, Paleontologist",Block 15 damage,block=15,6,Teacher,Intelligence
+Math Teacher,Block 10% of incoming damage,percentage_value=blocked;percentage=10,5,Teacher,Intelligence
+Entry Test,"If your redirected damage is above 10, block 10 incoming damage",conditional_value=redirected;conditional_threshold=10;block=10,5,Teacher,Intelligence

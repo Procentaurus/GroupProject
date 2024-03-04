@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from .models import Game, GameAuthenticationToken
 
+
 class GameSerializer(serializers.ModelSerializer):
     
     class Meta:
