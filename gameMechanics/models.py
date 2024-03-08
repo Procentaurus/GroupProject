@@ -10,8 +10,8 @@ class ActionCard(models.Model):
     name = models.CharField(max_length=20)
     description = models.CharField(max_length=100)
     playerType_choices = [
-        ('Student', 'Student'),
-        ('Teacher', 'Teacher')        
+        ('student', 'student'),
+        ('teacher', 'teacher')        
     ]
     playerType = models.CharField(max_length=20, choices=playerType_choices)
     cost = models.IntegerField(
@@ -25,8 +25,8 @@ class ReactionCard(models.Model):
     description = models.CharField(max_length=100)
     values = models.CharField()
     playerType_choices = [
-        ('Student', 'Student'),
-        ('Teacher', 'Teacher')        
+        ('student', 'student'),
+        ('teacher', 'teacher')
     ]
     playerType = models.CharField(max_length=20, choices=playerType_choices)
     cost = models.IntegerField(

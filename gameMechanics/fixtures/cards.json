@@ -7,7 +7,7 @@
             "description": "Redirect 5 damage",
             "values": "redirect=5;block=5",
             "cost": "2",
-            "playerType": "Student",
+            "playerType": "student",
             "type": "Brute"
         }
     },
@@ -19,7 +19,7 @@
             "description": "Redirect 10 damage",
             "values": "redirect=10;block=10",
             "cost": "4",
-            "playerType": "Student",
+            "playerType": "student",
             "type": "Brute"
         }
     },
@@ -31,7 +31,7 @@
             "description": "Redirect 15 damage",
             "values": "redirect=15;block=15",
             "cost": "6",
-            "playerType": "Student",
+            "playerType": "student",
             "type": "Brute"
         }
     },
@@ -43,7 +43,7 @@
             "description": "Add 10 damage to current redirection",
             "values": "redirect=10",
             "cost": "5",
-            "playerType": "Student",
+            "playerType": "student",
             "type": "Brute"
         }
     },
@@ -55,7 +55,7 @@
             "description": "If your blocked damage is above 10, redirect 10 at your opponent",
             "values": "conditional_value=blocked;conditional_threshold=10;redirect=10;block=10",
             "cost": "5",
-            "playerType": "Student",
+            "playerType": "student",
             "type": "Brute"
         }
     },
@@ -67,7 +67,7 @@
             "description": "Block 5 damage",
             "values": "block=5",
             "cost": "2",
-            "playerType": "Student",
+            "playerType": "student",
             "type": "Intelligence"
         }
     },
@@ -79,7 +79,7 @@
             "description": "Block 10 damage",
             "values": "block=10",
             "cost": "4",
-            "playerType": "Student",
+            "playerType": "student",
             "type": "Intelligence"
         }
     },
@@ -91,7 +91,7 @@
             "description": "Block 15 damage",
             "values": "block=15",
             "cost": "6",
-            "playerType": "Student",
+            "playerType": "student",
             "type": "Intelligence"
         }
     },
@@ -103,7 +103,7 @@
             "description": "Block 10% of incoming damage",
             "values": "percentage_value=blocked;percentage=10",
             "cost": "5",
-            "playerType": "Student",
+            "playerType": "student",
             "type": "Intelligence"
         }
     },
@@ -115,7 +115,7 @@
             "description": "If your redirected damage is above 10, block 10 incoming damage",
             "values": "conditional_value=redirected;conditional_threshold=10;block=10",
             "cost": "5",
-            "playerType": "Student",
+            "playerType": "student",
             "type": "Intelligence"
         }
     },
@@ -243,10 +243,10 @@
         "model": "gameMechanics.actioncard",
         "pk": "2951aa28-6fab-4244-be44-fd5bbaa81441",
         "fields": {
-            "name": "Clog The School Toilet",
+            "name": "Clog The Toilet",
             "description": "Deal 20 damage",
             "cost": "3",
-            "playerType": "Student",
+            "playerType": "student",
             "pressure": "0"
         }
     },
@@ -257,7 +257,7 @@
             "name": "Shoot A Spitball",
             "description": "Deal 20 damage",
             "cost": "3",
-            "playerType": "Student",
+            "playerType": "student",
             "pressure": "0"
         }
     },
@@ -265,10 +265,10 @@
         "model": "gameMechanics.actioncard",
         "pk": "d23979c0-6c07-4ddb-bc3d-c6826e83e908",
         "fields": {
-            "name": "Bite On The Teacher's Pencil",
+            "name": "Bite Teacher Pencil",
             "description": "Deal 20 damage",
             "cost": "3",
-            "playerType": "Student",
+            "playerType": "student",
             "pressure": "0"
         }
     },
@@ -279,7 +279,7 @@
             "name": "Eat Class Markers",
             "description": "Deal 20 damage",
             "cost": "3",
-            "playerType": "Student",
+            "playerType": "student",
             "pressure": "0"
         }
     },
@@ -287,10 +287,10 @@
         "model": "gameMechanics.actioncard",
         "pk": "a131d20c-3491-4c98-af1f-499ca95b2082",
         "fields": {
-            "name": "Report To Your Parents",
+            "name": "Report To Parents",
             "description": "Deal 20 damage",
             "cost": "3",
-            "playerType": "Student",
+            "playerType": "student",
             "pressure": "0"
         }
     },
@@ -298,7 +298,7 @@
         "model": "gameMechanics.actioncard",
         "pk": "ae41df4e-c2a4-4e77-adc8-2ab6fe93c317",
         "fields": {
-            "name": "Report To Student's Parents",
+            "name": "Invite Parents",
             "description": "Deal 20 damage",
             "cost": "3",
             "playerType": "Teacher",
@@ -309,7 +309,7 @@
         "model": "gameMechanics.actioncard",
         "pk": "e27c1519-ec3f-4c11-96aa-97e2e4bdc7fa",
         "fields": {
-            "name": "Ground The Student",
+            "name": "Ground student",
             "description": "Deal 20 damage",
             "cost": "3",
             "playerType": "Teacher",
