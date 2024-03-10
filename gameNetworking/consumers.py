@@ -108,6 +108,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     # Performs: logging, sending info to player and closing connection
     async def critical_error(self, log_message):
         await critical_error_impl(self, log_message)
+        self.close()
 
     def get_game_id(self):
         return self.__game_id
