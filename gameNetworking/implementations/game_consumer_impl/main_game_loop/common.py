@@ -4,7 +4,7 @@ from gameMechanics.scripts.initial_shop import get_initial_shop_for_player
 async def send_card_sets_to_shop(consumer, is_current_game_user_teacher):
   
     initial_action_cards_for_teacher, initial_reaction_cards_for_teacher = (
-        await get_initial_shop_for_player(5, 2, "teacher")
+        await get_initial_shop_for_player(5, 2, "Teacher")
     )
     initial_action_cards_for_student, initial_reaction_cards_for_student = (
         await get_initial_shop_for_player(5, 2, "student")
