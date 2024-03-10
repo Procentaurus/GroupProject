@@ -1,11 +1,10 @@
 from gameMechanics.scripts.basic_mechanics import get_new_morale
 
 from gameNetworking.enums import MessageType, PlayerState
-from gameNetworking.queries import update_game_turn
-from .common import surrender_move_mechanics
+from .common import surrender_move_mechanics, inform_about_improper_state_error
 from .checkers import *
 
-async def clash_stage_impl(consumer, game, game_stage, message_type, data):
+async def clash_stage_impl(consumer, game, message_type, data):
 
     if message_type == MessageType.CLASH_ACTION_MOVE:
         action_card_id = data.get("action_card")
@@ -18,44 +17,40 @@ async def clash_stage_impl(consumer, game, game_stage, message_type, data):
         await surrender_move_mechanics(consumer)
     else:
         await consumer.error(
-            f"Wrong message type in the {game_stage} game stage.")
+            f"Wrong message type in the {consumer.get_game_stage()}"
+            +" game stage.")
 
 async def clash_action_move_mechanics(consumer, game, action_card_id):
-
-    action_move_can_be_performed = await check_action_move_can_be_performed(
-        consumer, game, action_card_id)
-    if not action_move_can_be_performed: return
+    if not await check_action_move_can_be_performed(
+        consumer, game, action_card_id): return
     
-    action_card_exist = await check_all_action_cards_exist(consumer, [action_card_id])
-    if not action_card_exist: return
+    if not await check_all_action_cards_exist(consumer, [action_card_id]):
+        return
 
-    action_card_is_owned = await check_game_user_own_action_card(
-        consumer, action_card_id)
-    if not action_card_is_owned: return
+    if not await check_game_user_own_action_card(consumer, action_card_id):
+        return
 
+    if not game.update_after_turn():
+        await consumer.critical_error("Updating game turn impossible.")
+        return
+
+    game_user = consumer.get_game_user()
+    await game_user.remove_action_card(action_card_id)
+    await consumer.send_message_to_opponent(
+        {"action_card" : action_card_id},
+        "opponent_move")
+    
     moves_table = consumer.get_moves_table()
     moves_table[0] -= 1 # 0 is index of action moves
-
-    updated_game_turn = await update_game_turn(game)
-    if not updated_game_turn:
-        await consumer.critical_error("Updating game turn impossible.")
-    else:
-        game_user = consumer.get_game_user()
-        await game_user.remove_action_card(action_card_id)
-        await consumer.send_message_to_opponent(
-            {"action_card" : action_card_id},
-            "opponent_move")
-        if moves_table[0] == 0: # player has no more action moves in the current clash
-            await game_user.set_state(PlayerState.AWAIT_CLASH_END)
+    if player_has_no_more_action_moves(moves_table):
+        await game_user.set_state(PlayerState.AWAIT_CLASH_END)
 
 async def clash_reaction_move_mechanics(consumer, game, reaction_cards_data):
     
-    reaction_move_can_be_performed = await check_reaction_move_can_be_performed(
-        consumer, game, reaction_cards_data)
-    if not reaction_move_can_be_performed: return
+    if not await check_reaction_move_can_be_performed(
+        consumer, game, reaction_cards_data): return
 
-    updated_game_turn = await update_game_turn(game)
-    if not updated_game_turn:
+    if not game.update_after_turn():
         await consumer.critical_error("Updating game turn impossible.")
         return
 
@@ -80,12 +75,12 @@ async def clash_reaction_move_mechanics(consumer, game, reaction_cards_data):
         consumer, opponent, new_player_morale, new_opp_morale)
     if there_is_winner: return
 
-    game_user_message_body = await create_clash_result_response_body(
+    game_user_message_body = create_clash_result_response_body(
         new_player_morale,  new_opp_morale, money_player_gained,
         action_cards_player_gained, reaction_cards_player_gained)
     await consumer.clash_result(game_user_message_body)
 
-    opp_message_body = await create_clash_result_response_body(
+    opp_message_body = create_clash_result_response_body(
         new_opp_morale,  new_player_morale, money_opp_gained,
         action_cards_opp_gained, reaction_cards_opp_gained)
     await consumer.send_message_to_opponent(opp_message_body,"clash_result")
@@ -99,20 +94,19 @@ async def clash_reaction_move_mechanics(consumer, game, reaction_cards_data):
     
     await remove_all_used_reaction_cards(game_user, reaction_cards_data)
 
-    # player has no more moves in the current clash
-    if moves_table[0] == 0 and moves_table[1] == 0:        
+    if player_has_no_more_action_moves(moves_table) \
+        and player_has_no_more_reaction_moves(moves_table):
+           
         if opponent.state == PlayerState.AWAIT_CLASH_END:
             new_clash_initiated = consumer.init_table_for_new_clash()
             if not new_clash_initiated: return
 
             await consumer.send_message_to_group({}, "clash_end")
         else:
-            consumer.critical_error(
-            f"Improper state {game_user.state} of {game_user.conflict_side} \
-            player in clash reaction move.")
+            await inform_about_improper_state_error(consumer, "reaction_move")
 
 async def add_gains_to_account(
-        user, new_morale, money_gained, action_cards_gained, reaction_cards_gained):
+    user, new_morale, money_gained, action_cards_gained, reaction_cards_gained):
 
     await user.set_morale(new_morale)
     await user.add_money(money_gained)
@@ -125,7 +119,7 @@ async def add_gains_to_account(
             reaction_card_data.get("reaction_card_id"),
             reaction_card_data.get("amount"))
 
-async def create_clash_result_response_body(new_morale, new_opponent_morale,
+def create_clash_result_response_body(new_morale, new_opponent_morale,
     money_gained, action_cards_gained, reaction_cards_gained):
     return {
         "new_player_morale" : new_morale,
@@ -134,6 +128,12 @@ async def create_clash_result_response_body(new_morale, new_opponent_morale,
         "action_cards_gained" : action_cards_gained,
         "reaction_cards_gained" : reaction_cards_gained
     }
+
+def player_has_no_more_action_moves(moves_table):
+    return moves_table[0] == 0
+
+def player_has_no_more_reaction_moves(moves_table):
+    return moves_table[1] == 0
 
 async def remove_all_used_reaction_cards(game_user, reaction_cards_data):
     for reaction_card_data in reaction_cards_data:

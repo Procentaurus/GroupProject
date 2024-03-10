@@ -114,4 +114,4 @@ async def critical_error_impl(consumer, log_message):
     })
 
     consumer.logger.error(log_message)
-    consumer.close()
+
