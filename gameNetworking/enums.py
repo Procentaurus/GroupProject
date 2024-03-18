@@ -21,6 +21,10 @@ class GameStage(IntEnum):
 
 class PlayerState(str, Enum):
     IN_HUB = "in_hub"
-    AWAIT_CLASH_START = "await_clash_start" # after player collected all available cards
+
+    # after player collected all available cards
+    AWAIT_CLASH_START = "await_clash_start"
     IN_CLASH = "in_clash"
-    AWAIT_CLASH_END = "await_clash_end" # after player used all his action cards
+
+    # after player used all his action cards
+    AWAIT_CLASH_END = "await_clash_end"

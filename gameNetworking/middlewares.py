@@ -5,7 +5,8 @@ class GameAuthenticationTokenMiddleware:
     def __init__(self, inner):
         self.inner = inner
 
-class GameAuthenticationTokenMiddleware: # implementation of getting data about player's single-use token
+# Implementation of getting data about player's single-use token
+class GameAuthenticationTokenMiddleware:
     def __init__(self, inner):
         self.inner = inner
 

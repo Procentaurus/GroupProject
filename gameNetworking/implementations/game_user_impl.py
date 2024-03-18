@@ -71,7 +71,9 @@ def check_if_own_reaction_card_impl(game_user, reaction_card_id, amount):
     
 # Before usage check if reaction card of passed id exists
 @database_sync_to_async
-def check_if_have_reaction_card_in_shop_impl(game_user, reaction_card_id, amount):   
+def check_if_have_reaction_card_in_shop_impl(
+    game_user, reaction_card_id, amount):
+    
     card_in_shop = game_user.reaction_cards_in_shop.filter(
         reaction_card__id=reaction_card_id).first()
     
