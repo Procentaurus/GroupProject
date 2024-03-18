@@ -5,6 +5,7 @@ from channels.db import database_sync_to_async
 from customUser.models import MyUser
 from gameMechanics.models import ActionCard, ReactionCard
 
+from .enums import PlayerState
 from .implementations.game_user_impl import *
 from .implementations.game_impl import *
 
@@ -80,12 +81,36 @@ class GameUser(models.Model):
         self.save()
 
     @database_sync_to_async
-    def check_if_own_action_card(self, action_card_id):
+    def is_in_hub(self):
+        return self.state == PlayerState.IN_HUB
+    
+    @database_sync_to_async
+    def waits_for_clash_end(self):
+        return self.state == PlayerState.AWAIT_CLASH_END
+    
+    @database_sync_to_async
+    def is_in_clash(self):
+        return self.state == PlayerState.IN_CLASH
+    
+    @database_sync_to_async
+    def waits_for_clash_start(self):
+        return self.state == PlayerState.AWAIT_CLASH_START
+    
+    @database_sync_to_async
+    def is_teacher(self):
+        return self.conflict_side == "teacher"
+    
+    @database_sync_to_async
+    def is_student(self):
+        return self.conflict_side == "teacher"
+
+    @database_sync_to_async
+    def check_action_card_owned(self, action_card_id):
         result = check_if_own_action_card_impl(self, action_card_id)
         return result
     
     @database_sync_to_async
-    def check_if_have_action_card_in_shop(self, action_card_id):
+    def check_action_card_in_shop(self, action_card_id):
         result = check_if_have_action_card_in_shop_impl(self, action_card_id)
         return result
 
@@ -110,12 +135,12 @@ class GameUser(models.Model):
         return result
         
     @database_sync_to_async
-    def check_if_own_reaction_card(self, reaction_card_id, amount):
+    def check_reaction_card_owned(self, reaction_card_id, amount):
         result = check_if_own_reaction_card_impl(self, reaction_card_id, amount)
         return result
     
     @database_sync_to_async
-    def check_if_have_reaction_card_in_shop(self, reaction_card_id, amount):
+    def check_reaction_card_in_shop(self, reaction_card_id, amount):
         result = check_if_have_reaction_card_in_shop_impl(
             self, reaction_card_id, amount)
         return result

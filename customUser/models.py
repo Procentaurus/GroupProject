@@ -59,3 +59,9 @@ class MyUser(AbstractBaseUser, PermissionsMixin): # main user class used through
 
     def __str__(self):
         return self.username
+    
+    def set_in_game(self):
+        self.in_game = True
+
+    def unset_in_game(self):
+        self.in_game = False

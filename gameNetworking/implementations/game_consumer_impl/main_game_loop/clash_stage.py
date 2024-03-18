@@ -1,49 +1,72 @@
 from gameMechanics.scripts.basic_mechanics import get_new_morale
 
 from gameNetworking.enums import MessageType, PlayerState
-from .common import surrender_move_mechanics, inform_about_improper_state_error
+from .common import SurrenderMoveHandler
+from .abstract import MoveHandler, StageHandler
 from .checkers import *
 
-async def clash_stage_impl(consumer, game, message_type, data):
 
-    if message_type == MessageType.CLASH_ACTION_MOVE:
-        action_card_id = data.get("action_card")
-        await clash_action_move_mechanics(consumer, game, action_card_id)
-    elif message_type == MessageType.CLASH_REACTION_MOVE:
-        reaction_cards_data = data.get("reaction_cards")
-        await clash_reaction_move_mechanics(
-            consumer, game, reaction_cards_data)
-    elif message_type == MessageType.SURRENDER_MOVE:
-        await surrender_move_mechanics(consumer)
-    else:
-        await consumer.error(
-            f"Wrong message type in the {consumer.get_game_stage()}"
-            +" game stage.")
+class ClashStageHandler(StageHandler):
 
-async def clash_action_move_mechanics(consumer, game, action_card_id):
-    if not await check_action_move_can_be_performed(
-        consumer, game, action_card_id): return
+    def __init__(self, consumer, game, message_type, data):
+        super().__init__(consumer, game, message_type, data)
+
+    async def perform_stage(self):
+        if self._message_type == MessageType.PURCHASE_MOVE:
+            p_m_h = ActionMoveHandler(self._consumer, self._game, self._data)
+            await p_m_h.perform_move()
+        elif self._message_type == MessageType.READY_MOVE:
+            r_m_h = ReactionMoveHandler(self._consumer, self._game, self._data)
+            await r_m_h.perform_move()
+        elif self._message_type == MessageType.SURRENDER_MOVE:
+            s_m_h = SurrenderMoveHandler(self._consumer)
+            await s_m_h.perform_move()
+        else:
+            e_s = ErrorSender(self._consumer)
+            await e_s.send_wrong_message_type_info()
+
+
+class ActionMoveHandler(MoveHandler):
+
+    def __init__(self, consumer, game, data):
+        super().__init__(consumer)
+        self._game = game
+        self._a_card = data.get("action_card_id")
+
+    async def _perform_move_mechanics(self):
+        game_user = self._consumer.get_game_user()
+        await game_user.remove_action_card(self._a_card)
+        await self._consumer.send_message_to_opponent(
+            {"action_card" : self._a_card},
+            "opponent_move")
     
-    if not await check_all_action_cards_exist(consumer, [action_card_id]):
-        return
+        self._consumer.decrease_action_moves()
+        if self._consumer.no_action_moves_left():
+            await game_user.set_state(PlayerState.AWAIT_CLASH_END)
 
-    if not await check_game_user_own_action_card(consumer, action_card_id):
-        return
+    async def _verify_move(self):
+        
+        if not await check_is_player_turn(consumer, game): return
 
-    if not game.update_after_turn():
-        await consumer.critical_error("Updating game turn impossible.")
-        return
+        g_v = GameVerifier(self._consumer, game)
+        if not await 
+        
+        p_v = PlayerVerifier(self._consumer)
+        if not await p_v.verify_player_in_clash(): return False
 
-    game_user = consumer.get_game_user()
-    await game_user.remove_action_card(action_card_id)
-    await consumer.send_message_to_opponent(
-        {"action_card" : action_card_id},
-        "opponent_move")
-    
-    moves_table = consumer.get_moves_table()
-    moves_table[0] -= 1 # 0 is index of action moves
-    if player_has_no_more_action_moves(moves_table):
-        await game_user.set_state(PlayerState.AWAIT_CLASH_END)
+        a_c_c = ActionCardsChecker([self._a_card])
+        c_v = CardVerifier(self._consumer, a_c_c)
+        if not a_c_c.is_cards_data_empty(): return False
+        if not await c_v.verify_cards_for_clash(): return False
+
+        if not game.update_after_turn():
+            await consumer.critical_error("Updating game turn impossible.")
+            return
+        
+
+class ReactionMoveHandler(MoveHandler):
+    def __init__(self, consumer, game, message_type, data):
+        super().__init__(consumer, game, message_type, data)
 
 async def clash_reaction_move_mechanics(consumer, game, reaction_cards_data):
     
@@ -57,7 +80,7 @@ async def clash_reaction_move_mechanics(consumer, game, reaction_cards_data):
     moves_table = consumer.get_moves_table()
     moves_table[1] -= 1 # 1 is index of reaction moves
 
-    opponent = await game.get_opponent_player(game_user.id)
+    opponent = await game.get_opponent_player(game_user)
     new_opp_morale, money_opp_gained, new_player_morale, money_player_gained = (
         await get_new_morale(
             game_user, opponent,
