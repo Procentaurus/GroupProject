@@ -46,10 +46,9 @@ class ActionMoveHandler(MoveHandler):
 
     async def _verify_move(self):
         
-        if not await check_is_player_turn(consumer, game): return
-
-        g_v = GameVerifier(self._consumer, game)
-        if not await 
+        g_v = GameVerifier(self._consumer, self._game)
+        if not await g_v.verify_next_move_performer(): return
+        if not await g_v.verify_game_next_move_type(): return
         
         p_v = PlayerVerifier(self._consumer)
         if not await p_v.verify_player_in_clash(): return False
@@ -59,10 +58,8 @@ class ActionMoveHandler(MoveHandler):
         if not a_c_c.is_cards_data_empty(): return False
         if not await c_v.verify_cards_for_clash(): return False
 
-        if not game.update_after_turn():
-            await consumer.critical_error("Updating game turn impossible.")
-            return
-        
+        if not await g_v.verify_turn_update_successful(): return
+
 
 class ReactionMoveHandler(MoveHandler):
     def __init__(self, consumer, game, message_type, data):

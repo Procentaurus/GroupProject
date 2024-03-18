@@ -69,23 +69,32 @@ class ErrorSender:
             "Do not have enough money to buy chosen cards",
             f"Not enough money to buy cards by {side} player")
 
-    async def send_improper_move_info(self):
+    async def send_improper_move_info(self, add_msg):
         side = self._consumer.get_game_user().conflict_side
-        await self._consumer.error("Improper move made",
+        await self._consumer.error(f"Improper move made - {add_msg}",
             f"Improper move made by {side} player")
         
-    async def _send_wrong_message_type_info(self):
+    async def send_wrong_message_type_info(self):
         await self._consumer.error(
             f"Wrong message type in the {self._consumer.get_game_stage()}"
             +" game stage.")
         
-    async def _send_invalid_token_info(self, conflict_side):
+    async def send_invalid_token_info(self, conflict_side):
         await self.consumer.error("You have used invalid token",
             f"Invalid authentication token used by {conflict_side} player")
         
-    async def _send_invalid_conflict_side_info(self, conflict_side):
+    async def send_invalid_conflict_side_info(self, conflict_side):
         await self.consumer.error("You have chosen invalid conflict side",
             f"Invalid conflict side chosen by {conflict_side} player")
+        
+    async def send_game_not_started_info(self, conflict_side):
+        await self._consumer.error(
+            f"{conflict_side} player made move before the game"
+            +" has started")
+
+    async def send_turn_update_fail_error(self):
+        await self._consumer.critical_error("Updating game turn impossible.")
+
         
 
 class InfoSender:
@@ -99,12 +108,13 @@ class InfoSender:
             "channel_name": self._consumer.channel_name},
             "game_creation")
         
-    async def _send_game_start_info_to_players(self):
+    async def _send_game_start_info_to_opp(self, opp):
         await self._consumer.send_message_to_opponent(
-            {"initial_money_amount" : self._opponent.money,
-            "initial_morale" : self._opponent.morale},
+            {"initial_money_amount" : opp.money,
+            "initial_morale" : opp.morale},
             "game_start")
         
+    async def _send_game_start_info(self):   
         g_u = self._consumer.get_game_user()
         await self._consumer.game_start(
             {"initial_money_amount" : g_u.money,
@@ -184,15 +194,6 @@ async def announce_winner(consumer):
     await consumer.send_message_to_group(
         {"winner" : consumer.__winner},
         "game_end")
-    
-async def check_is_player_turn(consumer, game):
-    game_user = consumer.get_game_user()
-    if game.next_move_player != game_user.conflict_side:
-        await consumer.error("Not your turn.",
-            f"{game_user.conflict_side} player performed move \
-            while it was not his turn.")
-        return False
-    return True
 
 async def send_card_sets_to_shop(consumer):
   
