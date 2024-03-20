@@ -1,4 +1,4 @@
-name,description,values,cost,playerType,type
+name,description,values,price,playerType,type
 Junior Bully,Redirect 5 damage,redirect=5;block=5,2,Student,Brute
 Freshman Bully,Redirect 10 damage,redirect=10;block=10,4,Student,Brute
 Senior Bully,Redirect 15 damage,redirect=15;block=15,6,Student,Brute
