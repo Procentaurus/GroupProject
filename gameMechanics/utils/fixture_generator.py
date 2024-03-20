@@ -39,7 +39,7 @@ def read_card_csv_generate_list(csv_file_path, model):
                         "name": row['name'],
                         "description": row['description'],
                         "values": row['values'],
-                        "cost": row['cost'],
+                        "price": row['price'],
                         "playerType": row['playerType'],
                         "type": row['type']
                     }
@@ -51,7 +51,7 @@ def read_card_csv_generate_list(csv_file_path, model):
                     "fields": {
                         "name": row['name'],
                         "description": row['description'],
-                        "cost": row['cost'],
+                        "price": row['price'],
                         "playerType": row['playerType'],
                         "pressure": row['pressure']
                     }
