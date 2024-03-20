@@ -95,7 +95,6 @@ class ErrorSender:
     async def send_turn_update_fail_error(self):
         await self._consumer.critical_error("Updating game turn impossible.")
 
-        
 
 class InfoSender:
 
@@ -119,81 +118,7 @@ class InfoSender:
         await self._consumer.game_start(
             {"initial_money_amount" : g_u.money,
             "initial_morale" : g_u.morale})
-        
-    
 
-
-async def check_action_move_can_be_performed(consumer, game):
-    
-    if not await check_is_player_turn(consumer, game): return
-
-    game_user = consumer.get_game_user()
-    if game.next_move_type != "action":
-        await consumer.error(
-            "Wrong move. It is time for reaction.",
-            f"{game_user.conflict_side} player performed move of wrong type.")
-        return False
-    
-    # Check if player is in the clash stage, if not then flow error occured
-    if game_user.state != PlayerState.IN_CLASH:
-        await consumer.critical_error(
-            f"Improper state {game_user.state} of {game_user.conflict_side} \
-            player in clash action move.")
-        return False
-    
-    return True
-
-async def check_reaction_move_can_be_performed(
-    consumer, game, reaction_cards_data):
-
-    if not await check_is_player_turn(consumer, game): return
-
-    game_user = consumer.get_game_user()
-    if game.next_move_type != "reaction":
-        await consumer.error(
-            "Wrong move. It is time for action.",
-            f"{game_user.conflict_side} player performed move of wrong type.")
-        return False
-    
-    # Check if player is in the clash stage, if not then flow error occured
-    if game_user.state != PlayerState.IN_CLASH \
-        and game_user.state != PlayerState.AWAIT_CLASH_END:
-        await consumer.critical_error(
-            f"Improper state {game_user.state} of {game_user.conflict_side} \
-            player in clash action move.")
-        return False
-    
-    reaction_cards_ids = {x.get("reaction_card_id") for x in reaction_cards_data}
-    reaction_card_exist = await check_all_reaction_cards_exist(
-        consumer, reaction_cards_ids)
-    if not reaction_card_exist: return False
-
-    reaction_cards_are_owned = await check_game_user_own_reaction_cards(
-        consumer, reaction_cards_data)
-    if not reaction_cards_are_owned: return False
-
-    return True
-
-async def check_winner(
-    consumer, opponent, new_player_morale, new_opponent_morale):
-    
-    game_user = consumer.get_game_user()
-    if new_opponent_morale <= 0:
-        consumer.set_winner(game_user.get_conflict_side())
-        await announce_winner(consumer)
-        return True
-    elif new_player_morale <= 0:
-        consumer.set_winner(opponent.get_conflict_side())
-        await announce_winner(consumer, opponent)
-        return True
-    else: 
-        return False
-    
-async def announce_winner(consumer):
-    consumer.set_closure_from_user_side(False)
-    await consumer.send_message_to_group(
-        {"winner" : consumer.__winner},
-        "game_end")
 
 async def send_card_sets_to_shop(consumer):
   

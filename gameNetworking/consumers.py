@@ -25,7 +25,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         self._closure_from_user_side = True
 
         self._game_stage = GameStage.HUB
-        self._action_card_played_by_opponent = None
+        self._a_card_played_by_opponent = None
         self._last_move_send_time = None
 
         # Specifies how many action moves can be done in 1 clash 
@@ -118,12 +118,15 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     def get_game_user(self):
         return self._game_user
-
+    
     def get_winner(self):
         return self._winner
+
+    def is_winner(self):
+        return (self._winner is not None)
     
-    def get_action_card_played_by_opponent(self):
-        return self._action_card_played_by_opponent
+    def get_a_card_played_by_opponent(self):
+        return self._a_card_played_by_opponent
     
     def get_game_stage(self):
         return self._game_stage
@@ -172,6 +175,9 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     def no_reaction_moves_left(self):
         return self._moves_table[1] == 0
+    
+    def any_moves_left(self):
+        return (self._moves_table[0] != 0 and self._moves_table[1] != 0)
     
     def decrease_action_moves(self):
         # 0 is index of action moves

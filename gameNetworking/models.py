@@ -66,6 +66,10 @@ class GameUser(models.Model):
         self.save()
 
     @database_sync_to_async
+    def has_lost(self):
+        return (self.morale <= 0)
+
+    @database_sync_to_async
     def add_money(self, amount):
         self.money += amount
         self.save()
@@ -85,7 +89,7 @@ class GameUser(models.Model):
         return self.state == PlayerState.IN_HUB
     
     @database_sync_to_async
-    def waits_for_clash_end(self):
+    def wait_for_clash_end(self):
         return self.state == PlayerState.AWAIT_CLASH_END
     
     @database_sync_to_async
@@ -93,7 +97,7 @@ class GameUser(models.Model):
         return self.state == PlayerState.IN_CLASH
     
     @database_sync_to_async
-    def waits_for_clash_start(self):
+    def wait_for_clash_start(self):
         return self.state == PlayerState.AWAIT_CLASH_START
     
     @database_sync_to_async

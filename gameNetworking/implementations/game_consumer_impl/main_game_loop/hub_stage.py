@@ -43,7 +43,7 @@ class ReadyMoveHandler(MoveHandler):
         opponent = await self._game.get_opponent_player(self._player)
         if await opponent.is_in_hub():
             await self._player.set_state(PlayerState.AWAIT_CLASH_START)
-        elif await opponent.waits_for_clash_start():
+        elif await opponent.wait_for_clash_start():
             await self._send_clash_start_info()
         else:
             await self._consumer.critical_error(

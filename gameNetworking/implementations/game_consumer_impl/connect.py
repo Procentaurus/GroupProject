@@ -97,7 +97,7 @@ class Connector:
             {"game_id": str(game_id),
             "channel_name": self._consumer.channel_name},
             "game_creation")
-        
+   
     async def _send_game_start_info_to_players(self):
         await self._consumer.send_message_to_opponent(
             {"initial_money_amount" : self._opponent.money,

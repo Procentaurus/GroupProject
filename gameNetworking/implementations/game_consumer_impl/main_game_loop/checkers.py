@@ -230,7 +230,7 @@ class PlayerVerifier:
         self._player = consumer.get_game_user() if player is None else player
 
     async def verify_player_wait_for_clash(self):
-        if await self._player.waits_for_clash_start():
+        if await self._player.wait_for_clash_start():
             e_s = ErrorSender(self._consumer)
             await e_s.send_improper_move_info("readyness already declared")
             return True
@@ -243,10 +243,18 @@ class PlayerVerifier:
             return False
         return True
     
-    async def verify_player_in_clash(self, move):
+    async def verify_player_in_clash(self):
         if not await self._player.is_in_clash():
             e_s = ErrorSender(self._consumer)
-            await e_s.send_improper_state_error(move)
+            await e_s.send_improper_state_error("action_move")
+            return False
+        return True
+    
+    async def verify_player_in_clash_or_wait_for_clash_end(self):
+        p = self._player
+        if not await p.is_in_clash() and not await p.wait_for_clash_end():
+            e_s = ErrorSender(self._consumer)
+            await e_s.send_improper_state_error("reaction_move")
             return False
         return True
 
@@ -266,8 +274,8 @@ class GameVerifier:
             return False
         return True
 
-    async def verify_game_next_move_type(self):
-        if self._game.next_move_type != "action":
+    async def verify_game_next_move_type(self, proper_move):
+        if self._game.next_move_type != proper_move:
             e_s = ErrorSender(self._consumer)
             await e_s.send_improper_move_info("wrong move type")
             return False
@@ -287,3 +295,8 @@ class GameVerifier:
             await e_s.send_improper_move_info("not your turn")
             return False
         return True
+    
+    async def check_player_lost(self, player, new_player_morale):
+        if new_player_morale <= 0:
+            return True
+        return False

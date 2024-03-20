@@ -33,6 +33,21 @@ class ActionMoveHandler(MoveHandler):
         self._game = game
         self._a_card = data.get("action_card_id")
 
+    async def _verify_move(self):
+        g_v = GameVerifier(self._consumer, self._game)
+        if not await g_v.verify_next_move_performer(): return False
+        if not await g_v.verify_game_next_move_type("action"): return False
+        
+        p_v = PlayerVerifier(self._consumer)
+        if not await p_v.verify_player_in_clash("action_move"): return False
+
+        a_c_c = ActionCardsChecker([self._a_card])
+        c_v = CardVerifier(self._consumer, a_c_c)
+        if not a_c_c.is_cards_data_empty(): return False
+        if not await c_v.verify_cards_for_clash(): return False
+
+        if not await g_v.verify_turn_update_successful(): return False
+
     async def _perform_move_mechanics(self):
         game_user = self._consumer.get_game_user()
         await game_user.remove_action_card(self._a_card)
@@ -44,119 +59,174 @@ class ActionMoveHandler(MoveHandler):
         if self._consumer.no_action_moves_left():
             await game_user.set_state(PlayerState.AWAIT_CLASH_END)
 
-    async def _verify_move(self):
-        
-        g_v = GameVerifier(self._consumer, self._game)
-        if not await g_v.verify_next_move_performer(): return
-        if not await g_v.verify_game_next_move_type(): return
-        
-        p_v = PlayerVerifier(self._consumer)
-        if not await p_v.verify_player_in_clash(): return False
-
-        a_c_c = ActionCardsChecker([self._a_card])
-        c_v = CardVerifier(self._consumer, a_c_c)
-        if not a_c_c.is_cards_data_empty(): return False
-        if not await c_v.verify_cards_for_clash(): return False
-
-        if not await g_v.verify_turn_update_successful(): return
-
 
 class ReactionMoveHandler(MoveHandler):
-    def __init__(self, consumer, game, message_type, data):
-        super().__init__(consumer, game, message_type, data)
+    def __init__(self, consumer, game, data):
+        super().__init__(consumer)
+        self._game = game
+        self._r_cards = data.get("reaction_cards_data")
+        self._user = self._consumer.get_game_user()
 
-async def clash_reaction_move_mechanics(consumer, game, reaction_cards_data):
-    
-    if not await check_reaction_move_can_be_performed(
-        consumer, game, reaction_cards_data): return
+        # Current user new values
+        self._user_r_cards_gained = None
+        self._user_a_cards_gained = None
+        self._new_user_morale = None
+        self._money_user_gained = None
 
-    if not game.update_after_turn():
-        await consumer.critical_error("Updating game turn impossible.")
-        return
+        # Opponent new values
+        self._opp_r_cards_gained = None
+        self._opp_a_cards_gained = None
+        self._new_opp_morale = None
+        self._money_opp_gained = None
 
-    moves_table = consumer.get_moves_table()
-    moves_table[1] -= 1 # 1 is index of reaction moves
+    async def _verify_move(self):
+        g_v = GameVerifier(self._consumer, self._game)
+        if not await g_v.verify_next_move_performer(): return False
+        if not await g_v.verify_game_next_move_type("reaction"): return False
+        
+        p_v = PlayerVerifier(self._consumer)
+        if not await p_v.verify_player_in_clash_or_wait_for_clash_end():
+            return False
 
-    opponent = await game.get_opponent_player(game_user)
-    new_opp_morale, money_opp_gained, new_player_morale, money_player_gained = (
-        await get_new_morale(
-            game_user, opponent,
-            consumer.get_action_card_played_by_opponent, reaction_cards_data)
-    )
-    action_cards_player_gained, action_cards_opp_gained = None, None
-    reaction_cards_player_gained, reaction_cards_opp_gained = None, None
+        r_c_c = ReactionCardsChecker(self._r_cards)
+        c_v = CardVerifier(self._consumer, r_c_c)
+        if not r_c_c.is_cards_data_empty(): return False
+        if not await c_v.verify_cards_for_clash(): return False
 
-    await consumer.send_message_to_opponent(
-        {"reaction_cards" : reaction_cards_data},
-        "opponent_move")
-    
-    game_user = consumer.get_game_user()
-    there_is_winner = await check_winner(
-        consumer, opponent, new_player_morale, new_opp_morale)
-    if there_is_winner: return
+        if not await g_v.verify_turn_update_successful(): return False
 
-    game_user_message_body = create_clash_result_response_body(
-        new_player_morale,  new_opp_morale, money_player_gained,
-        action_cards_player_gained, reaction_cards_player_gained)
-    await consumer.clash_result(game_user_message_body)
+    async def _perform_move_mechanics(self):
+        opp = await self._game.get_opponent_player(self._user)
+        await self._consumer.send_message_to_opponent(
+            {"reaction_cards" : self._r_cards},
+            "opponent_move")
+        
+        await self._process_clash_results()
+        await self._add_gains_to_players_accounts()
+        await self._remove_all_used_reaction_cards()
+        await self._send_clash_result_to_players()
 
-    opp_message_body = create_clash_result_response_body(
-        new_opp_morale,  new_player_morale, money_opp_gained,
-        action_cards_opp_gained, reaction_cards_opp_gained)
-    await consumer.send_message_to_opponent(opp_message_body,"clash_result")
+        await self._set_winner_if_exist(opp)
 
-    await add_gains_to_account(
-        new_player_morale, money_player_gained,
-        action_cards_player_gained, reaction_cards_player_gained)
-    await add_gains_to_account(
-        opponent, new_opp_morale, money_opp_gained,
-        action_cards_opp_gained, reaction_cards_opp_gained)
-    
-    await remove_all_used_reaction_cards(game_user, reaction_cards_data)
+        if self._consumer.is_winner():
+            await self._announce_winner()
+            return
 
-    if player_has_no_more_action_moves(moves_table) \
-        and player_has_no_more_reaction_moves(moves_table):
-           
-        if opponent.state == PlayerState.AWAIT_CLASH_END:
-            new_clash_initiated = consumer.init_table_for_new_clash()
-            if not new_clash_initiated: return
-
-            await consumer.send_message_to_group({}, "clash_end")
+        self._consumer.decrease_reaction_moves()
+        if self._consumer.any_moves_left():
+            return
+        
+        if await opp.wait_for_clash_end():
+            self._consumer.init_table_for_new_clash()
+            await self._consumer.send_message_to_group({}, "clash_end")
         else:
-            await inform_about_improper_state_error(consumer, "reaction_move")
+            e_s = ErrorSender(self._consumer)
+            await e_s.send_improper_state_error("reaction_move")
 
-async def add_gains_to_account(
-    user, new_morale, money_gained, action_cards_gained, reaction_cards_gained):
+    async def _process_clash_results(self, opp):
+        (new_opp_morale, opp_money, new_user_morale, user_money) = (
+            await get_new_morale(
+                self._user, opp, self._consumer.get_a_card_played_by_opponent(),
+                self._r_cards)
+        )
+        self._set_money_opp_gained(opp_money)
+        self._set_new_opp_morale(new_opp_morale)
+        self._set_money_user_gained(user_money)
+        self._set_new_user_morale(new_user_morale)
 
-    await user.set_morale(new_morale)
-    await user.add_money(money_gained)
+
+    async def _set_winner_if_exist(self, opp):
+        if await opp.has_lost():
+            self._consumer.set_winner(self._user.conflict_side)
+        if await self._user.has_lost():
+            self._consumer.set_winner(opp.conflict_side)
+
+    async def _send_clash_result_to_players(self):
+        user_rsp_body = self._create_clash_result_response_body_for_opp()
+        await self._consumer.clash_result(user_rsp_body)
+
+        opp_rsp_body = self._create_clash_result_response_body_for_opp()
+        await self._consumer.send_message_to_opponent(
+            opp_rsp_body, "clash_result")
+        
+    async def _add_gains_to_players_accounts(self):
+        await self._add_all_gains_to_user_account()
+        await self._add_all_gains_to_opp_account()
     
-    for action_card in action_cards_gained:
-        await user.add_action_card(action_card)
+    async def _add_all_gains_to_user_account(self):
+        u = self._consumer.get_game_user()
+        await u.set_morale(self._new_user_morale)
+        await u.add_money(self._money_user_gained)
+        await self._add_all_action_cards(u, self._user_a_cards_gained)
+        await self._add_all_reaction_cards(u, self._user_r_cards_gained)
 
-    for reaction_card_data in reaction_cards_gained:
-        await user.add_reaction_card(
-            reaction_card_data.get("reaction_card_id"),
-            reaction_card_data.get("amount"))
+    async def _add_all_gains_to_opp_account(self):
+        opp = await self._game.get_opponent_player(self._player)
+        await opp.set_morale(self._new_user_morale)
+        await opp.add_money(self._money_user_gained)
+        await self._add_all_action_cards(opp, self._opp_a_cards_gained)
+        await self._add_all_reaction_cards(opp, self._opp_r_cards_gained)
+        
+    def _create_clash_result_response_body_for_user(self):
+        return {
+            "new_player_morale" : self._new_user_morale,
+            "new_opponent_morale" : self._new_opp_morale,
+            "money_gained" : self._money_user_gained,
+            "action_cards_gained" : self._user_a_cards_gained,
+            "reaction_cards_gained" : self._user_r_cards_gained
+        }
+    
+    def _create_clash_result_response_body_for_opp(self):
+        return {
+            "new_player_morale" : self._new_opp_morale,
+            "new_opponent_morale" : self._new_user_morale,
+            "money_gained" : self._money_opp_gained,
+            "action_cards_gained" : self._opp_a_cards_gained,
+            "reaction_cards_gained" : self._opp_r_cards_gained
+        }
 
-def create_clash_result_response_body(new_morale, new_opponent_morale,
-    money_gained, action_cards_gained, reaction_cards_gained):
-    return {
-        "new_player_morale" : new_morale,
-        "new_opponent_morale" : new_opponent_morale,
-        "money_gained" : money_gained,
-        "action_cards_gained" : action_cards_gained,
-        "reaction_cards_gained" : reaction_cards_gained
-    }
+    async def _remove_all_used_reaction_cards(self):
+        for r_card_data in self._r_cards:
+            await self._user.remove_reaction_card(
+                r_card_data.get("reaction_card_id"),
+                r_card_data.get("amount"))
+    
+    async def _add_all_reaction_cards(self, game_user, r_cards_gained):
+        for r_card_data in r_cards_gained:
+            await game_user.add_reaction_card(
+                r_card_data.get("reaction_card_id"),
+                r_card_data.get("amount"))
+            
+    async def _announce_winner(self):
+        self._consumer.set_closure_from_user_side(False)
+        await self._consumer.send_message_to_group(
+            {"winner" : self._consumer.get_winner()},
+            "game_end")
 
-def player_has_no_more_action_moves(moves_table):
-    return moves_table[0] == 0
+    async def _add_all_action_cards(self, game_user, a_cards_gained):
+        for a_card in a_cards_gained:
+            await game_user.add_action_card(a_card)
 
-def player_has_no_more_reaction_moves(moves_table):
-    return moves_table[1] == 0
+    def _set_user_r_cards_gained(self, value):
+        self._user_r_cards_gained = value
 
-async def remove_all_used_reaction_cards(game_user, reaction_cards_data):
-    for reaction_card_data in reaction_cards_data:
-        await game_user.remove_reaction_card(
-            reaction_card_data.get("reaction_card_id"),
-            reaction_card_data.get("amount"))
+    def _set_user_a_cards_gained(self, value):
+        self._user_a_cards_gained = value
+
+    def _set_new_user_morale(self, value):
+        self._new_user_morale = value
+
+    def _set_money_user_gained(self, value):
+        self._money_user_gained = value
+
+    def _set_opp_r_cards_gained(self, value):
+        self._opp_r_cards_gained = value
+
+    def _set_opp_a_cards_gained(self, value):
+        self._opp_a_cards_gained = value
+
+    def _set_new_opp_morale(self, value):
+        self._new_opp_morale = value
+
+    def _set_money_opp_gained(self, value):
+        self._money_opp_gained = value
