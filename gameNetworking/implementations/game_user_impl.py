@@ -133,7 +133,6 @@ def add_reaction_card_to_shop_impl(game_user, reaction_card_id, amount):
 @database_sync_to_async
 def increase_card_amount(had_card_earlier, card, amount):
     if had_card_earlier:
-        # Increment the amount
         card.amount += amount
         card.save()
         return True

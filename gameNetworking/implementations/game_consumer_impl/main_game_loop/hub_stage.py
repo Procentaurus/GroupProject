@@ -1,89 +1,101 @@
 from gameNetworking.enums import PlayerState, MessageType
 from .checkers import *
 from .purchasing_cards import purchase_action_card, purchase_reaction_card
-from .common import surrender_move_mechanics, inform_about_improper_state_error
+from .common import SurrenderMoveHandler
+from .abstract import MoveHandler, StageHandler
 
-async def hub_stage_impl(consumer, game, message_type, data):
 
-    if message_type == MessageType.PURCHASE_MOVE:
-        action_cards_ids = data.get("action_cards")
-        reaction_cards_data = data.get("reaction_cards")
-        await purchase_move_mechanics(
-            consumer, action_cards_ids, reaction_cards_data)
-    elif message_type == MessageType.READY_MOVE:
-        await ready_move_mechanics(consumer, game)
-    elif message_type == MessageType.SURRENDER_MOVE:
-        await surrender_move_mechanics(consumer)
-    else:
-        await consumer.error(
-            f"Wrong message type in the {consumer.get_game_stage()}"
-            +" game stage.")
+class HubStageHandler(StageHandler):
 
-async def ready_move_mechanics(consumer, game):
+    def __init__(self, consumer, game, message_type, data):
+        super().__init__(consumer, game, message_type, data)
 
-    game_user = consumer.get_game_user()
+    async def perform_stage(self):
+        if self._message_type == MessageType.PURCHASE_MOVE:
+            p_m_h = PurchaseMoveHandler(self._consumer, self._data)
+            await p_m_h.perform_move()
+        elif self._message_type == MessageType.READY_MOVE:
+            r_m_h = ReadyMoveHandler(self._consumer, self._game)
+            await r_m_h.perform_move()
+        elif self._message_type == MessageType.SURRENDER_MOVE:
+            s_m_h = SurrenderMoveHandler(self._consumer)
+            await s_m_h.perform_move()
+        else:
+            e_s = ErrorSender(self._consumer)
+            await e_s.send_wrong_message_type_info()
 
-    if is_player_awaiting_clash(game_user):
-        await inform_cards_cannot_be_bought_when_await_clash(consumer)
-        return
-    
-    if not is_player_in_hub(game_user):
-        await inform_about_improper_state_error(consumer, "ready_move")
-        return
-    
-    opponent = await game.get_opponent_player(game_user.id)
-    if is_player_in_hub(opponent):
-        await game_user.set_state(PlayerState.AWAIT_CLASH_START)
-    elif is_player_awaiting_clash(opponent):
-        await consumer.send_message_to_group(
-            {"next_move_player" : game.next_move_player},
-            "clash_start")
-    else:
-        await consumer.critical_error(
-            f"Improper opponent player state: {opponent.state}")
 
-async def purchase_move_mechanics(
-    consumer, action_cards_ids, reaction_cards_data):
+class ReadyMoveHandler(MoveHandler):
 
-    game_user = consumer.get_game_user()
+    def __init__(self, consumer, game):
+        super().__init__(consumer)
+        self._game = game
+        self._player = self._consumer.get_game_user()
 
-    if is_player_awaiting_clash(game_user):
-        await inform_cards_cannot_be_bought_when_await_clash(consumer)
-        return
-    
-    if not is_player_in_hub(game_user):
-        await inform_about_improper_state_error(consumer, "purchase_move")
-        return
-    
-    if not await check_all_action_cards_exist(consumer, action_cards_ids):
-        return
-
-    if not await check_all_reaction_cards_exist(consumer,
-        {x.get("reaction_card_id") for x in reaction_cards_data}): return
-
-    if not await check_all_cards_are_in_shop(
-        consumer, action_cards_ids, reaction_cards_data): return
-
-    if not await check_game_user_can_afford_all_cards(
-        consumer, action_cards_ids, reaction_cards_data): return
-    
-    for action_card_id in action_cards_ids:
-        _ = await purchase_action_card(consumer, action_card_id)
-
-    for reaction_card_data in reaction_cards_data:
-        _ = await purchase_reaction_card(
-            consumer, reaction_card_data.get("reaction_card_id"),
-            reaction_card_data.get("amount"))
+    async def _verify_move(self):
+        p_v = PlayerVerifier(self._consumer)
+        if await p_v.verify_player_wait_for_clash(): return False
+        if not await p_v.verify_player_in_hub("purchase move"): return False
         
-    await consumer.purchase_result({"new_money_amount" : game_user.money})
+        return True
 
-def is_player_awaiting_clash(game_user):
-    return game_user.state == PlayerState.AWAIT_CLASH_START
+    async def _perform_move_mechanics(self):
+        opponent = await self._game.get_opponent_player(self._player)
+        if await opponent.is_in_hub():
+            await self._player.set_state(PlayerState.AWAIT_CLASH_START)
+        elif await opponent.wait_for_clash_start():
+            await self._send_clash_start_info()
+        else:
+            await self._consumer.critical_error(
+                f"Improper opponent player state: {opponent.state}")
+            
+    async def _send_invalid_move_info(self):
+        await self._consumer.error("You have already declared readyness.",
+            f"{self._player.conflict_side} player tried to declare"
+            +" readyness for the clash afresh.")
 
-def is_player_in_hub(game_user):
-    return game_user.state == PlayerState.IN_HUB
+    async def _send_clash_start_info(self):
+        await self._consumer.send_message_to_group(
+            {"next_move_player" : self._game.next_move_player},
+            "clash_start")
 
-async def inform_cards_cannot_be_bought_when_await_clash(consumer):
-    await consumer.error("You have already declared readyness.",
-        f"{consumer.get_game_user().conflict_side} player tried to declare"
-        +" readyness for the clash afresh.")
+
+class PurchaseMoveHandler(MoveHandler):
+
+    def __init__(self, consumer, data):
+        super().__init__(consumer)
+        self._a_cards = data.get("action_cards")
+        self._r_cards = data.get("reaction_cards")
+
+    async def _perform_move_mechanics(self):
+        g_u = self._consumer.get_game_user()
+        for a_card_id in self._a_cards:
+            await purchase_action_card(self._consumer, a_card_id)
+            await g_u.remove_action_card_from_shop(a_card_id)
+
+        for r_card_data in self._r_cards:
+            id = r_card_data.get("reaction_card_id")
+            amount = r_card_data.get("amount")
+            await purchase_reaction_card(self._consumer, id, amount)
+            await g_u.remove_reaction_card_from_shop(id, amount)
+            
+        await self._consumer.purchase_result(
+            {"new_money_amount" : self._consumer.get_game_user().money})
+
+    async def _verify_move(self):
+        p_v = PlayerVerifier(self._consumer)
+        if await p_v.verify_player_wait_for_clash(): return False
+        if not await p_v.verify_player_in_hub("purchase move"): return False
+
+        a_c_c = ActionCardsChecker(self._a_cards)
+        a_c_v = CardVerifier(self._consumer, a_c_c)
+        if not await a_c_v.verify_cards_for_purchase(): return False
+
+        r_c_c = ReactionCardsChecker(self._r_cards)
+        r_c_v = CardVerifier(self._consumer, r_c_c)
+        if not await r_c_v.verify_cards_for_purchase(): return False
+
+        c_c_v = CardCostVerifier(self._consumer, self._a_cards, self._r_cards)
+        if not await c_c_v.verify_player_can_afford_cards(): return False
+
+        return True

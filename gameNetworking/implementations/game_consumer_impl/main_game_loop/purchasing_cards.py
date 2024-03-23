@@ -1,9 +1,9 @@
-from gameMechanics.models import ActionCard, ReactionCard
+from gameMechanics.queries import get_action_card, get_reaction_card
 
 
 async def purchase_action_card(consumer, action_card_id):
 
-    action_card_price = ActionCard.objects.get(id=action_card_id).price
+    action_card_price = (await get_action_card(action_card_id)).price
     game_user = consumer.get_game_user()
 
     if game_user.money >= action_card_price:
@@ -17,7 +17,7 @@ async def purchase_action_card(consumer, action_card_id):
 
 async def purchase_reaction_card(consumer, reaction_card_id, amount):
 
-    reaction_card_price = ReactionCard.objects.get(id=reaction_card_id).price
+    reaction_card_price = (await get_reaction_card(reaction_card_id)).price
     game_user = consumer.get_game_user()
 
     if game_user.money >= reaction_card_price * amount:
@@ -26,5 +26,5 @@ async def purchase_reaction_card(consumer, reaction_card_id, amount):
         return True
     else:
         await consumer.critical_error(
-            f"Too expensive reaction card: {reaction_card_id} passed validation.")
+            f"Too expensive reaction card: {reaction_card_id} passed validation")
         return False

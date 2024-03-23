@@ -66,8 +66,7 @@ async def clash_end_impl(consumer, data):
         'type' : "clash_end",
     })
     
-    is_teacher = bool(data.get("is_teacher"))
-    await send_card_sets_to_shop(consumer, is_teacher)
+    await send_card_sets_to_shop(consumer)
 
 async def game_end_impl(consumer, data):  
     try:
@@ -114,4 +113,3 @@ async def critical_error_impl(consumer, log_message):
     })
 
     consumer.logger.error(log_message)
-

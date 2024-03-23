@@ -1,87 +1,114 @@
 from gameNetworking.queries import *
-from .main_game_loop.common import send_card_sets_to_shop
+from .main_game_loop.common import *
 
+class Connector:
 
-async def connect_impl(consumer): # main implementation function
+    def __init__(self, consumer):
+        self._consumer = consumer
+        self._opponent = None
 
-    access_token = consumer.scope.get("token")
-    conflict_side = consumer.scope["url_route"]["kwargs"]["conflict_side"]
+    async def connect(self):
+        await self._consumer.accept()
+        if not self._verify_connection():
+            await self._consumer.close()
+            return
 
-    await consumer.accept()
+        await self._initialize_game_user()
+        num_t = await get_number_of_waiting_players("teacher")
+        num_s = await get_number_of_waiting_players("student")
 
-    # check if user is using valid token
-    if access_token is None:
-        consumer.error("You have used invalid token",
-            f"Invalid authentication token used by {conflict_side} player")
-        await consumer.close()
-        return
+        if num_t > 0 and num_s > 0:
+            await self._initialize_game()
+            # await initialize_game_archive()
+            await send_card_sets_to_shop(self._consumer)
 
-    # check if user has chosen a playable conflict side
-    if conflict_side != "teacher" and conflict_side != "student":
-        consumer.error("You have chosen invalid conflict side",
-            f"Invalid conflict side chosen by {conflict_side} player")
-        await consumer.close()
-        return
+    async def _initialize_game(self):
+        await self._set_opponent()
+        game = await self._create_game()
+        await self._set_users_in_game()
+
+        await self._add_players_channels_to_group(game.id)
+        self._consumer.set_opponent_channel_name(self._opponent.channel_name)
+
+        i_s = InfoSender(self._consumer)
+        await i_s._send_game_creation_info_to_opp(game.id)
+        await i_s._send_game_start_info()
+        await i_s._send_game_start_info_to_opp(self._opponent)
+
+    def _get_access_token(self):
+        return self._consumer.scope.get("token")
     
-    game_user = await create_game_user(
-        access_token, conflict_side, consumer.channel_name)
-    consumer.set_game_user(game_user)
-    # await delete_game_token(game_user)
+    def _get_conflict_side(self):
+        return self._consumer.scope["url_route"]["kwargs"]["conflict_side"]
 
-    number_of_teachers_waiting = await get_number_of_waiting_game_users("teacher")
-    number_of_students_waiting = await get_number_of_waiting_game_users("student")
+    def _is_access_token_valid(self):
+        a_t = self._get_access_token()
+        if a_t is None:
+            return False if a_t is None else True
+        
+    def _is_conflict_side_valid(self):
+        c_s = self._get_conflict_side()
+        if c_s == "teacher" or c_s == "student":
+            return True
+        else:
+            return False
+        
+    async def _verify_connection(self):
+        e_s = ErrorSender(self._consumer)
+        c_s = self._get_conflict_side()
+        if not self._is_access_token_valid():
+            await e_s.send_invalid_token_info(c_s)
+            return False
 
-    # initialization of the game if there are mininimum 2 players waiting
-    if number_of_teachers_waiting > 0 and number_of_students_waiting > 0:
-        await initialize_game(consumer)
-        # await initialize_game_archive()
-        await send_card_sets_to_shop(consumer)
+        if not self._is_conflict_side_valid():
+            await e_s.send_invalid_conflict_side_info(c_s)
+            return False
+        
+        return True
+    
+    async def _initialize_game_user(self):
+        a_t = self._get_access_token()
+        c_s = self._get_conflict_side()
+        g_u = await create_game_user(a_t, c_s, self._consumer.channel_name)
+        self._consumer.set_game_user(g_u)
+        # await delete_game_token(game_user)
 
-# Main initialization of the game
-async def initialize_game(consumer):
-    player_1 = consumer.get_game_user()
-    player_2 = None
-    if is_player_teacher(player_1):
-        player_2 = await get_longest_waiting_game_user("student")
-    else:
-        player_2 = await get_longest_waiting_game_user("teacher")
+    async def _set_opponent(self):
+        if self._get_conflict_side() == "teacher":
+            self._opponent = await get_longest_waiting_player("student")
+        else:
+            self._opponent = await get_longest_waiting_player("teacher")
 
-    (await player_1.get_user()).in_game = True
-    (await player_2.get_user()).in_game = True
+    async def _create_game(self):
+        game = await create_game(self._consumer.get_game_user(), self._opponent)
+        self._consumer.set_game_id(game.id)
+        self._consumer.logger.info("The game has started.")
+        return game
 
-    # Creating game object in DB
-    game = await create_game(player_1, player_2)
-    consumer.set_game_id(game.id)
-    consumer.logger.info("The game has started.")
+    async def _add_players_channels_to_group(self, game_id):
+        await self._consumer.channel_layer.group_add(
+            f"game_{game_id}", self._opponent.channel_name)
+        await self._consumer.channel_layer.group_add(
+            f"game_{game_id}", self._consumer.get_game_user().channel_name)
 
-    # adding both players' channels to one group
-    # group name is game_{UUID of game entity object}
-    await consumer.channel_layer.group_add(f"game_{game.id}", player_2.channel_name)
-    await consumer.channel_layer.group_add(f"game_{game.id}", player_1.channel_name)
+    async def _send_game_creation_info_to_opponent(self, game_id):
+        await self._consumer.send_message_to_opponent(
+            {"game_id": str(game_id),
+            "channel_name": self._consumer.channel_name},
+            "game_creation")
+   
+    async def _send_game_start_info_to_players(self):
+        await self._consumer.send_message_to_opponent(
+            {"initial_money_amount" : self._opponent.money,
+            "initial_morale" : self._opponent.morale},
+            "game_start")
+        
+        g_u = self._consumer.get_game_user()
+        await self._consumer.game_start(
+            {"initial_money_amount" : g_u.money,
+            "initial_morale" : g_u.morale})
 
-    # Saves info about opponent's channels name
-    consumer.set_opponent_channel_name(player_2.channel_name)
-
-    # Triggering initialization on opponent site
-    await consumer.send_message_to_opponent(
-        {"game_id": str(game.id), "channel_name": consumer.channel_name},
-        "game_creation")
-
-    # Sending initial message about game start
-    await consumer.send_message_to_opponent(
-        {"initial_money_amount" : player_2.money,
-        "initial_morale" : player_2.morale},
-        "game_start")
-    await consumer.game_start(
-        {"initial_money_amount" : player_1.money,
-        "initial_morale" : player_1.morale})
-
-async def inform_about_improper_state_error(consumer, move_type):
-    game_user = consumer.get_game_user()
-
-    await consumer.critical_error(
-        f"Improper state: {game_user.state} of {game_user.conflict_side}"
-        + f" player in {move_type}.")
-
-def is_player_teacher(player):
-    return player.conflict_side == "teacher"
+    async def _set_users_in_game(self):
+        g_u = self._consumer.get_game_user()
+        (await g_u.get_user()).set_in_game()
+        (await self._opponent.get_user()).set_in_game()

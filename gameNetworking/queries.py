@@ -14,14 +14,14 @@ def get_game_user(game_user_id):
         return None
     
 @database_sync_to_async
-def get_longest_waiting_game_user(conflict_side):
+def get_longest_waiting_player(conflict_side):
     try:
         return GameUser.objects.filter(conflict_side=conflict_side).first()
     except GameUser.DoesNotExist:
         return None
 
 @database_sync_to_async
-def get_number_of_waiting_game_users(conflict_side):
+def get_number_of_waiting_players(conflict_side):
     return GameUser.objects.filter(conflict_side=conflict_side).count()
 
 @database_sync_to_async
