@@ -101,12 +101,6 @@ def get_values_dict(values_string):
     dictionary = dict(re.findall(r'(\w+)[=:]([^\s,;]+)', values_string))
     return dictionary
 
-# Calculate morale for each player after each instance of clash
-def calculate_morale(player):
-    # For now, players 5 morale per fight if they win and 10 if they lose
-    # TODO: Consult usage
-    return None
-
 # TODO: Consult usage
 def get_action_cards():
     return None
