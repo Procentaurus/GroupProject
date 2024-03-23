@@ -119,7 +119,7 @@ class InfoSender:
             {"initial_money_amount" : g_u.money,
             "initial_morale" : g_u.morale})
 
-
+        
 async def send_card_sets_to_shop(consumer):
   
     initial_reaction_cards_for_teacher, initial_action_cards_for_teacher = (
@@ -129,7 +129,7 @@ async def send_card_sets_to_shop(consumer):
         await get_initial_shop_for_player(5, 2, "student")
     )
 
-    if consumer.get_game_user():
+    if consumer.get_game_user().conflict_side == "teacher":
         await send_cards_to_player(consumer, initial_action_cards_for_teacher,
             initial_reaction_cards_for_teacher)
         await send_cards_to_opponent(consumer, initial_action_cards_for_student,
