@@ -7,8 +7,8 @@ class Card(models.Model):
 
 class ActionCard(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-    name = models.CharField(max_length=20)
-    description = models.CharField(max_length=100)
+    name = models.CharField(max_length=50)
+    description = models.CharField(max_length=150)
     playerType_choices = [
         ('student', 'student'),
         ('teacher', 'teacher')        
@@ -21,8 +21,8 @@ class ActionCard(models.Model):
 
 class ReactionCard(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-    name = models.CharField(max_length=20)
-    description = models.CharField(max_length=100)
+    name = models.CharField(max_length=50)
+    description = models.CharField(max_length=150)
     values = models.CharField()
     playerType_choices = [
         ('student', 'student'),
