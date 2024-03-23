@@ -1,4 +1,4 @@
-name,description,cost,playerType,pressure
+name,description,price,playerType,pressure
 Clog The School Toilet,Deal 20 damage,3,Student,0
 Shoot A Spitball,Deal 20 damage,3,Student,0
 Bite On The Teacher's Pencil,Deal 20 damage,3,Student,0

@@ -1,10 +1,12 @@
 from .queries import *
 
+
 class GameAuthenticationTokenMiddleware:
     def __init__(self, inner):
         self.inner = inner
 
-class GameAuthenticationTokenMiddleware: # implementation of getting data about player's single-use token
+# Implementation of getting data about player's single-use token
+class GameAuthenticationTokenMiddleware:
     def __init__(self, inner):
         self.inner = inner
 
@@ -14,9 +16,12 @@ class GameAuthenticationTokenMiddleware: # implementation of getting data about 
         token_string = query_string.split('=')[1]
 
         token = await get_game_token(token_string)
-        user = token.get_game_user()
-        
-        scope['user'] = user
-        scope['token'] = token
+        if token is not None:
+            user = token.get_game_user()
             
-        return await self.inner(scope, receive, send)
+            scope['user'] = user
+            scope['token'] = token
+                
+            return await self.inner(scope, receive, send)
+        else:
+            return

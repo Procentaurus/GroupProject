@@ -41,6 +41,9 @@ class MyUser(AbstractBaseUser, PermissionsMixin): # main user class used through
     username = models.CharField(max_length=30, unique=True, null=False, blank=False)
     creation_date = models.DateTimeField(auto_now_add=True)
     lastLogin = models.DateTimeField(auto_now=True)
+
+    in_game = models.BooleanField(default=False)
+    is_online = models.BooleanField(default=False)
     
     hide_contact_data = models.BooleanField(default=True)
     #image = models.ImageField(null=True, blank=True, upload_to=user_directory_path, default="model.png")

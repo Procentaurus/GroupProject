@@ -1,12 +1,30 @@
 from enum import Enum, IntEnum
 
+
 class MessageType(str, Enum):
-    COLLECTING_MOVE = 'collecting_move'
+    PURCHASE_MOVE = 'purchase_move'
+    READY_MOVE = 'ready_move'
     CLASH_ACTION_MOVE = 'clash_action_move'
     CLASH_REACTION_MOVE = 'clash_reaction_move'
     SURRENDER_MOVE = 'surrender_move'
 
 
 class ResponseTime(IntEnum):
-    COLLECTION_PHASE_RESPONSE_TIME = 15
+    HUB_TIME = 100
     CLASH_PHASE_RESPONSE_TIME = 30
+
+
+class GameStage(IntEnum):
+    HUB = 0
+    CLASH = 1
+
+
+class PlayerState(str, Enum):
+    IN_HUB = "in_hub"
+
+    # after player collected all available cards
+    AWAIT_CLASH_START = "await_clash_start"
+    IN_CLASH = "in_clash"
+
+    # after player used all his action cards
+    AWAIT_CLASH_END = "await_clash_end"

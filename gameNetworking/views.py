@@ -6,11 +6,14 @@ import logging
 from WebGame.permissions import *
 from .serializers import *
 
+
 logger = logging.getLogger(__name__)
 
 class GameAuthenticationTokenList(generics.ListCreateAPIView):
 
-    permission_classes = (IsAuthenticated & ((ChoseSafeMethod & IsAdmin ) | ~ChoseSafeMethod),)
+    permission_classes = (
+        IsAuthenticated & ((ChoseSafeMethod & IsAdmin ) | ~ChoseSafeMethod),
+    )
 
     def get_output_serializer_class(self):
         if self.request.user.is_admin:
@@ -40,8 +43,11 @@ class GameAuthenticationTokenList(generics.ListCreateAPIView):
             return Response(dto, status=status.HTTP_201_CREATED)
         
         elif number_of_found_tokens > 1:
-            logger.error("Multiple game tokens connected to player %s", user.username)
+            logger.error(
+                "Multiple game tokens connected to player %s",
+                user.username)
             return Response(None, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         else:
-            return Response("You have already requested game token.", status=status.HTTP_400_BAD_REQUEST)
+            return Response("You have already requested game token.",
+                status=status.HTTP_400_BAD_REQUEST)

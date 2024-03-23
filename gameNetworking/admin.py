@@ -1,25 +1,34 @@
 from django.contrib import admin
 from .models import *
 
+
 #
-# Each class adds one entity class and its elements to django admin, with specified values for display and search
+# Each class adds one entity class and its elements to django admin,
+# with specified values for display and search
 #
 
 @admin.register(Game)
 class GameAdmin(admin.ModelAdmin):
-    list_display = ('id', 'teacher_player', 'student_player', 'start_datetime', 'end_datetime')
-    readonly_fields = ('id', 'start_datetime', 'end_datetime')
-    ordering = ("-start_datetime",)
+    list_display = ('id', 'teacher_player', 'student_player')
+    readonly_fields = ('id',)
     add_fieldsets = (
-        ("Main section", {"fields": ("teacher_player",'student_player', "next_move")}),
+        ("Main section", {"fields": (
+            "teacher_player",'student_player',
+            "next_move_player", "next_move_type")
+        }),
     )
 
 @admin.register(GameUser)
 class GameUserAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'conflict_side', 'in_game')
-    readonly_fields = ('id',)
+    list_display = ('id', 'user', 'conflict_side')
+    readonly_fields = ('id', 'user')
     add_fieldsets = (
-        ("Main section", {"fields": ("user",'conflict_side', 'in_game')}),
+        ("Main", {"fields": ("id", "user")}),
+        ("Game Data", {"fields": (
+            "state", "morale", "money", "conflict_side")}),
+        ("Cards", {"fields":(
+            "owned_action_cards", "action_cards_in_shop"
+        )})
     )
 
 @admin.register(GameAuthenticationToken)

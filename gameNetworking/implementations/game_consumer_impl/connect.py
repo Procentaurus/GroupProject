@@ -1,4 +1,5 @@
 from gameNetworking.queries import *
+from .main_game_loop.common import send_card_sets_to_shop
 
 
 async def connect_impl(consumer): # main implementation function
@@ -6,64 +7,81 @@ async def connect_impl(consumer): # main implementation function
     access_token = consumer.scope.get("token")
     conflict_side = consumer.scope["url_route"]["kwargs"]["conflict_side"]
 
+    await consumer.accept()
+
     # check if user is using valid token
     if access_token is None:
+        consumer.error("You have used invalid token",
+            f"Invalid authentication token used by {conflict_side} player")
         await consumer.close()
         return
 
     # check if user has chosen a playable conflict side
     if conflict_side != "teacher" and conflict_side != "student":
+        consumer.error("You have chosen invalid conflict side",
+            f"Invalid conflict side chosen by {conflict_side} player")
         await consumer.close()
         return
     
-    game_user = await create_game_user(access_token, conflict_side, consumer.channel_name)
-    is_teacher = True if game_user.conflict_side == "teacher" else False
-    consumer.set_game_user_id(game_user.id)
+    game_user = await create_game_user(
+        access_token, conflict_side, consumer.channel_name)
+    consumer.set_game_user(game_user)
     # await delete_game_token(game_user)
 
     number_of_teachers_waiting = await get_number_of_waiting_game_users("teacher")
     number_of_students_waiting = await get_number_of_waiting_game_users("student")
 
-    await consumer.accept()
-    if number_of_teachers_waiting > 0 and number_of_students_waiting > 0: # initialization of the game if there are mininimum 2 players waiting
-        await initialize_game(consumer, game_user, is_teacher)
-        await manage_first_tasks(consumer, is_teacher)
+    # initialization of the game if there are mininimum 2 players waiting
+    if number_of_teachers_waiting > 0 and number_of_students_waiting > 0:
+        await initialize_game(consumer)
+        # await initialize_game_archive()
+        await send_card_sets_to_shop(consumer)
 
-async def initialize_game(consumer, game_user, is_teacher):
+# Main initialization of the game
+async def initialize_game(consumer):
+    player_1 = consumer.get_game_user()
+    player_2 = None
+    if is_player_teacher(player_1):
+        player_2 = await get_longest_waiting_game_user("student")
+    else:
+        player_2 = await get_longest_waiting_game_user("teacher")
 
-    # Initializing game
-    player2 = await get_longest_waiting_game_user("student") if is_teacher else await get_longest_waiting_game_user("teacher")
-    player1 = game_user
+    (await player_1.get_user()).in_game = True
+    (await player_2.get_user()).in_game = True
 
-    player1.in_game = True
-    player2.in_game = True
-
-    # creating game object
-    game = await create_game(player1, player2)
+    # Creating game object in DB
+    game = await create_game(player_1, player_2)
     consumer.set_game_id(game.id)
-    consumer.logger.debug("The game has started")
-
-    consumer.set_opponent_channel_name(player2.channel_name)
+    consumer.logger.info("The game has started.")
 
     # adding both players' channels to one group
-    game_id = consumer.get_game_id()
-    await consumer.channel_layer.group_add(f"game_{game_id}", player2.channel_name) # group name is game_{UUID of game entity object}
-    await consumer.channel_layer.group_add(f"game_{game_id}", player1.channel_name) # -||-
+    # group name is game_{UUID of game entity object}
+    await consumer.channel_layer.group_add(f"game_{game.id}", player_2.channel_name)
+    await consumer.channel_layer.group_add(f"game_{game.id}", player_1.channel_name)
 
-    # sending info about game to players and opponent's consumer
-    await consumer.send_message_to_opponent({"game_id": str(game_id), "channel_name": consumer.channel_name}, "game_creation")
-    await consumer.send_message_to_opponent(None, "game_start")
-    await consumer.send_json({'type': "game_start"})
+    # Saves info about opponent's channels name
+    consumer.set_opponent_channel_name(player_2.channel_name)
 
-async def manage_first_tasks(consumer, is_teacher):
+    # Triggering initialization on opponent site
+    await consumer.send_message_to_opponent(
+        {"game_id": str(game.id), "channel_name": consumer.channel_name},
+        "game_creation")
 
-    # TODO get first task to each player
-    initial_task_for_teacher, initial_task_for_student = None, None
-    opponent_task, my_task = None, None
+    # Sending initial message about game start
+    await consumer.send_message_to_opponent(
+        {"initial_money_amount" : player_2.money,
+        "initial_morale" : player_2.morale},
+        "game_start")
+    await consumer.game_start(
+        {"initial_money_amount" : player_1.money,
+        "initial_morale" : player_1.morale})
 
-    opponent_task = initial_task_for_student if is_teacher else initial_task_for_teacher
-    my_task = initial_task_for_teacher if is_teacher else initial_task_for_student
+async def inform_about_improper_state_error(consumer, move_type):
+    game_user = consumer.get_game_user()
 
-    # sending initial tasks to players
-    await consumer.send_json({"type": "task_action", "task": my_task})
-    await consumer.send_message_to_opponent({"task": opponent_task}, "task_action")
+    await consumer.critical_error(
+        f"Improper state: {game_user.state} of {game_user.conflict_side}"
+        + f" player in {move_type}.")
+
+def is_player_teacher(player):
+    return player.conflict_side == "teacher"

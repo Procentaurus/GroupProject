@@ -38,7 +38,8 @@ def read_card_csv_generate_list(csv_file_path, model):
                     "fields": {
                         "name": row['name'],
                         "description": row['description'],
-                        "cost": row['cost'],
+                        "values": row['values'],
+                        "price": row['price'],
                         "playerType": row['playerType'],
                         "type": row['type']
                     }
@@ -50,16 +51,13 @@ def read_card_csv_generate_list(csv_file_path, model):
                     "fields": {
                         "name": row['name'],
                         "description": row['description'],
-                        "cost": row['cost'],
+                        "price": row['price'],
                         "playerType": row['playerType'],
                         "pressure": row['pressure']
                     }
                 })
     
     return fixture_data
-
-with open(file_path, 'w') as json_file:
-    json.dump([], json_file)
 
 reaction_list = read_card_csv_generate_list('gameMechanics/utils/reactionCard_data.csv', 'gameMechanics.reactioncard')
 action_list = read_card_csv_generate_list('gameMechanics/utils/actionCard_data.csv', 'gameMechanics.actioncard')

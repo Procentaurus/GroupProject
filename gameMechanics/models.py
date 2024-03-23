@@ -14,7 +14,7 @@ class ActionCard(models.Model):
         ('Teacher', 'Teacher')        
     ]
     playerType = models.CharField(max_length=20, choices=playerType_choices)
-    cost = models.IntegerField(
+    price = models.IntegerField(
         validators=[MinValueValidator(0), MaxValueValidator(10)]
     )
     pressure = models.IntegerField()
@@ -23,12 +23,13 @@ class ReactionCard(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     name = models.CharField(max_length=20)
     description = models.CharField(max_length=100)
+    values = models.CharField()
     playerType_choices = [
         ('Student', 'Student'),
         ('Teacher', 'Teacher')        
     ]
     playerType = models.CharField(max_length=20, choices=playerType_choices)
-    cost = models.IntegerField(
+    price = models.IntegerField(
         validators=[MinValueValidator(0), MaxValueValidator(10)]
     ) 
     type_choices = [
@@ -37,7 +38,3 @@ class ReactionCard(models.Model):
         ('Intelligence', 'Intelligence')
     ]
     type = models.CharField(max_length=20, choices=type_choices)
-
-class OwnedReactionCard(models.Model):
-    reaction_card = models.ForeignKey(ReactionCard, on_delete=models.CASCADE, null=False, blank=False)
-    amount = models.PositiveSmallIntegerField(default=0)
