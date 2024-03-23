@@ -1,11 +1,11 @@
-name,description,cost,playerType,pressure
+name,description,price,playerType,pressure
 Clog The School Toilet,Deal 20 damage,3,student,0
 Shoot A Spitball,Deal 20 damage,3,student,0
-Bite On The Teacher's Pencil,Deal 20 damage,3,student,0
+Bite On The teacher's Pencil,Deal 20 damage,3,student,0
 Eat Class Markers,Deal 20 damage,3,student,0
 Report To Your Parents,Deal 20 damage,3,student,0
-Report To student's Parents,Deal 20 damage,3,Teacher,0
-Ground The student,Deal 20 damage,3,Teacher,0
-Biology Exam,Deal 20 damage,3,Teacher,0
-Math Homework,Deal 20 damage,3,Teacher,0
-Cancel A Break,Deal 20 damage,3,Teacher,0
+Report To student's Parents,Deal 20 damage,3,teacher,0
+Ground The student,Deal 20 damage,3,teacher,0
+Biology Exam,Deal 20 damage,3,teacher,0
+Math Homework,Deal 20 damage,3,teacher,0
+Cancel A Break,Deal 20 damage,3,teacher,0

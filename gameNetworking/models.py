@@ -106,7 +106,7 @@ class GameUser(models.Model):
     
     @database_sync_to_async
     def is_student(self):
-        return self.conflict_side == "teacher"
+        return self.conflict_side == "student"
 
     @database_sync_to_async
     def check_action_card_owned(self, action_card_id):
@@ -152,6 +152,12 @@ class GameUser(models.Model):
     @database_sync_to_async
     def remove_reaction_card(self, reaction_card_id, amount):
         result = remove_reaction_card_impl(self, reaction_card_id, amount)
+        return result
+    
+    @database_sync_to_async
+    def remove_reaction_card_from_shop(self, reaction_card_id, amount):
+        result = remove_reaction_card_from_shop_impl(
+            self, reaction_card_id, amount)
         return result
 
     @database_sync_to_async

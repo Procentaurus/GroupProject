@@ -27,7 +27,8 @@ class CardVerifier:
         return True
     
     async def _verify_cards_in_shop(self):
-        cards_not_in_shop = await self._c_c.check_cards_in_shop()
+        g_u =self._consumer.get_game_user()
+        cards_not_in_shop = await self._c_c.check_cards_in_shop(g_u)
         if cards_not_in_shop != []:
             e_s = ErrorSender(self._consumer)
             str = self._c_c._convert_cards_to_string(cards_not_in_shop)
@@ -208,8 +209,8 @@ class CardCostVerifier:
     
     async def _can_player_afford_cards(self):
         player_money = self._consumer.get_game_user().money
-        a_cards_cost = self._count_a_cards_cost()
-        r_cards_cost = self._count_r_cards_cost()
+        a_cards_cost = await self._count_a_cards_cost()
+        r_cards_cost = await self._count_r_cards_cost()
 
         if player_money >= a_cards_cost + r_cards_cost:
             return True

@@ -6,17 +6,17 @@ class Disconnector:
         self._consumer = consumer
 
     async def disconnect(self):
-        await self._clean_game_user()
-
-        game = await get_game(self._consumer.get_game_id())
+        g_id = self._consumer.get_game_id()
+        game = await get_game(g_id)
         if game is not None:
             await self._clean_game(game)
             await self._send_game_end_info_to_opponent()
 
-        await self._remove_player_from_group(game)
+        await self._clean_game_user()
+        await self._remove_player_from_group(g_id)
 
     async def _send_cleanup_error(self, obj):
-        await self._consumer.logger.error(
+        await self._consumer.error(
             f"Couldnt clean up {obj} instance after the game")
         
     async def _send_game_end_info_to_opponent(self):
@@ -40,6 +40,6 @@ class Disconnector:
         if not succesful_delete:
             await self._send_cleanup_error("game")
 
-    async def _remove_player_from_group(self, game):
+    async def _remove_player_from_group(self, game_id):
         await self._consumer.channel_layer.group_discard(
-            f"game_{game.id}", self._consumer.channel_name)
+            f"game_{game_id}", self._consumer.channel_name)

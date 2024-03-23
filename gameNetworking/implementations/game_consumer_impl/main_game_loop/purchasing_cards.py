@@ -1,26 +1,30 @@
-from gameMechanics.models import ActionCard, ReactionCard
+from gameMechanics.queries import get_action_card, get_reaction_card
 
 
-async def purchase_action_card(consumer, card_id):
+async def purchase_action_card(consumer, action_card_id):
 
-    card_price = ActionCard.objects.get(id=card_id).price
-    g_u = consumer.get_game_user()
+    action_card_price = (await get_action_card(action_card_id)).price
+    game_user = consumer.get_game_user()
 
-    if g_u.money >= card_price:
-        await g_u.add_action_card(card_id)
-        await g_u.subtract_money(card_price)
+    if game_user.money >= action_card_price:
+        await game_user.add_action_card(action_card_id)
+        await game_user.subtract_money(action_card_price)
+        return True
     else:
         await consumer.critical_error(
-            f"Too expensive action card: {card_id} passed validation.")
+            f"Too expensive action card: {action_card_id} passed validation.")
+        return False
 
-async def purchase_reaction_card(consumer, card_id, amount):
+async def purchase_reaction_card(consumer, reaction_card_id, amount):
 
-    card_price = ReactionCard.objects.get(id=card_id).price
-    g_u = consumer.get_game_user()
+    reaction_card_price = (await get_reaction_card(reaction_card_id)).price
+    game_user = consumer.get_game_user()
 
-    if g_u.money >= card_price * amount:
-        await g_u.add_reaction_card(card_id, amount)
-        await g_u.subtract_money(card_price * amount)
+    if game_user.money >= reaction_card_price * amount:
+        await game_user.add_reaction_card(reaction_card_id, amount)
+        await game_user.subtract_money(reaction_card_price * amount)
+        return True
     else:
         await consumer.critical_error(
-            f"Too expensive reaction card: {card_id} passed validation.")
+            f"Too expensive reaction card: {reaction_card_id} passed validation")
+        return False

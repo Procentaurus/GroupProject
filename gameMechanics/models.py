@@ -14,7 +14,7 @@ class ActionCard(models.Model):
         ('teacher', 'teacher')        
     ]
     playerType = models.CharField(max_length=20, choices=playerType_choices)
-    cost = models.IntegerField(
+    price = models.IntegerField(
         validators=[MinValueValidator(0), MaxValueValidator(10)]
     )
     pressure = models.IntegerField()
@@ -29,7 +29,7 @@ class ReactionCard(models.Model):
         ('teacher', 'teacher')
     ]
     playerType = models.CharField(max_length=20, choices=playerType_choices)
-    cost = models.IntegerField(
+    price = models.IntegerField(
         validators=[MinValueValidator(0), MaxValueValidator(10)]
     ) 
     type_choices = [

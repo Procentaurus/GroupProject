@@ -59,7 +59,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     # effectively main game loop function
     async def receive_json(self, data):
         loop_handler = GameLoopHandler(self, data)
-        loop_handler.perform_game_loop()
+        await loop_handler.perform_game_loop()
 
     # sends messages to both players' mailboxes
     async def send_message_to_group(self, data, event):

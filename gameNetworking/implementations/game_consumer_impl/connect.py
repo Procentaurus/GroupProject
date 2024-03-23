@@ -69,14 +69,13 @@ class Connector:
     async def _initialize_game_user(self):
         a_t = self._get_access_token()
         c_s = self._get_conflict_side()
-        self._consumer.logger.info(f"{c_s}")
         g_u = await create_game_user(a_t, c_s, self._consumer.channel_name)
         self._consumer.set_game_user(g_u)
         # await delete_game_token(game_user)
 
     async def _set_opponent(self):
-        if self._consumer.get_game_user().is_teacher():
-            self._opponent =  await get_longest_waiting_player("student")
+        if self._get_conflict_side() == "teacher":
+            self._opponent = await get_longest_waiting_player("student")
         else:
             self._opponent = await get_longest_waiting_player("teacher")
 
