@@ -1,7 +1,7 @@
 from gameMechanics.scripts.initial_shop import get_initial_shop_for_player
 
 
-async def send_card_sets_to_shop(consumer, is_current_game_user_teacher):
+async def send_card_sets_to_shop(consumer):
   
     initial_action_cards_for_teacher, initial_reaction_cards_for_teacher = (
         await get_initial_shop_for_player(5, 2, "Teacher")
@@ -10,7 +10,7 @@ async def send_card_sets_to_shop(consumer, is_current_game_user_teacher):
         await get_initial_shop_for_player(5, 2, "student")
     )
 
-    if is_current_game_user_teacher:
+    if consumer.get_game_user().conflict_side == "teacher":
         await send_cards_to_player(consumer, initial_action_cards_for_teacher,
             initial_reaction_cards_for_teacher)
         await send_cards_to_opponent(consumer, initial_action_cards_for_student,
