@@ -12,10 +12,10 @@ class ReactionCardDataSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ReactionCard
-        fields = ['id','name', 'description', 'values', 'playerType', 'cost','type']
+        fields = ['id','name', 'description', 'values', 'playerType', 'price','type']
 
 class ActionCardDataSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ActionCard
-        fields = ['id','name', 'description', 'playerType', 'cost', 'pressure']
+        fields = ['id','name', 'description', 'playerType', 'price', 'pressure']
