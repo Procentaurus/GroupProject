@@ -164,6 +164,11 @@ class GameUser(models.Model):
     def add_reaction_card(self, reaction_card_id, amount):
         result = add_reaction_card_impl(self, reaction_card_id, amount)
         return result
+    
+    @database_sync_to_async
+    def add_reaction_card_to_shop(self, reaction_card_id, amount):
+        result = add_reaction_card_to_shop_impl(self, reaction_card_id, amount)
+        return result
             
 
 class Game(models.Model):
@@ -193,8 +198,9 @@ class Game(models.Model):
         result = update_after_turn_impl(self)
         return result
     
-    async def get_opponent_player(self, game_user):
-        result = await get_opponent_player_impl(self, game_user)
+    @database_sync_to_async
+    def get_opponent_player(self, game_user):
+        result = get_opponent_player_impl(self, game_user)
         return result
     
 
@@ -227,9 +233,10 @@ class GameAuthenticationToken(models.Model):
     @database_sync_to_async
     def get_game_user(self):
         return self.user
-    
+
 
 class OwnedReactionCard(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     reaction_card = models.ForeignKey(
         ReactionCard, on_delete=models.CASCADE, null=False, blank=False)
     game_user = models.ForeignKey(
@@ -238,6 +245,7 @@ class OwnedReactionCard(models.Model):
 
 
 class ReactionCardInShop(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     reaction_card = models.ForeignKey(
         ReactionCard, on_delete=models.CASCADE, null=False, blank=False)
     game_user = models.ForeignKey(

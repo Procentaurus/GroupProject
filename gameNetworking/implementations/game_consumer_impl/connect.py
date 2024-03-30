@@ -20,7 +20,9 @@ class Connector:
         if num_t > 0 and num_s > 0:
             await self._initialize_game()
             # await initialize_game_archive()
-            await send_card_sets_to_shop(self._consumer)
+            s_c_h = ShopCardsHandler(self._consumer, self._opponent)
+            await s_c_h.send_card_sets_to_shop()
+            await s_c_h.add_cards_to_shop()
 
     async def _initialize_game(self):
         await self._set_opponent()

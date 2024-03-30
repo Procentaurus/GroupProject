@@ -67,25 +67,11 @@ class PurchaseMoveHandler(MoveHandler):
         self._a_cards = data.get("action_cards")
         self._r_cards = data.get("reaction_cards")
 
-    async def _perform_move_mechanics(self):
-        g_u = self._consumer.get_game_user()
-        for a_card_id in self._a_cards:
-            await purchase_action_card(self._consumer, a_card_id)
-            await g_u.remove_action_card_from_shop(a_card_id)
-
-        for r_card_data in self._r_cards:
-            id = r_card_data.get("reaction_card_id")
-            amount = r_card_data.get("amount")
-            await purchase_reaction_card(self._consumer, id, amount)
-            await g_u.remove_reaction_card_from_shop(id, amount)
-            
-        await self._consumer.purchase_result(
-            {"new_money_amount" : self._consumer.get_game_user().money})
-
     async def _verify_move(self):
         p_v = PlayerVerifier(self._consumer)
         if await p_v.verify_player_wait_for_clash(): return False
         if not await p_v.verify_player_in_hub("purchase move"): return False
+        if not self._any_cards_sent(): return False
 
         a_c_c = ActionCardsChecker(self._a_cards)
         a_c_v = CardVerifier(self._consumer, a_c_c)
@@ -99,3 +85,23 @@ class PurchaseMoveHandler(MoveHandler):
         if not await c_c_v.verify_player_can_afford_cards(): return False
 
         return True
+    
+    def _any_cards_sent(self):
+        if ((self._a_cards is None or self._a_cards == [])
+            and (self._r_cards is None or self._r_cards == [])): return False
+        return True
+    
+    async def _perform_move_mechanics(self):
+        g_u = self._consumer.get_game_user()
+        for a_card_id in self._a_cards:
+            await purchase_action_card(self._consumer, a_card_id)
+            await g_u.remove_action_card_from_shop(a_card_id)
+
+        for r_card_data in self._r_cards:
+            id = r_card_data.get("reaction_card_id")
+            amount = r_card_data.get("amount")
+            await purchase_reaction_card(self._consumer, id, amount)
+            await g_u.remove_reaction_card_from_shop(id, amount)
+            
+        await self._consumer.purchase_result(
+            {"new_money_amount" : g_u.money})

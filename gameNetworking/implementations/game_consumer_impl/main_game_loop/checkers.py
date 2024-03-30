@@ -21,8 +21,7 @@ class CardVerifier:
         not_existing_cards = await self._c_c.check_cards_exist()
         if not_existing_cards != []:
             e_s = ErrorSender(self._consumer)
-            str = self._c_c._convert_cards_to_string(not_existing_cards)
-            await e_s.send_cards_not_exist_info(str)
+            await e_s.send_cards_not_exist_info(not_existing_cards)
             return False
         return True
     
@@ -31,8 +30,7 @@ class CardVerifier:
         cards_not_in_shop = await self._c_c.check_cards_in_shop(g_u)
         if cards_not_in_shop != []:
             e_s = ErrorSender(self._consumer)
-            str = self._c_c._convert_cards_to_string(cards_not_in_shop)
-            await e_s.send_cards_not_in_shop_info(cards_not_in_shop, str)
+            await e_s.send_cards_not_in_shop_info(cards_not_in_shop)
             return False
         return True
     
@@ -40,8 +38,7 @@ class CardVerifier:
         cards_not_owned = await self._c_c.check_cards_owned()
         if cards_not_owned != []:
             e_s = ErrorSender(self._consumer)
-            str = self._c_c._convert_cards_to_string(cards_not_owned)
-            await e_s.send_card_not_owned_info(cards_not_owned, str)
+            await e_s.send_card_not_owned_info(cards_not_owned)
             return False
         return True
     
@@ -113,9 +110,6 @@ class ActionCardsChecker(CardChecker):
                 cards_not_owned.append(card_id)
         
         return cards_not_owned
-    
-    def _convert_cards_to_string(self, cards_data):
-        return ', '.join(f"[id: {data}]" for data in cards_data)
 
 
 class ReactionCardsChecker(CardChecker):
@@ -168,12 +162,6 @@ class ReactionCardsChecker(CardChecker):
                 cards_not_owned.append([id, amount])
         
         return cards_not_owned
-    
-    def _convert_cards_to_string(self, cards_data):
-        res = ', '.join(
-            f"[id: {data[0]}, amount: {data[1]}]" for data in cards_data
-        )
-        return res
 
 
 class CardCostVerifier:
@@ -216,7 +204,7 @@ class CardCostVerifier:
             return True
         return False
     
-    async def verify_player_can_afford_cards(self):     
+    async def verify_player_can_afford_cards(self):   
         if not await self._can_player_afford_cards():
             e_s = ErrorSender(self._consumer)
             await e_s.send_not_enough_money_info()
@@ -283,7 +271,7 @@ class GameVerifier:
         return True
         
     async def verify_turn_update_successful(self):
-        if not self._game.update_after_turn():
+        if not await self._game.update_after_turn():
             e_s = ErrorSender(self._consumer)
             await e_s.send_turn_update_fail_error()
             return False

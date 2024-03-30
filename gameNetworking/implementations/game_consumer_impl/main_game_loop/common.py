@@ -39,22 +39,28 @@ class ErrorSender:
         await self._consumer.error("Invalid format of sent data")
 
     async def send_cards_not_exist_info(self, data):
-        await self._consumer.error(f"Cards: {data} do not exist")
-
-    async def send_cards_not_in_shop_info(self, cards, log_cards_data):
         side = self._consumer.get_game_user().conflict_side
         await self._consumer.complex_error(
-            f"Cards: {log_cards_data} are not in shop",
-            f"Cards: {log_cards_data} are not in shop of {side} player",
-            {"cards": cards}
+            f"Some of chosen cards do not exist",
+            f"{side} player tried to use cards that do not exist",
+            {"not_existing_cards" : data}
         )
 
-    async def send_card_not_owned_info(self, cards, log_cards_data):
+
+    async def send_cards_not_in_shop_info(self, cards):
         side = self._consumer.get_game_user().conflict_side
         await self._consumer.complex_error(
-            f"Cards: {log_cards_data} are not owned",
-            f"Cards: {log_cards_data} are not owned by {side} player",
-            {"cards": cards}
+            f"Some of chosen cards are not in shop",
+            f"{side} player tried to buy cards that are not in shop",
+            {"cards_not_in_shop": cards}
+        )
+
+    async def send_card_not_owned_info(self, cards):
+        side = self._consumer.get_game_user().conflict_side
+        await self._consumer.complex_error(
+            f"Some of chosen cards are not owned",
+            f"{side} player tried to use cards that he doesnt own",
+            {"cards_not_owned": cards}
         )
 
     async def send_improper_state_error(self, move_type):
@@ -119,35 +125,85 @@ class InfoSender:
             {"initial_money_amount" : g_u.money,
             "initial_morale" : g_u.morale})
 
+
+class ShopCardsHandler:
+
+    def __init__(self, consumer, opponent):
+        self._consumer = consumer
+        self._g_u = consumer.get_game_user()
+        self._opp = opponent
+        self._s_a_cards = None
+        self._s_r_cards = None
+        self._t_a_cards = None
+        self._t_r_cards = None
+
+    async def _get_cards(self):
+        await self._get_student_cards(5, 2)
+        await self._get_teacher_cards(5, 2)
+
+    async def _get_teacher_cards(self, num_a_cards, num_r_cards):
+        (a_cards, r_cards) = (await get_initial_shop_for_player(
+            num_a_cards, num_r_cards, "teacher"))[::-1]
         
-async def send_card_sets_to_shop(consumer):
-  
-    initial_reaction_cards_for_teacher, initial_action_cards_for_teacher = (
-        await get_initial_shop_for_player(5, 2, "teacher")
-    )
-    initial_reaction_cards_for_student, initial_action_cards_for_student = (
-        await get_initial_shop_for_player(5, 2, "student")
-    )
-
-    if consumer.get_game_user().conflict_side == "teacher":
-        await send_cards_to_player(consumer, initial_action_cards_for_teacher,
-            initial_reaction_cards_for_teacher)
-        await send_cards_to_opponent(consumer, initial_action_cards_for_student,
-            initial_reaction_cards_for_student)
-    else:
-        await send_cards_to_player(consumer, initial_action_cards_for_student,
-            initial_reaction_cards_for_student)
-        await send_cards_to_opponent(consumer, initial_action_cards_for_teacher,
-            initial_reaction_cards_for_teacher)
-
-
-async def send_cards_to_opponent(consumer, action_cards, reaction_cards):
-    await consumer.send_message_to_opponent(
-        {"action_cards" : action_cards,
-        "reaction_cards" : reaction_cards},
-        "card_package")
+        self._t_a_cards = a_cards
+        self._t_r_cards = r_cards
     
-async def send_cards_to_player(consumer, action_cards, reaction_cards):
-    await consumer.card_package(
-        {"action_cards" : action_cards,
-        "reaction_cards" : reaction_cards})
+    async def _get_student_cards(self, num_a_cards, num_r_cards):
+        (a_cards, r_cards) = (await get_initial_shop_for_player(
+            num_a_cards, num_r_cards, "student"))[::-1]
+        
+        self._s_a_cards = a_cards
+        self._s_r_cards = r_cards
+
+    async def add_cards_to_shop(self):
+        if not self._cards_already_got():
+            await self._get_cards()
+
+        await self._add_all_a_cards_to_shop(self._g_u)
+        await self._add_all_a_cards_to_shop(self._opp)
+        # await self._add_all_r_cards_to_shop(self._g_u)
+        # await self._add_all_r_cards_to_shop(self._opp)
+    
+    async def _add_all_a_cards_to_shop(self, player):
+        is_teacher = await player.is_teacher()
+        cards = self._t_a_cards if is_teacher else self._s_a_cards
+
+        cards_ids = [card['id'] for card in cards]
+        for card_id in cards_ids:
+            await player.add_action_card_to_shop(card_id)
+
+    async def _add_all_r_cards_to_shop(self, player):
+        if await self._g_u.is_teacher():
+            for r_card in self._t_r_cards:
+                await player.add_reaction_card_to_shop(
+                    r_card.get("reaction_card_id"), r_card.get("amount"))
+        else:
+            for r_card in self._s_r_cards:
+                await player.add_reaction_card_to_shop(
+                    r_card.get("reaction_card_id"), r_card.get("amount"))
+
+    async def send_card_sets_to_shop(self):
+        if not self._cards_already_got():
+            await self._get_cards()
+
+        if await self._g_u.is_teacher():
+            await self._send_cards_to_player(self._t_a_cards, self._t_r_cards)
+            await self._send_cards_to_opponent(self._s_a_cards, self._s_r_cards)
+        else:
+            await self._send_cards_to_player(self._s_a_cards, self._s_r_cards)
+            await self._send_cards_to_opponent(self._t_a_cards, self._t_r_cards)
+
+    async def _send_cards_to_opponent(self, a_cards, r_cards):
+        await self._consumer.send_message_to_opponent(
+            {"action_cards" : a_cards,
+            "reaction_cards" : r_cards},
+            "card_package")
+        
+    async def _send_cards_to_player(self, a_cards, r_cards):
+        await self._consumer.card_package(
+            {"action_cards" : a_cards,
+            "reaction_cards" : r_cards})
+        
+    def _cards_already_got(self):
+        return (self._s_a_cards is not None and self._s_r_cards is not None 
+            and self._t_a_cards is not None and self._t_r_cards is not None)

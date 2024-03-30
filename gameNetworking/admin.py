@@ -18,6 +18,7 @@ class GameAdmin(admin.ModelAdmin):
         }),
     )
 
+
 @admin.register(GameUser)
 class GameUserAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'conflict_side')
@@ -31,6 +32,7 @@ class GameUserAdmin(admin.ModelAdmin):
         )})
     )
 
+
 @admin.register(GameAuthenticationToken)
 class GameAuthenticationTokenAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'issued')
@@ -39,3 +41,13 @@ class GameAuthenticationTokenAdmin(admin.ModelAdmin):
     add_fieldsets = (
         ("Main section", {"fields": ("user",)}),
     )
+
+
+@admin.register(OwnedReactionCard)
+class OwnedReactionCardAdmin(admin.ModelAdmin):
+    list_display = ('id', 'reaction_card', 'game_user', 'amount')
+
+
+@admin.register(ReactionCardInShop)
+class ReactionCardInShopAdmin(admin.ModelAdmin):
+    list_display = ('id', 'reaction_card', 'game_user', 'amount')
