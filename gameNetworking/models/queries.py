@@ -3,7 +3,6 @@ from channels.db import database_sync_to_async
 
 from gameMechanics.models import ReactionCard
 
-from .common import increase_card_amount
 from .game_user.game_user import GameUser
 from .game.game import Game
 from .owned_reaction_card.owned_reaction_card import OwnedReactionCard
@@ -105,7 +104,17 @@ def delete_game(game_id):
 
 
 
-########### OwnedReactionCard ###########
+### owned reaction card ###
+
+@database_sync_to_async
+def check_reaction_card_owned(game_user, r_card_id, amount):  
+    owned_r_card = OwnedReactionCard.objects.filter(
+        reaction_card__id=r_card_id, game_user=game_user).first()
+    
+    if owned_r_card is not None:
+        return True if owned_r_card.amount >= amount else False
+    else: return False
+
 
 @database_sync_to_async
 def add_reaction_card_to_owned(game_user, r_card_id, amount):
@@ -113,23 +122,61 @@ def add_reaction_card_to_owned(game_user, r_card_id, amount):
 
     # Retrieve the OwnedReactionCard instance or create a new one
     # if it doesn't exist
-    (owned_card, had_card_earlier) = OwnedReactionCard.objects.get_or_create(
+    (owned_card, _) = OwnedReactionCard.objects.get_or_create(
         game_user=game_user,
         reaction_card=r_card,
     )
-    increase_card_amount(had_card_earlier, owned_card, amount)
+    increase_card_amount(owned_card, amount)
+
+@database_sync_to_async
+def remove_reaction_card(game_user, r_card_id, amount):
+    owned_r_card = OwnedReactionCard.objects.filter(
+        reaction_card__id=r_card_id, game_user=game_user).first()
+
+    if owned_r_card is not None:
+        decrease_card_amount(owned_r_card, amount)
 
 
-########### ReactionCardInShop ###########
 
+### reaction card in shop ###
+
+@database_sync_to_async  
+def check_reaction_card_in_shop(game_user, r_card_id, amount):
+    r_card_in_shop = ReactionCardInShop.objects.filter(
+        reaction_card__id=r_card_id, game_user=game_user).first()
+    
+    if r_card_in_shop is not None:
+        return True if r_card_in_shop.amount >= amount else False
+    else:
+        return False
+    
 @database_sync_to_async
 def add_reaction_card_to_shop(game_user, r_card_id, amount):  
     r_card = ReactionCard.objects.get(id=r_card_id)
     
     # Retrieve the ReactionCardInShop instance or create a new one
     # if it doesn't exist
-    card_in_shop, had_card_earlier = ReactionCardInShop.objects.get_or_create(
+    card_in_shop, _ = ReactionCardInShop.objects.get_or_create(
         game_user=game_user,
         reaction_card=r_card
     )
-    increase_card_amount(had_card_earlier, card_in_shop, amount)
+    increase_card_amount(card_in_shop, amount)
+
+@database_sync_to_async  
+def remove_reaction_card_from_shop(game_user, r_card_id, amount):
+    r_card_in_shop = ReactionCardInShop.objects.filter(
+        reaction_card__id=r_card_id, game_user=game_user).first()
+
+    if r_card_in_shop is not None:
+        decrease_card_amount(r_card_in_shop, amount)
+
+def increase_card_amount(card, amount):
+    card.amount += amount
+    card.save()
+
+def decrease_card_amount(card, amount):
+    if card.amount > amount:
+        card.amount -= amount
+        card.save()
+    elif card.amount == amount:
+        card.delete()

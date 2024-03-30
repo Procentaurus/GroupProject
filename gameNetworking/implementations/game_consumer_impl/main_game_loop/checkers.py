@@ -1,7 +1,6 @@
 from gameMechanics.queries import *
 
-from gameNetworking.models.queries import get_game
-
+from ....models.queries import *
 from .common import *
 
 
@@ -122,7 +121,7 @@ class ReactionCardsChecker(CardChecker):
                 isinstance(self._cards_data, list) and 
                 all(
                     isinstance(item, dict) and 
-                    "reaction_card_id" in item and 
+                    "card_id" in item and 
                     "amount" in item 
                     for item in self._cards_data
                 )
@@ -132,7 +131,7 @@ class ReactionCardsChecker(CardChecker):
         not_existing_cards = []
 
         for card_data in self._cards_data:
-            id = card_data.get("reaction_card_id")
+            id = card_data.get("card_id")
             card_exist = await check_reaction_card_exist(id)
             if not card_exist:
                 not_existing_cards.append(id)
@@ -143,10 +142,10 @@ class ReactionCardsChecker(CardChecker):
         cards_not_in_shop = []
 
         for card_data in self._cards_data:
-            id = card_data.get("reaction_card_id")
+            id = card_data.get("card_id")
             amount = card_data.get("amount")
-            card_in_shop = await game_user.check_reaction_card_in_shop(
-                id, amount)
+            card_in_shop = await check_reaction_card_in_shop(
+                game_user, id, amount)
             if not card_in_shop:
                 cards_not_in_shop.append([id, amount])
 
@@ -156,9 +155,9 @@ class ReactionCardsChecker(CardChecker):
         cards_not_owned = []
 
         for card_data in self._cards_data:
-            id = card_data.get("reaction_card_id")
+            id = card_data.get("card_id")
             amount = card_data.get("amount")
-            if not await game_user.check_reaction_card_owned(id, amount):
+            if not await check_reaction_card_owned(game_user, id, amount):
                 cards_not_owned.append([id, amount])
         
         return cards_not_owned
@@ -180,7 +179,7 @@ class CardCostVerifier:
         cards_total_price = 0
 
         for card_data in self._r_cards_data:
-            id = card_data.get("reaction_card_id")
+            id = card_data.get("card_id")
             card = await get_reaction_card(id)
             cards_total_price += card.price
 

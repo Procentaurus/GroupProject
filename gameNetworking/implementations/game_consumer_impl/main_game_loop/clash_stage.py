@@ -188,13 +188,13 @@ class ReactionMoveHandler(MoveHandler):
     async def _remove_all_used_reaction_cards(self):
         for r_card_data in self._r_cards:
             await self._user.remove_reaction_card(
-                r_card_data.get("reaction_card_id"),
+                r_card_data.get("card_id"),
                 r_card_data.get("amount"))
     
     async def _add_all_reaction_cards(self, game_user, r_cards_gained):
         for r_card_data in r_cards_gained:
             await game_user.add_reaction_card(
-                r_card_data.get("reaction_card_id"),
+                r_card_data.get("card_id"),
                 r_card_data.get("amount"))
             
     async def _announce_winner(self):

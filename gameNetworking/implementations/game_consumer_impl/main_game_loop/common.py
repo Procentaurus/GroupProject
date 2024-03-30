@@ -162,8 +162,8 @@ class ShopCardsHandler:
 
         await self._add_all_a_cards_to_shop(self._g_u)
         await self._add_all_a_cards_to_shop(self._opp)
-        # await self._add_all_r_cards_to_shop(self._g_u)
-        # await self._add_all_r_cards_to_shop(self._opp)
+        await self._add_all_r_cards_to_shop(self._g_u)
+        await self._add_all_r_cards_to_shop(self._opp)
     
     async def _add_all_a_cards_to_shop(self, player):
         is_teacher = await player.is_teacher()
@@ -183,7 +183,7 @@ class ShopCardsHandler:
         ]
         for data in purchase_data:
             await add_reaction_card_to_shop(
-                self._g_u, data.get("id"), data.get("amount"))
+                player, data.get("id"), data.get("amount"))
 
     async def send_card_sets_to_shop(self):
         if not self._cards_already_got():
