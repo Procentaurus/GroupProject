@@ -1,7 +1,17 @@
 from random import randint
 from channels.db import database_sync_to_async
 
-from .models import GameAuthenticationToken, GameUser, Game
+from gameMechanics.models import ReactionCard
+
+from .common import increase_card_amount
+from .game_user.game_user import GameUser
+from .game.game import Game
+from .owned_reaction_card.owned_reaction_card import OwnedReactionCard
+from .game_authentication_token.game_authentication_token \
+    import GameAuthenticationToken
+from .reaction_card_in_shop.reaction_card_in_shop \
+    import ReactionCardInShop
+
 
 
 ########### GameUser ###########
@@ -92,3 +102,34 @@ def delete_game(game_id):
         return True
     except Game.DoesNotExist:
         return False
+
+
+
+########### OwnedReactionCard ###########
+
+@database_sync_to_async
+def add_reaction_card_to_owned(game_user, r_card_id, amount):
+    r_card = ReactionCard.objects.get(id=r_card_id)
+
+    # Retrieve the OwnedReactionCard instance or create a new one
+    # if it doesn't exist
+    (owned_card, had_card_earlier) = OwnedReactionCard.objects.get_or_create(
+        game_user=game_user,
+        reaction_card=r_card,
+    )
+    increase_card_amount(had_card_earlier, owned_card, amount)
+
+
+########### ReactionCardInShop ###########
+
+@database_sync_to_async
+def add_reaction_card_to_shop(game_user, r_card_id, amount):  
+    r_card = ReactionCard.objects.get(id=r_card_id)
+    
+    # Retrieve the ReactionCardInShop instance or create a new one
+    # if it doesn't exist
+    card_in_shop, had_card_earlier = ReactionCardInShop.objects.get_or_create(
+        game_user=game_user,
+        reaction_card=r_card
+    )
+    increase_card_amount(had_card_earlier, card_in_shop, amount)

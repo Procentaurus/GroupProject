@@ -1,4 +1,4 @@
-from gameNetworking.queries import *
+from gameNetworking.models.queries import *
 
 class Disconnector:
 

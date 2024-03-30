@@ -1,5 +1,6 @@
 from gameMechanics.scripts.initial_shop import get_initial_shop_for_player
 
+from ....models.queries import add_reaction_card_to_shop
 from .abstract import MoveHandler
 
 
@@ -173,14 +174,16 @@ class ShopCardsHandler:
             await player.add_action_card_to_shop(card_id)
 
     async def _add_all_r_cards_to_shop(self, player):
-        if await self._g_u.is_teacher():
-            for r_card in self._t_r_cards:
-                await player.add_reaction_card_to_shop(
-                    r_card.get("reaction_card_id"), r_card.get("amount"))
-        else:
-            for r_card in self._s_r_cards:
-                await player.add_reaction_card_to_shop(
-                    r_card.get("reaction_card_id"), r_card.get("amount"))
+        is_teacher = await player.is_teacher()
+        cards_data = self._t_r_cards if is_teacher else self._s_r_cards
+
+        purchase_data = [
+            {"id": card_data["card"]["id"], "amount": card_data["amount"]}
+            for card_data in cards_data
+        ]
+        for data in purchase_data:
+            await add_reaction_card_to_shop(
+                self._g_u, data.get("id"), data.get("amount"))
 
     async def send_card_sets_to_shop(self):
         if not self._cards_already_got():

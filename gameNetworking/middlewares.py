@@ -1,4 +1,4 @@
-from .queries import *
+from .models.queries import *
 
 
 class GameAuthenticationTokenMiddleware:

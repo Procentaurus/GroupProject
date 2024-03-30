@@ -1,5 +1,5 @@
 from gameNetworking.enums import GameStage
-from gameNetworking.queries import get_game
+from gameNetworking.models.queries import get_game
 from .hub_stage import HubStageHandler
 from .clash_stage import ClashStageHandler
 from .checkers import GameVerifier

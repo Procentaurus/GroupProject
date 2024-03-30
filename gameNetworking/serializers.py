@@ -1,6 +1,8 @@
 from rest_framework import serializers
 
-from .models import Game, GameAuthenticationToken
+from .models.game.game import Game
+from .models.game_authentication_token.game_authentication_token \
+    import GameAuthenticationToken
 
 
 class GameSerializer(serializers.ModelSerializer):
