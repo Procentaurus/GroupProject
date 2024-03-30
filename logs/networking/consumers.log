@@ -10,3 +10,23 @@
 20:05:35 message_handling WARNING Invalid format of sent data
 20:07:12 message_handling WARNING Invalid format of sent data
 20:08:35 message_handling WARNING student player tried to buy cards that are not in shop
+20:15:40 connect INFO The game has started.
+20:15:53 message_handling WARNING student player tried to buy cards that are not in shop
+20:17:14 connect INFO The game has started.
+20:17:20 message_handling WARNING Improper move made by teacher player
+20:17:23 message_handling WARNING Improper move made by teacher player
+20:20:20 connect INFO The game has started.
+20:27:09 connect INFO The game has started.
+20:44:58 connect INFO The game has started.
+21:06:04 connect INFO The game has started.
+21:06:28 message_handling WARNING student player tried to buy cards that are not in shop
+21:09:00 connect INFO The game has started.
+21:10:57 message_handling WARNING Couldnt clean up game_user instance after the game
+21:11:27 connect INFO The game has started.
+21:11:33 connect INFO The game has started.
+21:11:50 message_handling WARNING student player tried to buy cards that are not in shop
+21:13:22 connect INFO The game has started.
+21:13:49 message_handling WARNING student player tried to buy cards that are not in shop
+21:14:22 message_handling WARNING student player tried to buy cards that are not in shop
+21:17:44 connect INFO The game has started.
+21:19:49 connect INFO The game has started.

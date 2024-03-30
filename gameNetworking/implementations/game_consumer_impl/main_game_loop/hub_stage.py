@@ -1,6 +1,7 @@
 from gameNetworking.enums import PlayerState, MessageType
+
+from ....models.queries import *
 from .checkers import *
-from .purchasing_cards import purchase_action_card, purchase_reaction_card
 from .common import SurrenderMoveHandler
 from .abstract import MoveHandler, StageHandler
 
@@ -94,14 +95,29 @@ class PurchaseMoveHandler(MoveHandler):
     async def _perform_move_mechanics(self):
         g_u = self._consumer.get_game_user()
         for a_card_id in self._a_cards:
-            await purchase_action_card(self._consumer, a_card_id)
-            await g_u.remove_action_card_from_shop(a_card_id)
+            await self._purchase_action_card(a_card_id)
 
         for r_card_data in self._r_cards:
-            id = r_card_data.get("reaction_card_id")
+            id = r_card_data.get("card_id")
             amount = r_card_data.get("amount")
-            await purchase_reaction_card(self._consumer, id, amount)
-            await g_u.remove_reaction_card_from_shop(id, amount)
+            await self._purchase_reaction_card(id, amount)
             
         await self._consumer.purchase_result(
             {"new_money_amount" : g_u.money})
+
+    async def _purchase_action_card(self, card_id):
+        card_price = (await get_action_card(card_id)).price
+        g_u = self._consumer.get_game_user()
+
+        await g_u.add_action_card(card_id)
+        await g_u.subtract_money(card_price)
+        await g_u.remove_action_card_from_shop(card_id)
+
+    async def _purchase_reaction_card(self, card_id, amount):
+
+        reaction_card_price = (await get_reaction_card(card_id)).price
+        g_u = self._consumer.get_game_user()
+
+        await add_reaction_card_to_owned(g_u, card_id, amount)
+        await g_u.subtract_money(reaction_card_price * amount)
+        await remove_reaction_card_from_shop(g_u, card_id, amount)

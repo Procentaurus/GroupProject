@@ -115,25 +115,3 @@ class GameUser(models.Model):
     def add_action_card_to_shop(self, action_card_id):
         result = add_action_card_to_shop_impl(self, action_card_id)
         return result
-        
-    @database_sync_to_async
-    def check_reaction_card_owned(self, reaction_card_id, amount):
-        result = check_reaction_card_owned_impl(self, reaction_card_id, amount)
-        return result
-    
-    @database_sync_to_async
-    def check_reaction_card_in_shop(self, reaction_card_id, amount):
-        result = check_reaction_card_in_shop_impl(
-            self, reaction_card_id, amount)
-        return result
-
-    @database_sync_to_async
-    def remove_reaction_card(self, reaction_card_id, amount):
-        result = remove_reaction_card_impl(self, reaction_card_id, amount)
-        return result
-    
-    @database_sync_to_async
-    def remove_reaction_card_from_shop(self, reaction_card_id, amount):
-        result = remove_reaction_card_from_shop_impl(
-            self, reaction_card_id, amount)
-        return result
