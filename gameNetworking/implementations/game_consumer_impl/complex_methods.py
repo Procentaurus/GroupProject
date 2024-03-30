@@ -1,5 +1,5 @@
 from gameNetworking.enums import GameStage
-from gameNetworking.queries import get_game_user
+from gameNetworking.models.queries import get_game_user
 
 
 def init_table_for_new_clash_impl(consumer):

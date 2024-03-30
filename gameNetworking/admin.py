@@ -1,5 +1,12 @@
 from django.contrib import admin
-from .models import *
+
+from .models.game_user.game_user import GameUser
+from .models.game.game import Game
+from .models.owned_reaction_card.owned_reaction_card import OwnedReactionCard
+from .models.game_authentication_token.game_authentication_token \
+    import GameAuthenticationToken
+from .models.reaction_card_in_shop.reaction_card_in_shop \
+    import ReactionCardInShop
 
 
 #

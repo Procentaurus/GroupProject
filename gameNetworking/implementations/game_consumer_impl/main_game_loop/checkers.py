@@ -1,6 +1,6 @@
 from gameMechanics.queries import *
 
-from gameNetworking.queries import get_game
+from gameNetworking.models.queries import get_game
 
 from .common import *
 

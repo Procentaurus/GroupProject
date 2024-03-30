@@ -1,0 +1,12 @@
+18:14:40 connect INFO The game has started.
+18:14:49 message_handling WARNING student player tried to buy cards that are not in shop
+18:16:28 message_handling WARNING student player tried to buy cards that are not in shop
+18:16:39 message_handling WARNING student player tried to use cards that do not exist
+18:17:09 message_handling WARNING student player tried to buy cards that are not in shop
+18:17:27 message_handling WARNING student player tried to buy cards that are not in shop
+20:04:09 connect INFO The game has started.
+20:04:51 connect INFO The game has started.
+20:05:12 message_handling WARNING student player tried to buy cards that are not in shop
+20:05:35 message_handling WARNING Invalid format of sent data
+20:07:12 message_handling WARNING Invalid format of sent data
+20:08:35 message_handling WARNING student player tried to buy cards that are not in shop
