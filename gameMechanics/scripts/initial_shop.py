@@ -11,18 +11,23 @@ from gameMechanics.serializers import ReactionCardDataSerializer, ActionCardData
 def get_random_card_ids(model, count, player_type):
     all_instances = model.objects.filter(playerType=player_type)
     random_instances = random.sample(list(all_instances), count)
-    
+
     # Serialize instances using appropriate serializer
     if model == ReactionCard:
-        serializer = ReactionCardDataSerializer(random_instances, many=True)
+        serialized_data = []
+        # Create a dict list for Reaction Cards
+        for random_instance in random_instances:
+            serialized_data.append({
+                'card': ReactionCardDataSerializer(random_instance).data,
+                'amount': random.randint(1, 5)
+            })
     elif model == ActionCard:
+        # Create Action Card serialized list
         serializer = ActionCardDataSerializer(random_instances, many=True)
+        serialized_data = serializer.data
     else:
-        raise ValueError("Unsupported model type")
-    
-    # Retrieve serialized data
-    serialized_data = serializer.data
-    
+        raise ValueError("Unsupported model type")    
+
     return serialized_data
 
 async def get_initial_shop_for_player(num_reaction_cards, num_action_cards, player_type):
