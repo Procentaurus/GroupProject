@@ -1,6 +1,7 @@
 from gameMechanics.scripts.basic_mechanics import get_new_morale
 
-from gameNetworking.enums import MessageType, PlayerState
+from ....enums import MessageType, PlayerState
+from ....models.queries import add_reaction_card_to_owned, remove_reaction_card
 from .common import SurrenderMoveHandler
 from .abstract import MoveHandler, StageHandler
 from .checkers import *
@@ -39,11 +40,11 @@ class ActionMoveHandler(MoveHandler):
         if not await g_v.verify_game_next_move_type("action"): return False
         
         p_v = PlayerVerifier(self._consumer)
-        if not await p_v.verify_player_in_clash("action_move"): return False
+        if not await p_v.verify_player_in_clash(): return False
 
         a_c_c = ActionCardsChecker([self._a_card])
         c_v = CardVerifier(self._consumer, a_c_c)
-        if not a_c_c.is_cards_data_empty(): return False
+        if a_c_c.is_cards_data_empty(): return False
         if not await c_v.verify_cards_for_clash(): return False
 
         if not await g_v.verify_turn_update_successful(): return False
@@ -65,7 +66,7 @@ class ReactionMoveHandler(MoveHandler):
         super().__init__(consumer)
         self._game = game
         self._r_cards = data.get("reaction_cards_data")
-        self._user = self._consumer.get_game_user()
+        self.g_u = self._consumer.get_game_user()
 
         # Current user new values
         self._user_r_cards_gained = None
@@ -90,13 +91,12 @@ class ReactionMoveHandler(MoveHandler):
 
         r_c_c = ReactionCardsChecker(self._r_cards)
         c_v = CardVerifier(self._consumer, r_c_c)
-        if not r_c_c.is_cards_data_empty(): return False
         if not await c_v.verify_cards_for_clash(): return False
 
         if not await g_v.verify_turn_update_successful(): return False
 
     async def _perform_move_mechanics(self):
-        opp = await self._game.get_opponent_player(self._user)
+        opp = await self._game.get_opponent_player(self.g_u)
         await self._consumer.send_message_to_opponent(
             {"reaction_cards" : self._r_cards},
             "opponent_move")
@@ -126,7 +126,7 @@ class ReactionMoveHandler(MoveHandler):
     async def _process_clash_results(self, opp):
         (new_opp_morale, opp_money, new_user_morale, user_money) = (
             await get_new_morale(
-                self._user, opp, self._consumer.get_a_card_played_by_opponent(),
+                self.g_u, opp, self._consumer.get_a_card_played_by_opponent(),
                 self._r_cards)
         )
         self._set_money_opp_gained(opp_money)
@@ -137,8 +137,8 @@ class ReactionMoveHandler(MoveHandler):
 
     async def _set_winner_if_exist(self, opp):
         if await opp.has_lost():
-            self._consumer.set_winner(self._user.conflict_side)
-        if await self._user.has_lost():
+            self._consumer.set_winner(self.g_u.conflict_side)
+        elif await self.g_u.has_lost():
             self._consumer.set_winner(opp.conflict_side)
 
     async def _send_clash_result_to_players(self):
@@ -186,17 +186,16 @@ class ReactionMoveHandler(MoveHandler):
         }
 
     async def _remove_all_used_reaction_cards(self):
-        for r_card_data in self._r_cards:
-            await self._user.remove_reaction_card(
-                r_card_data.get("card_id"),
-                r_card_data.get("amount"))
+        if self._any_cards_sent():
+            for r_card_data in self._r_cards:
+                await remove_reaction_card(
+                    self.g_u ,r_card_data.get("id"), r_card_data.get("amount"))
     
     async def _add_all_reaction_cards(self, game_user, r_cards_gained):
         for r_card_data in r_cards_gained:
-            await game_user.add_reaction_card(
-                r_card_data.get("card_id"),
-                r_card_data.get("amount"))
-            
+            await add_reaction_card_to_owned(
+                game_user, r_card_data.get("id"), r_card_data.get("amount"))
+
     async def _announce_winner(self):
         self._consumer.set_closure_from_user_side(False)
         await self._consumer.send_message_to_group(
@@ -230,3 +229,6 @@ class ReactionMoveHandler(MoveHandler):
 
     def _set_money_opp_gained(self, value):
         self._money_opp_gained = value
+
+    def _any_cards_sent(self):
+        return True if (self._r_cards is None or self._r_cards == []) else False 

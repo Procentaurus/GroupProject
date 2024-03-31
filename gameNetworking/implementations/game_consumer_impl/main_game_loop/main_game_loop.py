@@ -14,10 +14,10 @@ class GameLoopHandler:
 
     async def perform_game_loop(self):
         g = await get_game(self._consumer.get_game_id())
-        await self._consumer.refresh_game_user()
         g_v = GameVerifier(self._consumer, g)
         if not await g_v.verify_game_exist(): return
-        
+
+        await self._consumer.refresh_game_user()
         message_type = self._data.get('type')
         g_stage = self._consumer.get_game_stage()
         if g_stage == GameStage.HUB:
