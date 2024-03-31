@@ -69,10 +69,11 @@ class PurchaseMoveHandler(MoveHandler):
         self._r_cards = data.get("reaction_cards")
 
     async def _verify_move(self):
+        if not self._any_cards_sent(): return False
+        
         p_v = PlayerVerifier(self._consumer)
         if await p_v.verify_player_wait_for_clash(): return False
         if not await p_v.verify_player_in_hub("purchase move"): return False
-        if not self._any_cards_sent(): return False
 
         a_c_c = ActionCardsChecker(self._a_cards)
         a_c_v = CardVerifier(self._consumer, a_c_c)
@@ -98,7 +99,7 @@ class PurchaseMoveHandler(MoveHandler):
             await self._purchase_action_card(a_card_id)
 
         for r_card_data in self._r_cards:
-            id = r_card_data.get("card_id")
+            id = r_card_data.get("id")
             amount = r_card_data.get("amount")
             await self._purchase_reaction_card(id, amount)
             

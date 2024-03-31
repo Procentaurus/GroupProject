@@ -121,7 +121,7 @@ class ReactionCardsChecker(CardChecker):
                 isinstance(self._cards_data, list) and 
                 all(
                     isinstance(item, dict) and 
-                    "card_id" in item and 
+                    "id" in item and 
                     "amount" in item 
                     for item in self._cards_data
                 )
@@ -131,7 +131,7 @@ class ReactionCardsChecker(CardChecker):
         not_existing_cards = []
 
         for card_data in self._cards_data:
-            id = card_data.get("card_id")
+            id = card_data.get("id")
             card_exist = await check_reaction_card_exist(id)
             if not card_exist:
                 not_existing_cards.append(id)
@@ -142,7 +142,7 @@ class ReactionCardsChecker(CardChecker):
         cards_not_in_shop = []
 
         for card_data in self._cards_data:
-            id = card_data.get("card_id")
+            id = card_data.get("id")
             amount = card_data.get("amount")
             card_in_shop = await check_reaction_card_in_shop(
                 game_user, id, amount)
@@ -155,7 +155,7 @@ class ReactionCardsChecker(CardChecker):
         cards_not_owned = []
 
         for card_data in self._cards_data:
-            id = card_data.get("card_id")
+            id = card_data.get("id")
             amount = card_data.get("amount")
             if not await check_reaction_card_owned(game_user, id, amount):
                 cards_not_owned.append([id, amount])
@@ -179,7 +179,7 @@ class CardCostVerifier:
         cards_total_price = 0
 
         for card_data in self._r_cards_data:
-            id = card_data.get("card_id")
+            id = card_data.get("id")
             card = await get_reaction_card(id)
             cards_total_price += card.price
 
@@ -283,8 +283,3 @@ class GameVerifier:
             await e_s.send_improper_move_info("not your turn")
             return False
         return True
-    
-    async def check_player_lost(self, player, new_player_morale):
-        if new_player_morale <= 0:
-            return True
-        return False
