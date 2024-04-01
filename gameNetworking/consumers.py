@@ -3,7 +3,7 @@ from channels.exceptions import StopConsumer
 import logging
 
 from .implementations.game_consumer_impl.clean import Disconnector
-from .implementations.game_consumer_impl.complex_methods import *
+from .implementations.game_consumer_impl.methods import *
 from .implementations.game_consumer_impl.connect import Connector
 from .implementations.game_consumer_impl.message_handling import *
 from .implementations.game_consumer_impl.message_sending import *
