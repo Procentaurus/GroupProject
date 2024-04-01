@@ -98,20 +98,16 @@ class GameUser(models.Model):
 
     @database_sync_to_async
     def remove_action_card(self, action_card_id):
-        result = remove_action_card_impl(self, action_card_id)
-        return result
+        remove_action_card_impl(self, action_card_id)
     
     @database_sync_to_async
     def remove_action_card_from_shop(self, action_card_id):
-        result = remove_action_card_from_shop_impl(self, action_card_id)
-        return result
+        remove_action_card_from_shop_impl(self, action_card_id)
         
     @database_sync_to_async
     def add_action_card(self, action_card_id):
-        result = add_action_card_impl(self, action_card_id)
-        return result
+        add_action_card_impl(self, action_card_id)
     
     @database_sync_to_async
     def add_action_card_to_shop(self, action_card_id):
-        result = add_action_card_to_shop_impl(self, action_card_id)
-        return result
+        add_action_card_to_shop_impl(self, action_card_id)

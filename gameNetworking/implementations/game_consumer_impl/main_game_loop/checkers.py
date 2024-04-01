@@ -32,9 +32,10 @@ class CardVerifier:
             await e_s.send_cards_not_in_shop_info(cards_not_in_shop)
             return False
         return True
-    
+
     async def _verify_cards_owned(self):
-        cards_not_owned = await self._c_c.check_cards_owned()
+        g_u =self._consumer.get_game_user()
+        cards_not_owned = await self._c_c.check_cards_owned(g_u)
         if cards_not_owned != []:
             e_s = ErrorSender(self._consumer)
             await e_s.send_card_not_owned_info(cards_not_owned)

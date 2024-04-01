@@ -13,10 +13,10 @@ class ClashStageHandler(StageHandler):
         super().__init__(consumer, game, message_type, data)
 
     async def perform_stage(self):
-        if self._message_type == MessageType.PURCHASE_MOVE:
+        if self._message_type == MessageType.CLASH_ACTION_MOVE:
             p_m_h = ActionMoveHandler(self._consumer, self._game, self._data)
             await p_m_h.perform_move()
-        elif self._message_type == MessageType.READY_MOVE:
+        elif self._message_type == MessageType.CLASH_REACTION_MOVE:
             r_m_h = ReactionMoveHandler(self._consumer, self._game, self._data)
             await r_m_h.perform_move()
         elif self._message_type == MessageType.SURRENDER_MOVE:
@@ -32,22 +32,24 @@ class ActionMoveHandler(MoveHandler):
     def __init__(self, consumer, game, data):
         super().__init__(consumer)
         self._game = game
-        self._a_card = data.get("action_card_id")
+        self._a_card = data.get("id")
 
     async def _verify_move(self):
+        if not self._any_card_sent(): return False
+
         g_v = GameVerifier(self._consumer, self._game)
         if not await g_v.verify_next_move_performer(): return False
         if not await g_v.verify_game_next_move_type("action"): return False
-        
+
         p_v = PlayerVerifier(self._consumer)
         if not await p_v.verify_player_in_clash(): return False
 
         a_c_c = ActionCardsChecker([self._a_card])
         c_v = CardVerifier(self._consumer, a_c_c)
-        if a_c_c.is_cards_data_empty(): return False
         if not await c_v.verify_cards_for_clash(): return False
-
         if not await g_v.verify_turn_update_successful(): return False
+
+        return True
 
     async def _perform_move_mechanics(self):
         game_user = self._consumer.get_game_user()
@@ -59,6 +61,9 @@ class ActionMoveHandler(MoveHandler):
         self._consumer.decrease_action_moves()
         if self._consumer.no_action_moves_left():
             await game_user.set_state(PlayerState.AWAIT_CLASH_END)
+
+    def _any_card_sent(self):
+        return False if (self._a_card is None or self._a_card == []) else True
 
 
 class ReactionMoveHandler(MoveHandler):
@@ -92,8 +97,9 @@ class ReactionMoveHandler(MoveHandler):
         r_c_c = ReactionCardsChecker(self._r_cards)
         c_v = CardVerifier(self._consumer, r_c_c)
         if not await c_v.verify_cards_for_clash(): return False
-
         if not await g_v.verify_turn_update_successful(): return False
+
+        return True
 
     async def _perform_move_mechanics(self):
         opp = await self._game.get_opponent_player(self.g_u)
