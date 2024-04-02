@@ -107,7 +107,7 @@ class ReactionMoveHandler(MoveHandler):
             {"reaction_cards" : self._r_cards},
             "opponent_move")
         
-        await self._process_clash_results()
+        await self._process_clash_results(opp)
         await self._add_gains_to_players_accounts()
         await self._remove_all_used_reaction_cards()
         await self._send_clash_result_to_players()
