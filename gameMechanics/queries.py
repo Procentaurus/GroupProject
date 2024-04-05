@@ -47,7 +47,7 @@ def check_reaction_card_exist(id):
     try:
         _ = ReactionCard.objects.get(id=id)
         return True
-    except ReactionCard.DoesNotExist:
+    except (ReactionCard.DoesNotExist, ValidationError):
         return False
     
 @database_sync_to_async
