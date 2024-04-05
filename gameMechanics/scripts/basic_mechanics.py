@@ -20,8 +20,8 @@ async def get_new_morale(
         action_card_id,
         reaction_card_dictionary,
 ):
-    acting_player_health = acting_player.get("morale")
-    reacting_player_health = reacting_player.get("morale")
+    acting_player_health = acting_player.morale
+    reacting_player_health = reacting_player.morale
     reaction_card_list = await get_reaction_cards_from_dictionary(reaction_card_dictionary)
     action_card = await database_sync_to_async(ActionCard.objects.get(id = action_card_id))
     action_damage = await calculate_action_damage(action_card)

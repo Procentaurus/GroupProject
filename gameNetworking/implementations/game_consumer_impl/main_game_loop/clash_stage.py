@@ -70,7 +70,7 @@ class ReactionMoveHandler(MoveHandler):
     def __init__(self, consumer, game, data):
         super().__init__(consumer)
         self._game = game
-        self._r_cards = data.get("reaction_cards_data")
+        self._r_cards = data.get("reaction_cards")
         self.g_u = self._consumer.get_game_user()
 
         # Current user new values
