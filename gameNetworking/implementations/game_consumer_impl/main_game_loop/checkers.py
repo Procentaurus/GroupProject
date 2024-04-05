@@ -181,7 +181,7 @@ class CardCostVerifier:
 
         for card_data in self._r_cards_data:
             id = card_data.get("id")
-            card = await get_reaction_card(id)
+            card = await get_r_card(id)
             cards_total_price += card.price
 
         return cards_total_price
@@ -190,7 +190,7 @@ class CardCostVerifier:
         cards_total_price = 0
 
         for card_id in self._a_cards_data:
-            action_card = await get_action_card(card_id)
+            action_card = await get_a_card(card_id)
             cards_total_price += action_card.price
 
         return cards_total_price
