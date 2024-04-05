@@ -4,9 +4,10 @@ from enum import Enum, IntEnum
 class MessageType(str, Enum):
     PURCHASE_MOVE = 'purchase_move'
     READY_MOVE = 'ready_move'
-    CLASH_ACTION_MOVE = 'clash_action_move'
-    CLASH_REACTION_MOVE = 'clash_reaction_move'
+    ACTION_MOVE = 'action_move'
+    REACTION_MOVE = 'reaction_move'
     SURRENDER_MOVE = 'surrender_move'
+    REROLL_MOVE = 'reroll_move'
 
 
 class ResponseTime(IntEnum):

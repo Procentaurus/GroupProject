@@ -37,7 +37,6 @@ class ReadyMoveHandler(MoveHandler):
         p_v = PlayerVerifier(self._consumer)
         if await p_v.verify_player_wait_for_clash(): return False
         if not await p_v.verify_player_in_hub("purchase move"): return False
-        
         return True
 
     async def _perform_move_mechanics(self):
@@ -49,11 +48,6 @@ class ReadyMoveHandler(MoveHandler):
         else:
             await self._consumer.critical_error(
                 f"Improper opponent player state: {opponent.state}")
-            
-    async def _send_invalid_move_info(self):
-        await self._consumer.error("You have already declared readyness.",
-            f"{self._player.conflict_side} player tried to declare"
-            +" readyness for the clash afresh.")
 
     async def _send_clash_start_info(self):
         await self._consumer.send_message_to_group(
@@ -109,7 +103,7 @@ class PurchaseMoveHandler(MoveHandler):
         return False if (self._r_cards is None or self._r_cards == []) else True
 
     async def _purchase_action_card(self, card_id):
-        card_price = (await get_action_card(card_id)).price
+        card_price = (await get_a_card(card_id)).price
         g_u = self._consumer.get_game_user()
 
         await g_u.add_action_card(card_id)
@@ -118,7 +112,7 @@ class PurchaseMoveHandler(MoveHandler):
 
     async def _purchase_reaction_card(self, card_id, amount):
 
-        reaction_card_price = (await get_reaction_card(card_id)).price
+        reaction_card_price = (await get_r_card(card_id)).price
         g_u = self._consumer.get_game_user()
 
         await add_reaction_card_to_owned(g_u, card_id, amount)

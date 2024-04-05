@@ -1,7 +1,7 @@
 from random import randint
 from channels.db import database_sync_to_async
 
-from gameMechanics.models import ReactionCard
+from gameMechanics.queries import get_r_card_sync
 
 from .game_user.game_user import GameUser
 from .game.game import Game
@@ -115,10 +115,9 @@ def check_reaction_card_owned(game_user, r_card_id, amount):
         return True if owned_r_card.amount >= amount else False
     else: return False
 
-
 @database_sync_to_async
 def add_reaction_card_to_owned(game_user, r_card_id, amount):
-    r_card = ReactionCard.objects.get(id=r_card_id)
+    r_card = get_r_card_sync(r_card_id)
 
     # Retrieve the OwnedReactionCard instance or create a new one
     # if it doesn't exist
@@ -152,7 +151,7 @@ def check_reaction_card_in_shop(game_user, r_card_id, amount):
     
 @database_sync_to_async
 def add_reaction_card_to_shop(game_user, r_card_id, amount):  
-    r_card = ReactionCard.objects.get(id=r_card_id)
+    r_card = get_r_card_sync(r_card_id)
     
     # Retrieve the ReactionCardInShop instance or create a new one
     # if it doesn't exist

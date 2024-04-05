@@ -1,4 +1,5 @@
 from gameMechanics.scripts.basic_mechanics import get_new_morale
+from gameMechanics.queries import get_a_card_serialized
 
 from ....enums import MessageType, PlayerState
 from ....models.queries import add_reaction_card_to_owned, remove_reaction_card
@@ -13,10 +14,10 @@ class ClashStageHandler(StageHandler):
         super().__init__(consumer, game, message_type, data)
 
     async def perform_stage(self):
-        if self._message_type == MessageType.CLASH_ACTION_MOVE:
+        if self._message_type == MessageType.ACTION_MOVE:
             p_m_h = ActionMoveHandler(self._consumer, self._game, self._data)
             await p_m_h.perform_move()
-        elif self._message_type == MessageType.CLASH_REACTION_MOVE:
+        elif self._message_type == MessageType.REACTION_MOVE:
             r_m_h = ReactionMoveHandler(self._consumer, self._game, self._data)
             await r_m_h.perform_move()
         elif self._message_type == MessageType.SURRENDER_MOVE:
@@ -55,7 +56,7 @@ class ActionMoveHandler(MoveHandler):
         game_user = self._consumer.get_game_user()
         await game_user.remove_action_card(self._a_card)
         await self._consumer.send_message_to_opponent(
-            {"action_card" : self._a_card},
+            {"action_card" : await get_a_card_serialized(self._a_card)},
             "opponent_move")
     
         self._consumer.decrease_action_moves()
@@ -104,9 +105,9 @@ class ReactionMoveHandler(MoveHandler):
     async def _perform_move_mechanics(self):
         opp = await self._game.get_opponent_player(self.g_u)
         await self._consumer.send_message_to_opponent(
-            {"reaction_cards" : self._r_cards},
+            {"reaction_cards" : await self._get_opponent_move_resp_body()},
             "opponent_move")
-        
+
         await self._process_clash_results(opp)
         await self._add_gains_to_players_accounts()
         await self._remove_all_used_reaction_cards()
@@ -129,6 +130,15 @@ class ReactionMoveHandler(MoveHandler):
             e_s = ErrorSender(self._consumer)
             await e_s.send_improper_state_error("reaction_move")
 
+    async def _get_opponent_move_resp_body(self):
+        resp_body = []
+
+        for r_card_data in self._r_cards:
+            card_data = {"amount": r_card_data.get("amount")}
+            id = r_card_data.get("id")
+            card_data["reaction_card"] = await get_r_card_serialized(id)
+            resp_body.append(card_data)
+
     async def _process_clash_results(self, opp):
         (new_opp_morale, opp_money, new_user_morale, user_money) = (
             await get_new_morale(
@@ -140,7 +150,6 @@ class ReactionMoveHandler(MoveHandler):
         self._set_money_user_gained(user_money)
         self._set_new_user_morale(new_user_morale)
 
-
     async def _set_winner_if_exist(self, opp):
         if await opp.has_lost():
             self._consumer.set_winner(self.g_u.conflict_side)
@@ -148,10 +157,10 @@ class ReactionMoveHandler(MoveHandler):
             self._consumer.set_winner(opp.conflict_side)
 
     async def _send_clash_result_to_players(self):
-        user_rsp_body = self._create_clash_result_response_body_for_opp()
+        user_rsp_body = self._get_clash_result_response_body_for_opp()
         await self._consumer.clash_result(user_rsp_body)
 
-        opp_rsp_body = self._create_clash_result_response_body_for_opp()
+        opp_rsp_body = self._get_clash_result_response_body_for_opp()
         await self._consumer.send_message_to_opponent(
             opp_rsp_body, "clash_result")
         
@@ -173,7 +182,7 @@ class ReactionMoveHandler(MoveHandler):
         await self._add_all_action_cards(opp, self._opp_a_cards_gained)
         await self._add_all_reaction_cards(opp, self._opp_r_cards_gained)
         
-    def _create_clash_result_response_body_for_user(self):
+    def _get_clash_result_response_body_for_user(self):
         return {
             "new_player_morale" : self._new_user_morale,
             "new_opponent_morale" : self._new_opp_morale,
@@ -182,7 +191,7 @@ class ReactionMoveHandler(MoveHandler):
             "reaction_cards_gained" : self._user_r_cards_gained
         }
     
-    def _create_clash_result_response_body_for_opp(self):
+    def _get_clash_result_response_body_for_opp(self):
         return {
             "new_player_morale" : self._new_opp_morale,
             "new_opponent_morale" : self._new_user_morale,
