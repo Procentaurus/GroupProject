@@ -22,7 +22,9 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         self._winner = None
         self._game_user = None
         self._opponent_channel_name = None
+
         self._closure_from_user_side = True
+        self._valid_json_sent = False
 
         self._game_stage = GameStage.HUB
         self._a_card_played_by_opponent = None
@@ -60,6 +62,10 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     async def receive_json(self, data):
         loop_handler = GameLoopHandler(self, data)
         await loop_handler.perform_game_loop()
+        self.set_valid_json_sent(False)
+
+    async def decode_json(self, text_data, **kwargs):
+        await decode_json_impl(self, text_data)
 
     # sends messages to both players' mailboxes
     async def send_message_to_group(self, data, event):
@@ -116,6 +122,9 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     def get_game_id(self):
         return self._game_id
 
+    def get_valid_json_sent(self):
+        return self._valid_json_sent
+
     def get_game_user(self):
         return self._game_user
     
@@ -145,6 +154,9 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     
     def set_game_id(self, game_id):
         self._game_id = game_id
+
+    def set_valid_json_sent(self, val):
+        self._valid_json_sent = val
 
     def set_winner(self, winner):
         self._winner = winner
