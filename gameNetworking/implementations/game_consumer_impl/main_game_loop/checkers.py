@@ -1,231 +1,286 @@
 from gameMechanics.queries import *
 
-from gameNetworking.enums import PlayerState
+from ....models.queries import *
+from .common import *
 
 
-async def check_all_action_cards_exist(consumer, action_cards_ids):
-    not_existing_action_cards = []
+class CardVerifier:
+    def __init__(self, consumer, card_checker):
+        self._consumer = consumer
+        self._c_c = card_checker
 
-    for action_card_id in action_cards_ids:
-        action_card_exist = await check_action_card_exist(action_card_id)
-        if not action_card_exist:
-            not_existing_action_cards.append(action_card_id)
-
-    response_body = {}
-    
-    if(len(not_existing_action_cards) != 0):
-        response_body["not_existing_action_cards"] = not_existing_action_cards
-
-    # if there is 1 or more not existing cards
-    if response_body:
-        await consumer.complex_error(
-            f"Some action cards you have chosen do not exist.",
-            f"Player chose not existing cards: \
-            {', '.join(not_existing_action_cards)}",
-            response_body)
-        return False
-    return True
-
-async def check_all_reaction_cards_exist(consumer, reaction_cards_ids):
-    not_existing_reaction_cards = []
-
-    for reaction_card_id in reaction_cards_ids:
-        reaction_card_exist = await check_reaction_card_exist(reaction_card_id)
-        if not reaction_card_exist:
-            not_existing_reaction_cards.append(reaction_card_id)
-
-    response_body = {}
-
-    if(len(not_existing_reaction_cards) != 0):
-        response_body["not_existing_reaction_cards"] = not_existing_reaction_cards
-
-    # if there is 1 or more not existing cards
-    if response_body:
-        await consumer.complex_error(
-            f"Some reaction cards you have chosen do not exist.",
-            f"Player chose not existing cards: \
-            {', '.join(not_existing_reaction_cards)}",
-            response_body)
-        return False
-    return True
-
-async def check_all_cards_are_in_shop(
-    consumer, action_cards_ids, reaction_cards_data):
-    
-    action_cards_not_in_shop, reaction_cards_not_in_shop = [], []
-    game_user = consumer.get_game_user()
-
-    for action_card_id in action_cards_ids:
-        action_card_in_shop = await game_user.check_if_have_action_card_in_shop(
-            action_card_id)
-        if not action_card_in_shop:
-            action_cards_not_in_shop.append(action_card_id)
-
-    for reaction_card_data in reaction_cards_data:
-        reaction_card_in_shop = await game_user.check_if_have_reaction_card_in_shop(
-            reaction_card_data["reaction_card_id"], reaction_card_data["amount"])
-        if not reaction_card_in_shop:
-            reaction_cards_not_in_shop.append(reaction_card_data["reaction_card_id"])
-
-    response_body = {}
-    
-    if(len(action_cards_not_in_shop) != 0):
-        response_body["action_cards_not_in_shop"] = action_cards_not_in_shop
-
-    if(len(reaction_cards_not_in_shop) != 0):
-        response_body["reaction_cards_not_in_shop"] = reaction_cards_not_in_shop
-
-    # when there is 1 or more cards that are no in the shop
-    if response_body:
-        await consumer.complex_error(
-            f"Some action cards you have chosen are not in the shop.",
-            f"Player chose cards outside his shop: {', '.join(action_cards_not_in_shop)}, \
-            {', '.join(reaction_cards_not_in_shop)}",
-            response_body)
-        return False
-    return True
-
-async def check_game_user_can_afford_all_cards(
-        consumer, action_cards_ids, reaction_cards_data):
-
-    action_cards_total_price, action_cards_total_price = 0, 0
-
-    for action_card_id in action_cards_ids:
-        action_card = await get_action_card(action_card_id)
-        if action_card is None:
-            await consumer.critical_error(
-                f"Not existing card passed validation: {action_card_id}")
-        else:
-            action_cards_total_price += action_card.price
-
-    for reaction_card_data in reaction_cards_data:
-        reaction_card = await get_reaction_card(reaction_card_data["reaction_card_id"])
-        if reaction_card is None:
-            await consumer.critical_error(
-                f"Not existing card passed validation: \
-                {reaction_card_data['reaction_card_id']}")
-        else:
-            reaction_cards_total_price += reaction_card.price
-
-    if consumer.get_game_user().money < action_cards_total_price + action_cards_total_price:
-        await consumer.error(
-            "You can not afford to buy all chosen cards.",
-            "Player chose cards that he can not afford")
-        return False
-    return True
-
-async def check_game_user_own_action_card(consumer, action_card_id):
-    game_user = consumer.get_game_user()
-    if not await game_user.check_if_own_action_card(action_card_id):
-        await consumer.error_impl(
-            "You don't own the used action card",
-            f"The {game_user.conflict_side} player tried \
-            to use {action_card_id} card that he does not posess.")
-        return False
-    return True
-
-async def check_game_user_own_reaction_cards(consumer, reaction_cards_data):
-    reaction_cards_not_owned = {}
-    game_user = consumer.get_game_user()
-    for reaction_card_data in reaction_cards_data:
-        reaction_card_owned = await game_user.check_if_own_reaction_card(
-            reaction_card_data["reaction_card_id"], reaction_card_data["amount"])
-        if not reaction_card_owned:
-            reaction_cards_not_owned.append(reaction_card_data["reaction_card_id"])
-
-    response_body = {}
-
-    if(len(reaction_cards_not_owned) != 0):
-       response_body["reaction_cards_not_owned"] = reaction_cards_not_owned
-
-    # when there is 1 or more cards that are no in the shop
-    if response_body:
-        await consumer.complex_error(
-            "You don't own the used reaction card",
-            f"Player chose cards outside his shop: {', '.join(reaction_cards_not_owned)}",
-            response_body)
-        return False
-    return True
-
-async def check_action_move_can_be_performed(consumer, game):
-    
-    is_player_turn = check_is_player_turn(consumer, game)
-    if not is_player_turn: return False
-
-    game_user = consumer.get_game_user()
-    if game.next_move_type != "action":
-        await consumer.error(
-            "Wrong move. It is time for reaction.",
-            f"{game_user.conflict_side} player performed move of wrong type.")
-        return False
-    
-    # Check if player is in the clash stage, if not then flow error occured
-    if game_user.state != PlayerState.IN_CLASH:
-        await consumer.critical_error(
-            f"Improper state {game_user.state} of {game_user.conflict_side} \
-            player in clash action move.")
-        return False
-    
-    return True
-
-async def check_reaction_move_can_be_performed(
-    consumer, game, reaction_cards_data):
-
-    game_user = consumer.get_game_user()
-    is_player_turn = check_is_player_turn(consumer, game, game_user)
-    if not is_player_turn: return False
-
-    if game.next_move_type != "action":
-        await consumer.error(
-            "Wrong move. It is time for action.",
-            f"{game_user.conflict_side} player performed move of wrong type.")
-        return False
-    
-    # Check if player is in the clash stage, if not then flow error occured
-    if game_user.state != PlayerState.IN_CLASH \
-        and game_user.state != PlayerState.AWAIT_CLASH_END:
-        await consumer.critical_error(
-            f"Improper state {game_user.state} of {game_user.conflict_side} \
-            player in clash action move.")
-        return False
-    
-    reaction_cards_ids = {x.get("reaction_card_id") for x in reaction_cards_data}
-    reaction_card_exist = await check_all_reaction_cards_exist(
-        consumer, reaction_cards_ids)
-    if not reaction_card_exist: return False
-
-    reaction_cards_are_owned = await check_game_user_own_reaction_cards(
-        consumer, reaction_cards_data)
-    if not reaction_cards_are_owned: return False
-
-    return True
-
-async def check_winner(
-    consumer, opponent, new_player_morale, new_opponent_morale):
-    
-    game_user = consumer.get_game_user()
-    if new_opponent_morale <= 0:
-        consumer.set_winner(game_user.get_conflict_side())
-        await announce_winner(consumer)
+    async def _verify_cards_data_structure(self):
+        if not self._c_c.is_cards_data_structure_valid():
+            e_s = ErrorSender(self._consumer)
+            await e_s.send_invalid_data_structure_info()
+            return False
         return True
-    elif new_player_morale <= 0:
-        consumer.set_winner(opponent.get_conflict_side())
-        await announce_winner(consumer, opponent)
+
+    async def _verify_cards_exist(self):
+        not_existing_cards = await self._c_c.check_cards_exist()
+        if not_existing_cards != []:
+            e_s = ErrorSender(self._consumer)
+            await e_s.send_cards_not_exist_info(not_existing_cards)
+            return False
         return True
-    else: 
+    
+    async def _verify_cards_in_shop(self):
+        g_u =self._consumer.get_game_user()
+        cards_not_in_shop = await self._c_c.check_cards_in_shop(g_u)
+        if cards_not_in_shop != []:
+            e_s = ErrorSender(self._consumer)
+            await e_s.send_cards_not_in_shop_info(cards_not_in_shop)
+            return False
+        return True
+
+    async def _verify_cards_owned(self):
+        g_u =self._consumer.get_game_user()
+        cards_not_owned = await self._c_c.check_cards_owned(g_u)
+        if cards_not_owned != []:
+            e_s = ErrorSender(self._consumer)
+            await e_s.send_card_not_owned_info(cards_not_owned)
+            return False
+        return True
+    
+    async def verify_cards_for_purchase(self):
+        if not self._c_c.is_cards_data_empty():
+            if await self._verify_cards_data_structure():
+                if await self._verify_cards_exist():
+                    return await self._verify_cards_in_shop()
+            return False
+        return True
+    
+    async def verify_cards_for_clash(self):
+        if not self._c_c.is_cards_data_empty():
+            if await self._verify_cards_data_structure():
+                if await self._verify_cards_exist():
+                    return await self._verify_cards_owned()
+            return False
+        return True
+
+
+class CardChecker:
+
+    def __init__(self, cards_data):
+        self._cards_data = cards_data if cards_data is not None else []
+
+    def is_cards_data_empty(self):
+        if self._cards_data == []:
+            return True
+        else:
+            return False
+
+
+class ActionCardsChecker(CardChecker):
+
+    def __init__(self, cards_data):
+        super().__init__(cards_data)
+
+    def is_cards_data_structure_valid(self):
+        if isinstance(self._cards_data, list):
+            return all(isinstance(item, str) for item in self._cards_data)
+        return False
+
+    async def check_cards_exist(self):
+        not_existing_cards = []
+
+        for card_id in self._cards_data:
+            card_exist = await check_action_card_exist(card_id)
+            if not card_exist:
+                not_existing_cards.append(card_id)
+
+        return not_existing_cards
+    
+    async def check_cards_in_shop(self, game_user):
+        cards_not_in_shop = []
+
+        for card_id in self._cards_data:
+            action_card_in_shop = await game_user.check_action_card_in_shop(
+                card_id)
+            if not action_card_in_shop:
+                cards_not_in_shop.append(card_id)
+
+        return cards_not_in_shop
+    
+    async def check_cards_owned(self, game_user):
+        cards_not_owned = []
+
+        for card_id in self._cards_data:
+            if not await game_user.check_action_card_owned(card_id):
+                cards_not_owned.append(card_id)
+        
+        return cards_not_owned
+
+
+class ReactionCardsChecker(CardChecker):
+
+    def __init__(self, cards_data):
+        super().__init__(cards_data)
+
+    def is_cards_data_structure_valid(self):
+        return (
+                isinstance(self._cards_data, list) and 
+                all(
+                    isinstance(item, dict) and 
+                    "id" in item and 
+                    "amount" in item 
+                    for item in self._cards_data
+                )
+            )
+
+    async def check_cards_exist(self):
+        not_existing_cards = []
+
+        for card_data in self._cards_data:
+            id = card_data.get("id")
+            card_exist = await check_reaction_card_exist(id)
+            if not card_exist:
+                not_existing_cards.append(id)
+
+        return not_existing_cards
+    
+    async def check_cards_in_shop(self, game_user):
+        cards_not_in_shop = []
+
+        for card_data in self._cards_data:
+            id = card_data.get("id")
+            amount = card_data.get("amount")
+            card_in_shop = await check_reaction_card_in_shop(
+                game_user, id, amount)
+            if not card_in_shop:
+                cards_not_in_shop.append([id, amount])
+
+        return cards_not_in_shop
+    
+    async def check_cards_owned(self, game_user):
+        cards_not_owned = []
+
+        for card_data in self._cards_data:
+            id = card_data.get("id")
+            amount = card_data.get("amount")
+            if not await check_reaction_card_owned(game_user, id, amount):
+                cards_not_owned.append([id, amount])
+        
+        return cards_not_owned
+
+
+class CardCostVerifier:
+
+    """
+    Class'es functions dont perform any validation, so before using it
+    existence of all cards must be confirmed    
+    """
+
+    def __init__(self, consumer, a_cards_data, r_cards_data):
+        self._consumer = consumer
+        self._a_cards_data = a_cards_data if a_cards_data is not None else []
+        self._r_cards_data = r_cards_data if r_cards_data is not None else []
+
+    async def _count_r_cards_cost(self):
+        cards_total_price = 0
+
+        for card_data in self._r_cards_data:
+            id = card_data.get("id")
+            card = await get_r_card(id)
+            cards_total_price += card.price
+
+        return cards_total_price
+    
+    async def _count_a_cards_cost(self):
+        cards_total_price = 0
+
+        for card_id in self._a_cards_data:
+            action_card = await get_a_card(card_id)
+            cards_total_price += action_card.price
+
+        return cards_total_price
+    
+    async def _can_player_afford_cards(self):
+        player_money = self._consumer.get_game_user().money
+        a_cards_cost = await self._count_a_cards_cost()
+        r_cards_cost = await self._count_r_cards_cost()
+
+        if player_money >= a_cards_cost + r_cards_cost:
+            return True
         return False
     
-async def announce_winner(consumer):
-    consumer.set_closure_from_user_side(False)
-    await consumer.send_message_to_group(
-        {"winner" : consumer.__winner},
-        "game_end")
-    
-async def check_is_player_turn(consumer, game):
-    game_user = consumer.get_game_user()
-    if game.next_move_player != game_user.conflict_side:
-        await consumer.error("Not your turn.",
-            f"{game_user.conflict_side} player performed move \
-            while it was not his turn.")
+    async def verify_player_can_afford_cards(self):   
+        if not await self._can_player_afford_cards():
+            e_s = ErrorSender(self._consumer)
+            await e_s.send_not_enough_money_info()
+            return False
+        return True
+
+
+class PlayerVerifier:
+
+    def __init__(self, consumer, player=None):
+        self._consumer = consumer
+        self._player = consumer.get_game_user() if player is None else player
+
+    async def verify_player_wait_for_clash(self):
+        if await self._player.wait_for_clash_start():
+            e_s = ErrorSender(self._consumer)
+            await e_s.send_improper_move_info("readyness already declared")
+            return True
         return False
-    return True
+    
+    async def verify_player_in_hub(self, move):
+        if not await self._player.is_in_hub():
+            e_s = ErrorSender(self._consumer)
+            await e_s.send_improper_state_error(move)
+            return False
+        return True
+    
+    async def verify_player_in_clash(self):
+        if not await self._player.is_in_clash():
+            e_s = ErrorSender(self._consumer)
+            await e_s.send_improper_state_error("action_move")
+            return False
+        return True
+    
+    async def verify_player_in_clash_or_wait_for_clash_end(self):
+        p = self._player
+        if not await p.is_in_clash() and not await p.wait_for_clash_end():
+            e_s = ErrorSender(self._consumer)
+            await e_s.send_improper_state_error("reaction_move")
+            return False
+        return True
+
+
+class GameVerifier:
+
+    def __init__(self, consumer, game):
+        self._consumer = consumer
+        self._game = game
+    
+    async def verify_game_exist(self):
+        g = await get_game(self._consumer.get_game_id())
+        if g is None:
+            game_user = self._consumer.get_game_user()
+            e_s = ErrorSender(self._consumer)
+            await e_s.send_game_not_started_info(game_user.conflict_side)
+            return False
+        return True
+
+    async def verify_game_next_move_type(self, proper_move):
+        if self._game.next_move_type != proper_move:
+            e_s = ErrorSender(self._consumer)
+            await e_s.send_improper_move_info("wrong move type")
+            return False
+        return True
+        
+    async def verify_turn_update_successful(self):
+        if not await self._game.update_after_turn():
+            e_s = ErrorSender(self._consumer)
+            await e_s.send_turn_update_fail_error()
+            return False
+        return True
+    
+    async def verify_next_move_performer(self):
+        game_user = self._consumer.get_game_user()
+        if self._game.next_move_player != game_user.conflict_side:
+            e_s = ErrorSender(self._consumer)
+            await e_s.send_improper_move_info("not your turn")
+            return False
+        return True

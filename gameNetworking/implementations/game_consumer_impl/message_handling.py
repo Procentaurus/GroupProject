@@ -1,8 +1,7 @@
 from autobahn.exception import Disconnected
 
 from gameNetworking.enums import PlayerState
-from gameNetworking.queries import get_game_user
-from .main_game_loop.common import send_card_sets_to_shop
+from .main_game_loop.common import ShopCardsHandler
 
 
 #
@@ -65,9 +64,9 @@ async def clash_end_impl(consumer, data):
     await consumer.send_json({
         'type' : "clash_end",
     })
-    
-    is_teacher = bool(data.get("is_teacher"))
-    await send_card_sets_to_shop(consumer, is_teacher)
+    s_c_h = ShopCardsHandler(consumer)
+    await s_c_h.send_card_sets_to_shop()
+    await s_c_h.add_cards_to_shop()
 
 async def game_end_impl(consumer, data):  
     try:
@@ -95,7 +94,7 @@ async def error_impl(consumer, message, log_message):
     else:
         consumer.logger.warning(log_message)
 
-async def complex_error_impl(consumer, message, log_message, **data):
+async def complex_error_impl(consumer, message, log_message, data):
     await consumer.send_json({
         'type' : "error",
         'info' : message,
@@ -114,4 +113,3 @@ async def critical_error_impl(consumer, log_message):
     })
 
     consumer.logger.error(log_message)
-

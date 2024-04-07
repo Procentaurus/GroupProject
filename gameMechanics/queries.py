@@ -1,56 +1,75 @@
 from channels.db import database_sync_to_async
+from django.core.exceptions import ValidationError
 
 from .models import ActionCard, ReactionCard
-
-
-@database_sync_to_async
-def get_action_cards(given_task, choice, number_of_cards_to_return):
-    pass
-
-
-@database_sync_to_async
-def get_reaction_cards(given_task, choice, number_of_cards_to_return):
-    pass
-
-
-@database_sync_to_async
-def calculate_change_in_morale(action_card, reaction_cards):
-    pass
+from .serializers import ActionCardDataSerializer, ReactionCardDataSerializer
 
 
 ########### Action card ###########
 
 @database_sync_to_async
-def get_action_card(action_card_id):
+def get_a_card(id):
     try:
-        card = ActionCard.objects.get(action_card_id)
+        card = ActionCard.objects.get(id=id)
         return card
     except ActionCard.DoesNotExist:
-        return None  
+        return None
+    
+def get_a_card_sync(id):
+    try:
+        card = ActionCard.objects.get(id=id)
+        return card
+    except ActionCard.DoesNotExist:
+        return None
 
 @database_sync_to_async
-def check_action_card_exist(action_card_id):
+def get_a_card_serialized(id):
     try:
-        _ = ActionCard.objects.get(action_card_id)
-        return True
+        card = ActionCard.objects.get(id=id)
+        serializer = ActionCardDataSerializer(card)
+        return serializer.data
     except ActionCard.DoesNotExist:
+        return {}
+
+@database_sync_to_async
+def check_action_card_exist(id):
+    try:
+        _ = ActionCard.objects.get(id=id)
+        return True
+    except (ActionCard.DoesNotExist, ValidationError):
         return False            
 
 
 ########### Reaction card ###########
 
 @database_sync_to_async
-def check_reaction_card_exist(reaction_card_id):
+def check_reaction_card_exist(id):
     try:
-        _ = ReactionCard.objects.get(reaction_card_id)
+        _ = ReactionCard.objects.get(id=id)
         return True
-    except ReactionCard.DoesNotExist:
+    except (ReactionCard.DoesNotExist, ValidationError):
         return False
     
 @database_sync_to_async
-def get_reaction_card(reaction_card_id):
+def get_r_card(id):
     try:
-        card = ReactionCard.objects.get(reaction_card_id)
+        card = ReactionCard.objects.get(id=id)
         return card
     except ReactionCard.DoesNotExist:
         return None
+
+def get_r_card_sync(id):
+    try:
+        card = ReactionCard.objects.get(id=id)
+        return card
+    except ReactionCard.DoesNotExist:
+        return None
+    
+@database_sync_to_async
+def get_r_card_serialized(id):
+    try:
+        card = ReactionCard.objects.get(id=id)
+        serializer = ReactionCardDataSerializer(card)
+        return serializer.data
+    except ReactionCard.DoesNotExist:
+        return {}

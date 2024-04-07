@@ -5,13 +5,13 @@ from .models import *
 
 
 class ActionCardAdmin(admin.ModelAdmin):
-    list_display = ('name', 'playerType', 'cost', 'pressure')
-    list_filter = ('playerType', 'cost')
+    list_display = ('name', 'playerType', 'price', 'pressure')
+    list_filter = ('playerType', 'price')
     search_fields = ('name', 'description')
 
 class ReactionCardAdmin(admin.ModelAdmin):
-    list_display = ('name', 'playerType', 'cost', 'type')
-    list_filter = ('playerType', 'cost', 'type')
+    list_display = ('name', 'playerType', 'price', 'type')
+    list_filter = ('playerType', 'price', 'type')
     search_fields = ('name', 'description')
 
 admin.site.register(ActionCard)

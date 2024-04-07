@@ -20,8 +20,8 @@ async def get_new_morale(
         action_card_id,
         reaction_card_dictionary,
 ):
-    acting_player_health = acting_player.get("morale")
-    reacting_player_health = reacting_player.get("morale")
+    acting_player_health = acting_player.morale
+    reacting_player_health = reacting_player.morale
     reaction_card_list = await get_reaction_cards_from_dictionary(reaction_card_dictionary)
     action_card = await database_sync_to_async(ActionCard.objects.get(id = action_card_id))
     action_damage = await calculate_action_damage(action_card)
@@ -85,17 +85,17 @@ async def calculate_reaction(action_damage, reaction_card_list):
     return blocked_damage, redirected_damage, action_damage - blocked_damage
 
 @database_sync_to_async
-def get_reaction_cards_from_dictionary(card_dictionary):
-    # Extract UUIDs from the keys of the dictionary and create a flat list
-    card_uuids = [uuid for uuid, count in card_dictionary.items() for _ in range(count)]
+def get_reaction_cards_from_dictionary(reaction_cards_dict):
+    card_uuids = []
 
-    # Query ReactionCard objects from the database based on UUIDs
+    for item in reaction_cards_dict:
+        card_id = item['id']
+        amount = item['amount']
+        card_uuids.extend([card_id] * amount)
+
     reaction_cards = ReactionCard.objects.filter(pk__in=card_uuids)
 
-    # Convert the queryset to a list
-    reaction_card_list = list(reaction_cards)
-
-    return reaction_card_list
+    return list(reaction_cards)
 
 def get_values_dict(values_string):
     dictionary = dict(re.findall(r'(\w+)[=:]([^\s,;]+)', values_string))

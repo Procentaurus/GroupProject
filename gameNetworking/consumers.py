@@ -2,13 +2,13 @@ from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels.exceptions import StopConsumer
 import logging
 
-from .implementations.game_consumer_impl.clean import disconnect_impl
-from .implementations.game_consumer_impl.complex_methods import *
-from .implementations.game_consumer_impl.connect import connect_impl
+from .implementations.game_consumer_impl.clean import Disconnector
+from .implementations.game_consumer_impl.methods import *
+from .implementations.game_consumer_impl.connect import Connector
 from .implementations.game_consumer_impl.message_handling import *
 from .implementations.game_consumer_impl.message_sending import *
-from .implementations.game_consumer_impl.main_game_loop.main_game_loop_impl \
-    import main_game_loop_impl
+from .implementations.game_consumer_impl.main_game_loop.main_game_loop \
+    import GameLoopHandler
 
 
 class GameConsumer(AsyncJsonWebsocketConsumer):
@@ -18,45 +18,54 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         super().__init__(*args, **kwargs)
         self.logger = logging.getLogger(__name__)
 
-        self.__game_id = None
-        self.__winner = None
-        self.__game_user = None
-        self.__opponent_channel_name = None
-        self.__closure_from_user_side = True
+        self._game_id = None
+        self._winner = None
+        self._game_user = None
+        self._opponent_channel_name = None
 
-        self.__game_stage = GameStage.HUB
-        self.__action_card_played_by_opponent = None
-        self.__last_move_send_time = None
+        self._closure_from_user_side = True
+        self._valid_json_sent = False
+
+        self._game_stage = GameStage.HUB
+        self._a_card_played_by_opponent = None
+        self._last_move_send_time = None
 
         # Specifies how many action moves can be done in 1 clash 
-        self.__moves_per_clash = 1
-        self.__max_moves_per_clash = 3
+        self._moves_per_clash = 1
+        self._max_moves_per_clash = 3
 
         # Number of turns that specify how often action_moves_per_clash
         # is incremented
-        self.__turns_between_incrementations = (5 - 1)
+        self._turns_between_inc = (5 - 1)
 
         #Number of turns until the next incrementation
-        self.__turns_to_incrementation = (5 - 1)
+        self._turns_to_inc = (5 - 1)
 
         # This table represents number of moves that
         # player performs in each clash.
         # Index 0 represent number of actions
         # and index 1 number of reactions
-        self.__moves_table = [1, 1]
+        self._moves_table = [1, 1]
 
     async def connect(self):
-        await connect_impl(self)
+        connector = Connector(self)
+        await connector.connect()
 
     # is called when socket connection is close
     async def disconnect(self, *args):
-        await disconnect_impl(self)            
+        disconnector = Disconnector(self)
+        await disconnector.disconnect()           
         raise StopConsumer()
 
     # responsible for managing current user messages,
     # effectively main game loop function
     async def receive_json(self, data):
-        await main_game_loop_impl(self, data)
+        loop_handler = GameLoopHandler(self, data)
+        await loop_handler.perform_game_loop()
+        self.set_valid_json_sent(False)
+
+    async def decode_json(self, text_data, **kwargs):
+        await decode_json_impl(self, text_data)
 
     # sends messages to both players' mailboxes
     async def send_message_to_group(self, data, event):
@@ -101,7 +110,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     # Used for player's mistakes during game flow
     # that do require complex response
     # Performs: logging and sending info to player
-    async def complex_error(self, message, log_message = None, **data):
+    async def complex_error(self, message, log_message, data):
         await complex_error_impl(self, message, log_message, data)
 
     # Used for game flow errors
@@ -111,52 +120,58 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         self.close()
 
     def get_game_id(self):
-        return self.__game_id
+        return self._game_id
+
+    def get_valid_json_sent(self):
+        return self._valid_json_sent
 
     def get_game_user(self):
-        return self.__game_user
-
-    def get_winner(self):
-        return self.__winner
+        return self._game_user
     
-    def get_action_card_played_by_opponent(self):
-        return self.__action_card_played_by_opponent
+    def get_winner(self):
+        return self._winner
+
+    def is_winner(self):
+        return (self._winner is not None)
+    
+    def get_a_card_played_by_opponent(self):
+        return self._a_card_played_by_opponent
     
     def get_game_stage(self):
-        return self.__game_stage
+        return self._game_stage
 
     def get_opponent_channel_name(self):
-        return self.__opponent_channel_name
+        return self._opponent_channel_name
 
     def get_closure_from_user_side(self):
-        return self.__closure_from_user_side
-
-    def get_moves_table(self):
-        return self.__moves_table
+        return self._closure_from_user_side
 
     def get_last_move_send_time(self):
-        return self.__last_move_send_time
+        return self._last_move_send_time
     
     def set_closure_from_user_side(self, closure_from_user_side):
-        self.__closure_from_user_side = closure_from_user_side
+        self._closure_from_user_side = closure_from_user_side
     
     def set_game_id(self, game_id):
-        self.__game_id = game_id
+        self._game_id = game_id
+
+    def set_valid_json_sent(self, val):
+        self._valid_json_sent = val
 
     def set_winner(self, winner):
-        self.__winner = winner
+        self._winner = winner
 
     def set_game_stage(self, game_stage):
-        self.__game_stage = game_stage
+        self._game_stage = game_stage
 
     def set_action_card_played_by_opponent(self, action_card_id):
-        self.__action_card_played_by_opponent = action_card_id
+        self._action_card_played_by_opponent = action_card_id
     
     def set_game_user(self, game_user):
-        self.__game_user = game_user
+        self._game_user = game_user
 
     def set_opponent_channel_name(self, opponent_channel_name):
-        self.__opponent_channel_name = opponent_channel_name
+        self._opponent_channel_name = opponent_channel_name
     
     def init_table_for_new_clash(self):
         init_table_for_new_clash_impl(self)
@@ -166,3 +181,21 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     async def refresh_game_user(self):
         await refresh_game_user_impl(self)
+
+    def no_action_moves_left(self):
+        return self._moves_table[0] == 0
+
+    def no_reaction_moves_left(self):
+        return self._moves_table[1] == 0
+    
+    def any_moves_left(self):
+        return (self._moves_table[0] != 0 and self._moves_table[1] != 0)
+    
+    def decrease_action_moves(self):
+        # 0 is index of action moves
+        self._moves_table[0] -= 1
+
+    def decrease_reaction_moves(self):
+        # 1 is index of reaction moves
+        self._moves_table[1] -= 1
+
