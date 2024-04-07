@@ -65,7 +65,8 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         self.set_valid_json_sent(False)
 
     async def decode_json(self, text_data, **kwargs):
-        await decode_json_impl(self, text_data)
+        json_data = await decode_json_impl(self, text_data)
+        return json_data
 
     # sends messages to both players' mailboxes
     async def send_message_to_group(self, data, event):
