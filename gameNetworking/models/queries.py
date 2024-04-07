@@ -1,5 +1,6 @@
 from random import randint
 from channels.db import database_sync_to_async
+from django.forms import ValidationError
 
 from gameMechanics.queries import get_r_card_sync
 
@@ -57,8 +58,8 @@ def delete_game_user(game_user_id):
 def get_game_token(token_id):
     try:
         return GameAuthenticationToken.objects.get(id=token_id)
-    except GameAuthenticationToken.DoesNotExist:
-        return None    
+    except (GameAuthenticationToken.DoesNotExist, ValueError, ValidationError):
+        return None
 
 @database_sync_to_async
 def delete_game_token(game_user):

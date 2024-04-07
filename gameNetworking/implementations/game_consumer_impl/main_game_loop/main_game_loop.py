@@ -13,6 +13,8 @@ class GameLoopHandler:
         self._data = data
 
     async def perform_game_loop(self):
+        if not self._consumer.get_valid_json_sent(): return
+
         g = await get_game(self._consumer.get_game_id())
         g_v = GameVerifier(self._consumer, g)
         if not await g_v.verify_game_exist(): return
