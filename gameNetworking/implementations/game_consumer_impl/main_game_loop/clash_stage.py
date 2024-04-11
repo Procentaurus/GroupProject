@@ -104,7 +104,6 @@ class ReactionMoveHandler(MoveHandler):
 
     async def _perform_move_mechanics(self):
         opp = await self._game.get_opponent_player(self.g_u)
-        self._consumer.logger.error(self._r_cards)
         await self._consumer.send_message_to_opponent(
             {"reaction_cards" : await self._get_opponent_move_resp_body()},
             "opponent_move")
@@ -143,7 +142,6 @@ class ReactionMoveHandler(MoveHandler):
         return resp_body
 
     async def _process_clash_results(self, opp):
-        self._consumer.logger.error(self._consumer.get_a_card_played_by_opponent())
         (new_opp_morale, opp_money, new_user_morale, user_money) = (
             await get_new_morale(
                 self.g_u, opp, self._consumer.get_a_card_played_by_opponent(),

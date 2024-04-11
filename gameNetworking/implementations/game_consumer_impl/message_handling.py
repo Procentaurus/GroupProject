@@ -11,10 +11,11 @@ from .main_game_loop.common import ShopCardsHandler
 
 async def opponent_move_impl(consumer, data):
     if data.get("action_card") is not None:
-        consumer.set_action_card_played_by_opponent(data.get("action_card"))
+        a_card = data.get("action_card")
+        consumer.set_a_card_played_by_opponent(a_card)
         await consumer.send_json({
             'type' : "opponent_move",
-            'action_card' : data.get("action_card"),
+            'action_card' : a_card,
         })
     else:
         await consumer.send_json({
