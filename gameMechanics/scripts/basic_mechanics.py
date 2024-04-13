@@ -29,14 +29,19 @@ def get_new_morale(
     blocked_damage, redirected_damage, new_action_damage = calculate_reaction(action_damage, reaction_card_list)
     new_acting_player_health = acting_player_health - redirected_damage
     new_reacting_player_health = reacting_player_health - (new_action_damage + blocked_damage)
-    new_acting_player_money, new_reacting_player_money = 200
+    new_acting_player_money, new_reacting_player_money = (200, 200)
     
     return new_acting_player_health, new_acting_player_money, new_reacting_player_health, new_reacting_player_money
 
 # Placeholder function for damage calculation
 # TODO: Replace with more complex mechanics for action damage
 def calculate_action_damage(action_card):
-    damage = action_card.damage
+    pattern = r'(\d+)\s+damage'
+
+    # Search for the pattern in the description
+    match = re.search(pattern, action_card.description)
+
+    damage = int(match.group(1))  # Extract the numeric value    
     return damage
 
 # Most important function of this script
@@ -48,7 +53,7 @@ def calculate_reaction(action_damage, reaction_card_list):
 
     for reaction_card in reaction_card_list:
         
-        values_string = reaction_card.get("values")
+        values_string = reaction_card.values
         values_dictionary = get_values_dict(values_string)
         condition_satisfied = True
         
