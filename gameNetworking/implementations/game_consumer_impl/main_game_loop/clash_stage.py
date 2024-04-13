@@ -209,9 +209,10 @@ class ReactionMoveHandler(MoveHandler):
                     self.g_u ,r_card_data.get("id"), r_card_data.get("amount"))
     
     async def _add_all_reaction_cards(self, game_user, r_cards_gained):
-        for r_card_data in r_cards_gained:
-            await add_reaction_card_to_owned(
-                game_user, r_card_data.get("id"), r_card_data.get("amount"))
+        if r_cards_gained is not None:
+            for r_card_data in r_cards_gained:
+                await add_reaction_card_to_owned(
+                    game_user, r_card_data.get("id"), r_card_data.get("amount"))
 
     async def _announce_winner(self):
         self._consumer.set_closure_from_user_side(False)
@@ -220,8 +221,9 @@ class ReactionMoveHandler(MoveHandler):
             "game_end")
 
     async def _add_all_action_cards(self, game_user, a_cards_gained):
-        for a_card in a_cards_gained:
-            await game_user.add_action_card(a_card)
+        if a_cards_gained is not None:
+            for a_card in a_cards_gained:
+                await game_user.add_action_card(a_card)
 
     def _set_user_r_cards_gained(self, value):
         self._user_r_cards_gained = value
