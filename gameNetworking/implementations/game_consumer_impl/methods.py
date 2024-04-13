@@ -8,11 +8,11 @@ def init_table_for_new_clash_impl(consumer):
     consumer._turns_to_inc -= 1
     if consumer._turns_to_inc == 0:
         consumer._turns_to_inc = consumer._turns_between_inc
-        if consumer._action_moves_per_clash < consumer._max_moves_per_clash:
-            consumer._action_moves_per_clash += 1
+        if consumer._moves_per_clash < consumer._max_moves_per_clash:
+            consumer._moves_per_clash += 1
 
     for i in range(2):
-        consumer._moves_table[i] = consumer._action_moves_per_clash
+        consumer._moves_table[i] = consumer._moves_per_clash
 
 def update_game_stage_impl(consumer):
     if consumer.get_game_stage() == GameStage.HUB:

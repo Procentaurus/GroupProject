@@ -72,7 +72,7 @@ class ReactionMoveHandler(MoveHandler):
         super().__init__(consumer)
         self._game = game
         self._r_cards = data.get("reaction_cards")
-        self.g_u = self._consumer.get_game_user()
+        self._g_u = self._consumer.get_game_user()
 
         # Current user new values
         self._user_r_cards_gained = None
@@ -103,7 +103,7 @@ class ReactionMoveHandler(MoveHandler):
         return True
 
     async def _perform_move_mechanics(self):
-        opp = await self._game.get_opponent_player(self.g_u)
+        opp = await self._game.get_opponent_player(self._g_u)
         await self._consumer.send_message_to_opponent(
             {"reaction_cards" : await self._get_opponent_move_resp_body()},
             "opponent_move")
@@ -144,7 +144,7 @@ class ReactionMoveHandler(MoveHandler):
     async def _process_clash_results(self, opp):
         (new_opp_morale, opp_money, new_user_morale, user_money) = (
             await get_new_morale(
-                self.g_u, opp, self._consumer.get_a_card_played_by_opponent(),
+                self._g_u, opp, self._consumer.get_a_card_played_by_opponent(),
                 self._r_cards)
         )
         self._set_money_opp_gained(opp_money)
@@ -154,12 +154,12 @@ class ReactionMoveHandler(MoveHandler):
 
     async def _set_winner_if_exist(self, opp):
         if await opp.has_lost():
-            self._consumer.set_winner(self.g_u.conflict_side)
-        elif await self.g_u.has_lost():
+            self._consumer.set_winner(self._g_u.conflict_side)
+        elif await self._g_u.has_lost():
             self._consumer.set_winner(opp.conflict_side)
 
     async def _send_clash_result_to_players(self):
-        user_rsp_body = self._get_clash_result_response_body_for_opp()
+        user_rsp_body = self._get_clash_result_response_body_for_user()
         await self._consumer.clash_result(user_rsp_body)
 
         opp_rsp_body = self._get_clash_result_response_body_for_opp()
@@ -178,7 +178,7 @@ class ReactionMoveHandler(MoveHandler):
         await self._add_all_reaction_cards(u, self._user_r_cards_gained)
 
     async def _add_all_gains_to_opp_account(self):
-        opp = await self._game.get_opponent_player(self._player)
+        opp = await self._game.get_opponent_player(self._g_u)
         await opp.set_morale(self._new_user_morale)
         await opp.add_money(self._money_user_gained)
         await self._add_all_action_cards(opp, self._opp_a_cards_gained)
@@ -206,7 +206,7 @@ class ReactionMoveHandler(MoveHandler):
         if self._any_cards_sent():
             for r_card_data in self._r_cards:
                 await remove_reaction_card(
-                    self.g_u ,r_card_data.get("id"), r_card_data.get("amount"))
+                    self._g_u, r_card_data.get("id"), r_card_data.get("amount"))
     
     async def _add_all_reaction_cards(self, game_user, r_cards_gained):
         if r_cards_gained is not None:
