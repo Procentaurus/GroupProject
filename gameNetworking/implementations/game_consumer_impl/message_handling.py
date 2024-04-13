@@ -1,7 +1,7 @@
 from autobahn.exception import Disconnected
 
 from gameNetworking.enums import PlayerState
-from .main_game_loop.common import ShopCardsHandler
+from .main_game_loop.common import *
 
 
 #
@@ -65,9 +65,9 @@ async def clash_end_impl(consumer, data):
     await consumer.send_json({
         'type' : "clash_end",
     })
-    s_c_h = ShopCardsHandler(consumer)
-    await s_c_h.send_card_sets_to_shop()
-    await s_c_h.add_cards_to_shop()
+    opp = consumer.get_opponent()
+    mng = InitCardsManager(consumer, opp)
+    await mng.manage_cards()
 
 async def game_end_impl(consumer, data):  
     try:

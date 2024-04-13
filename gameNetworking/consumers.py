@@ -21,6 +21,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         self._game_id = None
         self._winner = None
         self._game_user = None
+        self._opponent = None
         self._opponent_channel_name = None
 
         self._closure_from_user_side = True
@@ -122,6 +123,9 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     def get_game_id(self):
         return self._game_id
+    
+    def get_opponent(self):
+        return self._opponent
 
     def get_valid_json_sent(self):
         return self._valid_json_sent
@@ -155,6 +159,9 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     
     def set_game_id(self, game_id):
         self._game_id = game_id
+
+    def set_opponent(self, opponent):
+        self._opponent = opponent
 
     def set_valid_json_sent(self, val):
         self._valid_json_sent = val

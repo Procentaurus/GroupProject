@@ -107,6 +107,9 @@ def get_values_dict(values_string):
     dictionary = dict(re.findall(r'(\w+)[=:]([^\s,;]+)', values_string))
     return dictionary
 
+async def get_rerolled_cards(game_user):
+    pass
+
 # TODO: Consult usage
 def get_action_cards():
     return None
