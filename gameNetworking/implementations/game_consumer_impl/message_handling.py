@@ -2,6 +2,7 @@ from autobahn.exception import Disconnected
 
 from gameNetworking.enums import PlayerState
 from .main_game_loop.common import *
+from ...models.queries import get_game_user
 
 
 #
@@ -65,9 +66,6 @@ async def clash_end_impl(consumer, data):
     await consumer.send_json({
         'type' : "clash_end",
     })
-    opp = consumer.get_opponent()
-    mng = InitCardsManager(consumer, opp)
-    await mng.manage_cards()
 
 async def game_end_impl(consumer, data):  
     try:
@@ -83,6 +81,9 @@ async def game_end_impl(consumer, data):
 async def game_creation_impl(consumer, data):
     consumer.set_game_id(data.get("game_id"))
     consumer.set_opponent_channel_name(data.get("channel_name"))
+
+    opp = await get_game_user(data.get("opponent_id"))
+    consumer.set_opponent(opp)
 
 async def error_impl(consumer, message, log_message):    
     await consumer.send_json({

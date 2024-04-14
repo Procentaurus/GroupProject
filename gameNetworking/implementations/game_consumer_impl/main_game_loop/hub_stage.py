@@ -36,7 +36,7 @@ class ReadyMoveHandler(MoveHandler):
     def __init__(self, consumer, game):
         super().__init__(consumer)
         self._game = game
-        self._player = self._consumer.get_game_user()
+        self._g_u = self._consumer.get_game_user()
 
     async def _verify_move(self):
         p_v = PlayerVerifier(self._consumer)
@@ -45,14 +45,18 @@ class ReadyMoveHandler(MoveHandler):
         return True
 
     async def _perform_move_mechanics(self):
-        opponent = await self._game.get_opponent_player(self._player)
+        opponent = self._consumer.get_opponent()
         if opponent.is_in_hub():
-            await self._player.set_state(PlayerState.AWAIT_CLASH_START)
+            await self._g_u.set_state(PlayerState.AWAIT_CLASH_START)
         elif opponent.wait_for_clash_start():
             await self._send_clash_start_info()
         else:
             await self._consumer.critical_error(
                 f"Improper opponent player state: {opponent.state}")
+            return
+
+        await self._g_u.remove_all_action_cards_from_shop()
+        await remove_all_reaction_cards_from_shop(self._g_u)
 
     async def _send_clash_start_info(self):
         await self._consumer.send_message_to_group(

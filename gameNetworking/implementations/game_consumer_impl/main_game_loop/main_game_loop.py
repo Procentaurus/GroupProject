@@ -20,6 +20,7 @@ class GameLoopHandler:
         if not await g_v.verify_game_exist(): return
 
         await self._consumer.refresh_game_user()
+        await self._consumer.refresh_opponent()
         message_type = self._data.get('type')
         g_stage = self._consumer.get_game_stage()
         if g_stage == GameStage.HUB:

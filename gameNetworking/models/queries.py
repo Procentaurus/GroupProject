@@ -149,7 +149,7 @@ def check_reaction_card_in_shop(game_user, r_card_id, amount):
         return True if r_card_in_shop.amount >= amount else False
     else:
         return False
-    
+
 @database_sync_to_async
 def add_reaction_card_to_shop(game_user, r_card_id, amount):  
     r_card = get_r_card_sync(r_card_id)

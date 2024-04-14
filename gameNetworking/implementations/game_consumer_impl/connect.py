@@ -7,6 +7,7 @@ class Connector:
         self._consumer = consumer
         self._opp = None
         self._game = None
+        self._g_u = None
 
     async def connect(self):
         await self._consumer.accept()
@@ -21,13 +22,12 @@ class Connector:
         if num_t > 0 and num_s > 0:
             await self._initialize_game_networking()
             await self._send_game_info_to_players()
-            mng = InitCardsManager(self._consumer, self._opp)
+            mng = InitCardsManager(self._consumer)
             await mng.manage_cards()
             # await initialize_game_archive()
 
     async def _initialize_game_networking(self):
         await self._set_opponent()
-        self._consumer.set_opponent()
 
         game = await self._create_game()
         self._game = game
@@ -38,7 +38,7 @@ class Connector:
 
     async def _send_game_info_to_players(self):
         i_s = InfoSender(self._consumer)
-        await i_s._send_game_creation_info_to_opp(self._game.id)
+        await i_s._send_game_creation_info_to_opp(self._game.id, self._g_u.id)
         await i_s._send_game_start_info()
         await i_s._send_game_start_info_to_opp(self._opp)
 
@@ -75,16 +75,24 @@ class Connector:
         c_s = self._get_conflict_side()
         g_u = await create_game_user(a_t, c_s, self._consumer.channel_name)
         self._consumer.set_game_user(g_u)
+        self._g_u = g_u
         # await delete_game_token(game_user)
 
     async def _set_opponent(self):
+        opp = None
         if self._get_conflict_side() == "teacher":
-            self._opp = await get_longest_waiting_player("student")
+            opp = await get_longest_waiting_player("student")
         else:
-            self._opp = await get_longest_waiting_player("teacher")
+            opp = await get_longest_waiting_player("teacher")
+
+        # Added as Connector field  because needed in later initialization
+        self._opp = opp
+
+        # Added as consumer field as needed in later game
+        self._consumer.set_opponent(opp)
 
     async def _create_game(self):
-        game = await create_game(self._consumer.get_game_user(), self._opp)
+        game = await create_game(self._g_u, self._opp)
         self._consumer.set_game_id(game.id)
         self._consumer.logger.info("The game has started.")
         return game
@@ -93,7 +101,7 @@ class Connector:
         await self._consumer.channel_layer.group_add(
             f"game_{game_id}", self._opp.channel_name)
         await self._consumer.channel_layer.group_add(
-            f"game_{game_id}", self._consumer.get_game_user().channel_name)
+            f"game_{game_id}", self._g_u.channel_name)
 
     async def _send_game_creation_info_to_opponent(self, game_id):
         await self._consumer.send_message_to_opponent(
@@ -107,12 +115,10 @@ class Connector:
             "initial_morale" : self._opp.morale},
             "game_start")
         
-        g_u = self._consumer.get_game_user()
         await self._consumer.game_start(
-            {"initial_money_amount" : g_u.money,
-            "initial_morale" : g_u.morale})
+            {"initial_money_amount" : self._g_u.money,
+            "initial_morale" : self._g_u.morale})
 
     async def _set_users_in_game(self):
-        g_u = self._consumer.get_game_user()
-        (await g_u.get_user()).set_in_game()
+        (await self._g_u.get_user()).set_in_game()
         (await self._opp.get_user()).set_in_game()

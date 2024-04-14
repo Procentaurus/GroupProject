@@ -3,7 +3,7 @@ from gameMechanics.queries import get_a_card_serialized
 
 from ....enums import MessageType, PlayerState
 from ....models.queries import add_reaction_card_to_owned, remove_reaction_card
-from .common import SurrenderMoveHandler
+from .common import SurrenderMoveHandler, InitCardsManager
 from .abstract import MoveHandler, StageHandler
 from .checkers import *
 
@@ -127,6 +127,9 @@ class ReactionMoveHandler(MoveHandler):
         if opp.wait_for_clash_end():
             self._consumer.init_table_for_new_clash()
             await self._consumer.send_message_to_group({}, "clash_end")
+
+            mng = InitCardsManager(self._consumer)
+            await mng.manage_cards()
         else:
             e_s = ErrorSender(self._consumer)
             await e_s.send_improper_state_error("reaction_move")
@@ -250,4 +253,4 @@ class ReactionMoveHandler(MoveHandler):
         self._money_opp_gained = value
 
     def _any_cards_sent(self):
-        return True if (self._r_cards is None or self._r_cards == []) else False 
+        return False if (self._r_cards is None or self._r_cards == []) else True

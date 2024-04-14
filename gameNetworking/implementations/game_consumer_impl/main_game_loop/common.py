@@ -109,10 +109,11 @@ class InfoSender:
     def __init__(self, consumer):
         self._consumer = consumer
 
-    async def _send_game_creation_info_to_opp(self, game_id):
+    async def _send_game_creation_info_to_opp(self, game_id, opp_id):
         await self._consumer.send_message_to_opponent(
             {"game_id": str(game_id),
-            "channel_name": self._consumer.channel_name},
+            "channel_name": self._consumer.channel_name,
+            "opponent_id": str(opp_id)},
             "game_creation")
         
     async def _send_game_start_info_to_opp(self, opp):
@@ -191,10 +192,10 @@ class CardSender:
 
 class InitCardsManager:
 
-    def __init__(self, consumer, opponent):
+    def __init__(self, consumer):
         self._consumer = consumer
         self._g_u = self._consumer.get_game_user()
-        self._opp = opponent
+        self._opp = self._consumer.get_opponent()
         self._player_a_cards = None
         self._player_r_cards = None
         self._opp_a_cards = None
@@ -207,11 +208,11 @@ class InitCardsManager:
 
     async def _get_cards(self):
         i_s_c_g = InitShopCardsGetter(self._g_u, 5, 2)
-        player_a_cards, player_r_cards = await i_s_c_g.get_player_cards()
+        (player_a_cards, player_r_cards) = await i_s_c_g.get_player_cards()
         self._player_a_cards = player_a_cards
         self._player_r_cards = player_r_cards
 
-        opp_a_cards, opp_r_cards = await i_s_c_g.get_opponent_cards()
+        (opp_a_cards, opp_r_cards) = await i_s_c_g.get_opponent_cards()
         self._opp_a_cards = opp_a_cards
         self._opp_r_cards = opp_r_cards
 

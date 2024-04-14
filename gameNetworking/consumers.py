@@ -190,6 +190,9 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     async def refresh_game_user(self):
         await refresh_game_user_impl(self)
 
+    async def refresh_opponent(self):
+        await refresh_opponent_impl(self)
+
     def no_action_moves_left(self):
         return self._moves_table[0] == 0
 
