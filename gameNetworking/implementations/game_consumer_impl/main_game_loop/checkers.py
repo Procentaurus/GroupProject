@@ -25,7 +25,7 @@ class CardVerifier:
         return True
     
     async def _verify_cards_in_shop(self):
-        g_u =self._consumer.get_game_user()
+        g_u = self._consumer.get_game_user()
         cards_not_in_shop = await self._c_c.check_cards_in_shop(g_u)
         if cards_not_in_shop != []:
             e_s = ErrorSender(self._consumer)
@@ -34,7 +34,7 @@ class CardVerifier:
         return True
 
     async def _verify_cards_owned(self):
-        g_u =self._consumer.get_game_user()
+        g_u = self._consumer.get_game_user()
         cards_not_owned = await self._c_c.check_cards_owned(g_u)
         if cards_not_owned != []:
             e_s = ErrorSender(self._consumer)
@@ -219,21 +219,21 @@ class PlayerVerifier:
         self._player = consumer.get_game_user() if player is None else player
 
     async def verify_player_wait_for_clash(self):
-        if await self._player.wait_for_clash_start():
+        if self._player.wait_for_clash_start():
             e_s = ErrorSender(self._consumer)
             await e_s.send_improper_move_info("readyness already declared")
             return True
         return False
     
     async def verify_player_in_hub(self, move):
-        if not await self._player.is_in_hub():
+        if not self._player.is_in_hub():
             e_s = ErrorSender(self._consumer)
             await e_s.send_improper_state_error(move)
             return False
         return True
     
     async def verify_player_in_clash(self):
-        if not await self._player.is_in_clash():
+        if not self._player.is_in_clash():
             e_s = ErrorSender(self._consumer)
             await e_s.send_improper_state_error("action_move")
             return False
@@ -241,9 +241,16 @@ class PlayerVerifier:
     
     async def verify_player_in_clash_or_wait_for_clash_end(self):
         p = self._player
-        if not await p.is_in_clash() and not await p.wait_for_clash_end():
+        if not p.is_in_clash() and not p.wait_for_clash_end():
             e_s = ErrorSender(self._consumer)
             await e_s.send_improper_state_error("reaction_move")
+            return False
+        return True
+    
+    async def verify_player_can_reroll(self):
+        if not self._player.any_rerolls_available():
+            e_s = ErrorSender(self._consumer)
+            await e_s.send_improper_move_info("no more rerolls available")
             return False
         return True
 

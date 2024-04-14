@@ -39,3 +39,10 @@ def add_action_card_to_shop_impl(game_user, a_card_id):
     action_card = get_a_card_sync(a_card_id)
     game_user.action_cards_in_shop.add(action_card)
     game_user.save()
+
+def remove_all_action_cards_from_shop_impl(game_user):
+    action_cards_in_shop = game_user.action_cards_in_shop.all()
+    for action_card in action_cards_in_shop:
+        game_user.action_cards_in_shop.remove(action_card)
+
+    game_user.save()

@@ -1,8 +1,10 @@
+from gameMechanics.scripts.basic_mechanics import get_rerolled_cards
+
 from gameNetworking.enums import PlayerState, MessageType
 
 from ....models.queries import *
 from .checkers import *
-from .common import SurrenderMoveHandler
+from .common import SurrenderMoveHandler, ShopCardsAdder, CardSender
 from .abstract import MoveHandler, StageHandler
 
 
@@ -12,18 +14,21 @@ class HubStageHandler(StageHandler):
         super().__init__(consumer, game, message_type, data)
 
     async def perform_stage(self):
+        handler = None
         if self._message_type == MessageType.PURCHASE_MOVE:
-            p_m_h = PurchaseMoveHandler(self._consumer, self._data)
-            await p_m_h.perform_move()
+            handler = PurchaseMoveHandler(self._consumer, self._data)
         elif self._message_type == MessageType.READY_MOVE:
-            r_m_h = ReadyMoveHandler(self._consumer, self._game)
-            await r_m_h.perform_move()
+            handler = ReadyMoveHandler(self._consumer, self._game)
         elif self._message_type == MessageType.SURRENDER_MOVE:
-            s_m_h = SurrenderMoveHandler(self._consumer)
-            await s_m_h.perform_move()
+            handler = SurrenderMoveHandler(self._consumer)
+        elif self._message_type == MessageType.REROLL_MOVE:
+            handler = RerollMoveHandler(self._consumer)
         else:
             e_s = ErrorSender(self._consumer)
             await e_s.send_wrong_message_type_info()
+            return
+
+        await handler.perform_move()
 
 
 class ReadyMoveHandler(MoveHandler):
@@ -31,7 +36,7 @@ class ReadyMoveHandler(MoveHandler):
     def __init__(self, consumer, game):
         super().__init__(consumer)
         self._game = game
-        self._player = self._consumer.get_game_user()
+        self._g_u = self._consumer.get_game_user()
 
     async def _verify_move(self):
         p_v = PlayerVerifier(self._consumer)
@@ -40,19 +45,51 @@ class ReadyMoveHandler(MoveHandler):
         return True
 
     async def _perform_move_mechanics(self):
-        opponent = await self._game.get_opponent_player(self._player)
-        if await opponent.is_in_hub():
-            await self._player.set_state(PlayerState.AWAIT_CLASH_START)
-        elif await opponent.wait_for_clash_start():
+        opponent = self._consumer.get_opponent()
+        if opponent.is_in_hub():
+            await self._g_u.set_state(PlayerState.AWAIT_CLASH_START)
+        elif opponent.wait_for_clash_start():
             await self._send_clash_start_info()
         else:
             await self._consumer.critical_error(
                 f"Improper opponent player state: {opponent.state}")
+            return
+
+        await self._g_u.remove_all_action_cards_from_shop()
+        await remove_all_reaction_cards_from_shop(self._g_u)
 
     async def _send_clash_start_info(self):
         await self._consumer.send_message_to_group(
             {"next_move_player" : self._game.next_move_player},
             "clash_start")
+
+
+class RerollMoveHandler(MoveHandler):
+
+    def __init__(self, consumer):
+        super().__init__(consumer)
+
+    async def _verify_move(self):
+        p_v = PlayerVerifier(self._consumer)
+        if await p_v.verify_player_wait_for_clash(): return False
+        if not await p_v.verify_player_in_hub("reroll move"): return False
+        if not await p_v.verify_player_can_reroll(): return False
+        return True
+
+    async def _perform_move_mechanics(self):
+        g_u = self._consumer.get_game_user()
+        await g_u.subtract_available_rerolls()
+
+        (new_a_cards, new_r_cards) = await get_rerolled_cards(g_u)
+
+        s_c_a = ShopCardsAdder(g_u, new_a_cards, new_r_cards)
+        await s_c_a.add_all_cards_shop()
+ 
+        await g_u.remove_all_action_cards_from_shop()
+        await remove_all_reaction_cards_from_shop(g_u)
+
+        c_s = CardSender(self._consumer, new_a_cards, new_r_cards)
+        c_s.send_cards_to_player()
 
 
 class PurchaseMoveHandler(MoveHandler):

@@ -3,7 +3,7 @@ from gameMechanics.queries import get_a_card_serialized
 
 from ....enums import MessageType, PlayerState
 from ....models.queries import add_reaction_card_to_owned, remove_reaction_card
-from .common import SurrenderMoveHandler
+from .common import SurrenderMoveHandler, InitCardsManager
 from .abstract import MoveHandler, StageHandler
 from .checkers import *
 
@@ -14,18 +14,19 @@ class ClashStageHandler(StageHandler):
         super().__init__(consumer, game, message_type, data)
 
     async def perform_stage(self):
+        handler = None
         if self._message_type == MessageType.ACTION_MOVE:
-            p_m_h = ActionMoveHandler(self._consumer, self._game, self._data)
-            await p_m_h.perform_move()
+            handler = ActionMoveHandler(self._consumer, self._game, self._data)
         elif self._message_type == MessageType.REACTION_MOVE:
-            r_m_h = ReactionMoveHandler(self._consumer, self._game, self._data)
-            await r_m_h.perform_move()
+            handler = ReactionMoveHandler(self._consumer, self._game, self._data)
         elif self._message_type == MessageType.SURRENDER_MOVE:
-            s_m_h = SurrenderMoveHandler(self._consumer)
-            await s_m_h.perform_move()
+            handler = SurrenderMoveHandler(self._consumer)
         else:
             e_s = ErrorSender(self._consumer)
             await e_s.send_wrong_message_type_info()
+            return
+
+        await handler.perform_move()
 
 
 class ActionMoveHandler(MoveHandler):
@@ -123,9 +124,12 @@ class ReactionMoveHandler(MoveHandler):
         if self._consumer.any_moves_left():
             return
         
-        if await opp.wait_for_clash_end():
+        if opp.wait_for_clash_end():
             self._consumer.init_table_for_new_clash()
             await self._consumer.send_message_to_group({}, "clash_end")
+
+            mng = InitCardsManager(self._consumer)
+            await mng.manage_cards()
         else:
             e_s = ErrorSender(self._consumer)
             await e_s.send_improper_state_error("reaction_move")
@@ -138,7 +142,6 @@ class ReactionMoveHandler(MoveHandler):
             id = r_card_data.get("id")
             card_data["reaction_card"] = await get_r_card_serialized(id)
             resp_body.append(card_data)
-
         return resp_body
 
     async def _process_clash_results(self, opp):
@@ -250,4 +253,4 @@ class ReactionMoveHandler(MoveHandler):
         self._money_opp_gained = value
 
     def _any_cards_sent(self):
-        return True if (self._r_cards is None or self._r_cards == []) else False 
+        return False if (self._r_cards is None or self._r_cards == []) else True

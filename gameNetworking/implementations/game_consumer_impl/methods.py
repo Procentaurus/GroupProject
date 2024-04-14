@@ -25,6 +25,11 @@ async def refresh_game_user_impl(consumer):
     refreshed_game_user = await get_game_user(game_user_id)
     consumer.set_game_user(refreshed_game_user)
 
+async def refresh_opponent_impl(consumer):
+    opp_id = consumer.get_opponent().id
+    refreshed_opp = await get_game_user(opp_id)
+    consumer.set_opponent(refreshed_opp)
+
 async def decode_json_impl(consumer, text_data):
     try:
         json_data = json.loads(text_data)
