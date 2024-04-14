@@ -14,7 +14,8 @@ from channels.db import database_sync_to_async
 #  - percentage
 
 # Calculate health for each player after each instance of action-reaction during a clash
-async def get_new_morale(
+@database_sync_to_async
+def get_new_morale(
         reacting_player,
         acting_player,
         action_card_id,
@@ -22,31 +23,37 @@ async def get_new_morale(
 ):
     acting_player_health = acting_player.morale
     reacting_player_health = reacting_player.morale
-    reaction_card_list = await get_reaction_cards_from_dictionary(reaction_card_dictionary)
-    action_card = await database_sync_to_async(ActionCard.objects.get(id = action_card_id))
-    action_damage = await calculate_action_damage(action_card)
-    blocked_damage, redirected_damage, new_action_damage = await calculate_reaction(action_damage, reaction_card_list)
+    reaction_card_list = get_reaction_cards_from_dictionary(reaction_card_dictionary)
+    action_card = ActionCard.objects.get(id = action_card_id)
+    action_damage = calculate_action_damage(action_card)
+    blocked_damage, redirected_damage, new_action_damage = calculate_reaction(action_damage, reaction_card_list)
     new_acting_player_health = acting_player_health - redirected_damage
     new_reacting_player_health = reacting_player_health - (new_action_damage + blocked_damage)
-    new_acting_player_money, new_reacting_player_money = 200
+    new_acting_player_money, new_reacting_player_money = (200, 200)
     
     return new_acting_player_health, new_acting_player_money, new_reacting_player_health, new_reacting_player_money
 
 # Placeholder function for damage calculation
 # TODO: Replace with more complex mechanics for action damage
-async def calculate_action_damage(action_card):
-    damage = action_card.damage
+def calculate_action_damage(action_card):
+    pattern = r'(\d+)\s+damage'
+
+    # Search for the pattern in the description
+    match = re.search(pattern, action_card.description)
+
+    damage = int(match.group(1))  # Extract the numeric value    
+    return damage
 
 # Most important function of this script
 # Used to calculate reaction mechanics based on predetermined values dictionary
-async def calculate_reaction(action_damage, reaction_card_list):
+def calculate_reaction(action_damage, reaction_card_list):
 
     blocked_damage = 0
     redirected_damage = 0
 
     for reaction_card in reaction_card_list:
         
-        values_string = reaction_card.get("values")
+        values_string = reaction_card.values
         values_dictionary = get_values_dict(values_string)
         condition_satisfied = True
         
@@ -84,7 +91,6 @@ async def calculate_reaction(action_damage, reaction_card_list):
 
     return blocked_damage, redirected_damage, action_damage - blocked_damage
 
-@database_sync_to_async
 def get_reaction_cards_from_dictionary(reaction_cards_dict):
     card_uuids = []
 
@@ -100,6 +106,9 @@ def get_reaction_cards_from_dictionary(reaction_cards_dict):
 def get_values_dict(values_string):
     dictionary = dict(re.findall(r'(\w+)[=:]([^\s,;]+)', values_string))
     return dictionary
+
+async def get_rerolled_cards(game_user):
+    pass
 
 # TODO: Consult usage
 def get_action_cards():

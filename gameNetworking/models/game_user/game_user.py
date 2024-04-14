@@ -25,6 +25,7 @@ class GameUser(models.Model):
         default=500, null=False, blank=False)
     conflict_side = models.CharField(
         choices=CONFLICT_SIDES, null=False, max_length=15)
+    available_rerolls = models.PositiveSmallIntegerField(default=3)
 
     owned_action_cards = models.ManyToManyField(
         ActionCard, related_name="owned_action_cards")
@@ -58,33 +59,35 @@ class GameUser(models.Model):
         self.save()
 
     @database_sync_to_async
+    def subtract_available_rerolls(self):
+        self.available_rerolls -= 1
+        self.save()
+
+    @database_sync_to_async
     def set_state(self, state):
         self.state = state.value 
         self.save()
 
-    @database_sync_to_async
     def is_in_hub(self):
         return self.state == PlayerState.IN_HUB
     
-    @database_sync_to_async
     def wait_for_clash_end(self):
         return self.state == PlayerState.AWAIT_CLASH_END
     
-    @database_sync_to_async
     def is_in_clash(self):
         return self.state == PlayerState.IN_CLASH
     
-    @database_sync_to_async
     def wait_for_clash_start(self):
         return self.state == PlayerState.AWAIT_CLASH_START
     
-    @database_sync_to_async
     def is_teacher(self):
         return self.conflict_side == "teacher"
-    
-    @database_sync_to_async
+
     def is_student(self):
         return self.conflict_side == "student"
+    
+    def any_rerolls_available(self):
+        return (self.available_rerolls > 0)
 
     @database_sync_to_async
     def check_action_card_owned(self, action_card_id):
@@ -111,3 +114,7 @@ class GameUser(models.Model):
     @database_sync_to_async
     def add_action_card_to_shop(self, action_card_id):
         add_action_card_to_shop_impl(self, action_card_id)
+
+    @database_sync_to_async
+    def remove_all_action_cards_from_shop(self):
+        remove_all_action_cards_from_shop_impl(self)

@@ -1,7 +1,8 @@
 from autobahn.exception import Disconnected
 
 from gameNetworking.enums import PlayerState
-from .main_game_loop.common import ShopCardsHandler
+from .main_game_loop.common import *
+from ...models.queries import get_game_user
 
 
 #
@@ -11,10 +12,11 @@ from .main_game_loop.common import ShopCardsHandler
 
 async def opponent_move_impl(consumer, data):
     if data.get("action_card") is not None:
-        consumer.set_action_card_played_by_opponent(data.get("action_card"))
+        a_card = data.get("action_card")
+        consumer.set_a_card_played_by_opponent(a_card["id"])
         await consumer.send_json({
             'type' : "opponent_move",
-            'action_card' : data.get("action_card"),
+            'action_card' : a_card,
         })
     else:
         await consumer.send_json({
@@ -64,9 +66,6 @@ async def clash_end_impl(consumer, data):
     await consumer.send_json({
         'type' : "clash_end",
     })
-    s_c_h = ShopCardsHandler(consumer)
-    await s_c_h.send_card_sets_to_shop()
-    await s_c_h.add_cards_to_shop()
 
 async def game_end_impl(consumer, data):  
     try:
@@ -82,6 +81,9 @@ async def game_end_impl(consumer, data):
 async def game_creation_impl(consumer, data):
     consumer.set_game_id(data.get("game_id"))
     consumer.set_opponent_channel_name(data.get("channel_name"))
+
+    opp = await get_game_user(data.get("opponent_id"))
+    consumer.set_opponent(opp)
 
 async def error_impl(consumer, message, log_message):    
     await consumer.send_json({

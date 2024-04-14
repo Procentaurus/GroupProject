@@ -149,7 +149,7 @@ def check_reaction_card_in_shop(game_user, r_card_id, amount):
         return True if r_card_in_shop.amount >= amount else False
     else:
         return False
-    
+
 @database_sync_to_async
 def add_reaction_card_to_shop(game_user, r_card_id, amount):  
     r_card = get_r_card_sync(r_card_id)
@@ -170,6 +170,13 @@ def remove_reaction_card_from_shop(game_user, r_card_id, amount):
     if r_card_in_shop is not None:
         decrease_card_amount(r_card_in_shop, amount)
 
+@database_sync_to_async
+def remove_all_reaction_cards_from_shop(game_user):
+    r_cards_in_shop = ReactionCardInShop.objects.filter(game_user=game_user)
+
+    for r_card in r_cards_in_shop:
+        r_card.delete()
+        
 def increase_card_amount(card, amount):
     card.amount += amount
     card.save()

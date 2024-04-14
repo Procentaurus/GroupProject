@@ -21,6 +21,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         self._game_id = None
         self._winner = None
         self._game_user = None
+        self._opponent = None
         self._opponent_channel_name = None
 
         self._closure_from_user_side = True
@@ -65,7 +66,8 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         self.set_valid_json_sent(False)
 
     async def decode_json(self, text_data, **kwargs):
-        await decode_json_impl(self, text_data)
+        json_data = await decode_json_impl(self, text_data)
+        return json_data
 
     # sends messages to both players' mailboxes
     async def send_message_to_group(self, data, event):
@@ -121,6 +123,9 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     def get_game_id(self):
         return self._game_id
+    
+    def get_opponent(self):
+        return self._opponent
 
     def get_valid_json_sent(self):
         return self._valid_json_sent
@@ -155,6 +160,9 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     def set_game_id(self, game_id):
         self._game_id = game_id
 
+    def set_opponent(self, opponent):
+        self._opponent = opponent
+
     def set_valid_json_sent(self, val):
         self._valid_json_sent = val
 
@@ -164,8 +172,8 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     def set_game_stage(self, game_stage):
         self._game_stage = game_stage
 
-    def set_action_card_played_by_opponent(self, action_card_id):
-        self._action_card_played_by_opponent = action_card_id
+    def set_a_card_played_by_opponent(self, action_card_id):
+        self._a_card_played_by_opponent = action_card_id
     
     def set_game_user(self, game_user):
         self._game_user = game_user
@@ -181,6 +189,9 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     async def refresh_game_user(self):
         await refresh_game_user_impl(self)
+
+    async def refresh_opponent(self):
+        await refresh_opponent_impl(self)
 
     def no_action_moves_left(self):
         return self._moves_table[0] == 0
