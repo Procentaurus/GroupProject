@@ -121,18 +121,19 @@ class ReactionMoveHandler(MoveHandler):
             return
 
         self._consumer.decrease_reaction_moves()
-        if self._consumer.any_moves_left():
+        if not self._consumer.no_action_moves_left():
             return
         
-        if opp.wait_for_clash_end():
-            self._consumer.init_table_for_new_clash()
-            await self._consumer.send_message_to_group({}, "clash_end")
-
-            mng = InitCardsManager(self._consumer)
-            await mng.manage_cards()
-        else:
+        if not opp.wait_for_clash_end():
             e_s = ErrorSender(self._consumer)
             await e_s.send_improper_state_error("reaction_move")
+            return
+            
+        self._consumer.init_table_for_new_clash()
+        await self._consumer.send_message_to_group({}, "clash_end")
+
+        mng = InitCardsManager(self._consumer)
+        await mng.manage_cards()
 
     async def _get_opponent_move_resp_body(self):
         resp_body = []
