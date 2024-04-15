@@ -198,9 +198,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     def no_reaction_moves_left(self):
         return self._moves_table[1] == 0
-    
-    def any_moves_left(self):
-        return (self._moves_table[0] != 0 and self._moves_table[1] != 0)
+
     
     def decrease_action_moves(self):
         # 0 is index of action moves
