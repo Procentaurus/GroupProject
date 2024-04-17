@@ -248,9 +248,9 @@ class PlayerVerifier:
         return True
     
     async def verify_player_can_reroll(self):
-        if not self._player.any_rerolls_available():
+        if not self._player.can_afford_reroll():
             e_s = ErrorSender(self._consumer)
-            await e_s.send_improper_move_info("no more rerolls available")
+            await e_s.send_improper_move_info("not enough money to reroll")
             return False
         return True
 
