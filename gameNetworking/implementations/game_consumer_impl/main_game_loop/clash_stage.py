@@ -141,7 +141,7 @@ class ReactionMoveHandler(MoveHandler):
         for r_card_data in self._r_cards:
             card_data = {"amount": r_card_data.get("amount")}
             id = r_card_data.get("id")
-            card_data["reaction_card"] = await get_r_card_serialized(id)
+            card_data["card"] = await get_r_card_serialized(id)
             resp_body.append(card_data)
         return resp_body
 
