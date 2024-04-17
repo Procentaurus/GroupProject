@@ -25,7 +25,7 @@ class GameUser(models.Model):
         default=500, null=False, blank=False)
     conflict_side = models.CharField(
         choices=CONFLICT_SIDES, null=False, max_length=15)
-    available_rerolls = models.PositiveSmallIntegerField(default=3)
+    reroll_price = models.PositiveSmallIntegerField(default=30)
 
     owned_action_cards = models.ManyToManyField(
         ActionCard, related_name="owned_action_cards")
@@ -59,14 +59,20 @@ class GameUser(models.Model):
         self.save()
 
     @database_sync_to_async
-    def subtract_available_rerolls(self):
-        self.available_rerolls -= 1
-        self.save()
-
-    @database_sync_to_async
     def set_state(self, state):
         self.state = state.value 
         self.save()
+
+    def can_afford_reroll(self):
+        return self.money >= self.reroll_price
+    
+    @database_sync_to_async
+    def increase_reroll_price(self):
+        self.reroll_price += 5
+        self.save()
+
+    async def buy_reroll(self):
+        await self.subtract_money(self.reroll_price)
 
     def is_in_hub(self):
         return self.state == PlayerState.IN_HUB
@@ -85,9 +91,6 @@ class GameUser(models.Model):
 
     def is_student(self):
         return self.conflict_side == "student"
-    
-    def any_rerolls_available(self):
-        return (self.available_rerolls > 0)
 
     @database_sync_to_async
     def check_action_card_owned(self, action_card_id):

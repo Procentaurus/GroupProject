@@ -78,7 +78,8 @@ class RerollMoveHandler(MoveHandler):
 
     async def _perform_move_mechanics(self):
         g_u = self._consumer.get_game_user()
-        await g_u.subtract_available_rerolls()
+        await g_u.buy_reroll()
+        g_u.increase_reroll_price()
 
         (new_a_cards, new_r_cards) = await get_rerolled_cards(g_u)
 
