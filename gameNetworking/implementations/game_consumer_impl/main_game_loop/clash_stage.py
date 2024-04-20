@@ -196,7 +196,7 @@ class ReactionMoveHandler(MoveHandler):
             "action_cards_gained" : self._user_a_cards_gained,
             "reaction_cards_gained" : self._user_r_cards_gained
         }
-    
+
     def _get_clash_result_response_body_for_opp(self):
         return {
             "new_player_morale" : self._new_opp_morale,
