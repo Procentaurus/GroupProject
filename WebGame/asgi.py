@@ -3,7 +3,7 @@ from channels.routing import ProtocolTypeRouter, URLRouter
 from django.core.asgi import get_asgi_application
 
 from gameNetworking.middlewares import GameAuthenticationTokenMiddleware
-from gameNetworking.routing import websocket_urlpatterns
+from gameNetworking.routing import url_patterns
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'WebGame.settings')
 
@@ -13,7 +13,7 @@ application = ProtocolTypeRouter(
     {
         "http": django_asgi_app,
         "websocket": GameAuthenticationTokenMiddleware(
-            URLRouter(websocket_urlpatterns)
+            URLRouter(url_patterns)
         ),
     }
 )
