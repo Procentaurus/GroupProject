@@ -141,7 +141,7 @@ class ReactionMoveHandler(MoveHandler):
         for r_card_data in self._r_cards:
             card_data = {"amount": r_card_data.get("amount")}
             id = r_card_data.get("id")
-            card_data["reaction_card"] = await get_r_card_serialized(id)
+            card_data["card"] = await get_r_card_serialized(id)
             resp_body.append(card_data)
         return resp_body
 
@@ -196,7 +196,7 @@ class ReactionMoveHandler(MoveHandler):
             "action_cards_gained" : self._user_a_cards_gained,
             "reaction_cards_gained" : self._user_r_cards_gained
         }
-    
+
     def _get_clash_result_response_body_for_opp(self):
         return {
             "new_player_morale" : self._new_opp_morale,

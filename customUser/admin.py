@@ -12,13 +12,23 @@ class MyUserAdmin(UserAdmin): # used in django admin, enables more data for admi
     search_fields = ("email",)
     ordering = ("email",)
     fieldsets = (
-        ("Main section", {"fields": ("email", "username","phone_number", "password")}),
-        ("Additional", {"fields": ("hide_contact_data", "is_active", "is_admin")}),
-        ("Set up", {"fields": ("last_login", "creation_date")}),
+        ("Main section",
+            {"fields": ("email", "username", "phone_number", "password")}
+        ),
+        ("Additional",
+            {"fields": ("hide_contact_data", "is_active", "is_admin")}
+        ),
+        ("Set up", {"fields": ("last_login", "creation_date", "bio")}),
     )
     add_fieldsets = (
-        ("Main section", {"fields": ("email", "username", "phone_number", "password1", "password2")}),
-        ("Additional", {"fields": ("hide_contact_data", "is_active", "is_admin")}),
+        ("Main section",
+            {"fields": (
+                "email", "username", "phone_number", "password1", "password2")
+            }
+        ),
+        ("Additional",
+            {"fields": ("hide_contact_data", "is_active", "is_admin")}
+        ),
     )
     
 admin.site.register(MyUser, MyUserAdmin)
