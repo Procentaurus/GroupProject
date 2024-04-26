@@ -1,6 +1,5 @@
 from autobahn.exception import Disconnected
 
-from gameNetworking.enums import PlayerState
 from .main_game_loop.common import *
 from ...models.queries import get_game_user
 
@@ -50,7 +49,7 @@ async def game_start_impl(consumer, data):
 
 async def clash_start_impl(consumer, data):
     game_user = consumer.get_game_user()
-    await game_user.set_state(PlayerState.IN_CLASH)
+    await game_user.set_state("in_clash")
     consumer.update_game_stage()
 
     await consumer.send_json({
@@ -58,11 +57,8 @@ async def clash_start_impl(consumer, data):
         'next_move' : data.get("next_move_player"),
     })
 
-async def clash_end_impl(consumer, data):
-    game_user = consumer.get_game_user()
-    await game_user.set_state(PlayerState.IN_HUB)
+async def clash_end_impl(consumer):
     consumer.update_game_stage()
-
     await consumer.send_json({
         'type' : "clash_end",
     })
@@ -75,7 +71,7 @@ async def game_end_impl(consumer, data):
         })
     except Disconnected:
         consumer.logger.warning("Tried to sent through closed socket.")
-        
+
     await consumer.close()
 
 async def game_creation_impl(consumer, data):
@@ -90,7 +86,7 @@ async def error_impl(consumer, message, log_message):
         'type' : "error",
         'info' : message,
     })
-    
+
     if log_message is None:
         consumer.logger.warning(message)
     else:
