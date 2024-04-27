@@ -46,7 +46,7 @@ class MyUser(AbstractBaseUser, PermissionsMixin):
     creation_date = models.DateTimeField(auto_now_add=True)
     lastLogin = models.DateTimeField(auto_now=True)
 
-    bio = models.TextField(max_length=500, default="")
+    bio = models.TextField(max_length=500, default="", blank=True)
     in_game = models.BooleanField(default=False)
     is_online = models.BooleanField(default=False)
 
