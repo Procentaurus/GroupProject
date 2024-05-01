@@ -8,7 +8,7 @@ import bleach
 from WebGame.permissions import *
 
 from .serializers import *
-from .user_update import add_phone_number, add_bio, add_hide_contact_data
+from .user_update import *
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -49,7 +49,10 @@ class MyUserList(generics.ListCreateAPIView):
             return MyUserPublicGetSerializer
 
     def get_output_serializer_class(self):
-        if self.request.user.is_admin:
+        user = self.request.user
+        if user.is_anonymous:
+            return MyUserAccountDataSerializer
+        elif self.request.user.is_admin:
             return MyUserAdminSerializer
         else:
             return MyUserAccountDataSerializer
@@ -57,9 +60,13 @@ class MyUserList(generics.ListCreateAPIView):
     def get_queryset(self):
         objects = MyUser.objects.all()
         username = self.request.query_params.get('username', None)
+        in_game = self.request.query_params.get('in_game', None)
+        
         if username is not None:
             objects = objects.filter(username__icontains=username)
-        
+        if in_game is not None:
+            objects = objects.filter(in_game=in_game)
+
         return objects
     
     def get(self, request, *args, **kwargs):
@@ -88,15 +95,15 @@ class MyUserList(generics.ListCreateAPIView):
             data.get('username'),
             data.get('password')
         )
-        add_bio(data, user)
-        add_hide_contact_data(data, user)
-        add_phone_number(data, user)
+        update_bio(data, user)
+        update_hide_contact_data(data, user)
+        update_phone_number(data, user)
 
         user.save()
         return user
 
 
-class MyUserDetail(generics.RetrieveUpdateAPIView):
+class MyUserDetail(generics.RetrieveUpdateDestroyAPIView):
 
     permission_classes = (
         IsAuthenticated &
@@ -108,10 +115,8 @@ class MyUserDetail(generics.RetrieveUpdateAPIView):
     lookup_field = 'id'
 
     def get_serializer_class(self):
-        if self.request.method == 'PUT':
-            return MyUserCreateUpdateSerializer
-        else:
-            return MyUserPublicGetSerializer
+        return MyUserCreateUpdateSerializer
+
 
     def get_output_serializer_class(self):
         if self.request.user.id == self.get_object().id:
@@ -123,15 +128,22 @@ class MyUserDetail(generics.RetrieveUpdateAPIView):
         user = self.get_object()
         data = serializer.validated_data
 
-        add_bio(data, user)
-        add_hide_contact_data(data, user)
-        add_phone_number(data, user)
+        update_email(data, user)
+        update_username(data, user)
+        update_bio(data, user)
+        update_hide_contact_data(data, user)
+        update_phone_number(data, user)
 
         user.save()
         return user
 
     def get(self, request, *args, **kwargs):
-        return self.retrieve(request, *args, **kwargs)
+        user = self.get_object()
+        dto = self.serialize_resp_body(user)
+        return Response(dto, status=status.HTTP_200_OK)
+    
+    def delete(self, request, *args, **kwargs):
+        return super().delete(request, *args, **kwargs)
 
     def put(self, request, *args, **kwargs):
         user = self.get_object()
