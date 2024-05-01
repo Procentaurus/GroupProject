@@ -6,7 +6,7 @@ from .models import *
 
 class MyUserAdmin(UserAdmin): # used in django admin, enables more data for admin's view
     model = MyUser
-    list_display = ("email", "username", "phone_number")
+    list_display = ("id", "email", "username", "phone_number")
     list_filter = ("email", "username")
     readonly_fields = ("id", "last_login", "creation_date")
     search_fields = ("email",)
@@ -16,7 +16,7 @@ class MyUserAdmin(UserAdmin): # used in django admin, enables more data for admi
             {"fields": ("email", "username", "phone_number", "password")}
         ),
         ("Additional",
-            {"fields": ("hide_contact_data", "is_active", "is_admin")}
+            {"fields": ("in_game", "hide_contact_data", "is_active", "is_admin")}
         ),
         ("Set up", {"fields": ("id", "last_login", "creation_date", "bio")}),
     )

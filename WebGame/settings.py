@@ -102,8 +102,8 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=10),
-    "REFRESH_TOKEN_LIFETIME": timedelta(minutes=60),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "REFRESH_TOKEN_LIFETIME": timedelta(minutes=90),
     "UPDATE_LAST_LOGIN": True,                         # updates last_login field in MyUser enyity after logging procerssing token
 
     "ALGORITHM": "HS256",                             # JWT-specific config

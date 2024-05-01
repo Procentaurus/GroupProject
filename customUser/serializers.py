@@ -55,9 +55,9 @@ class MyUserCreateUpdateSerializer(serializers.ModelSerializer):
 
     def validate_username(self, username):
         cleaned_username = bleach.clean(username)
-        len = len(cleaned_username)
+        username_len = len(cleaned_username)
 
-        if len < 6 or len > 50:
+        if username_len < 6 or username_len > 50:
             raise serializers.ValidationError(
                 "Username length must be between 6 and 50.")
         
