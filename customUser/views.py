@@ -3,17 +3,25 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth import authenticate
 from rest_framework.permissions import IsAuthenticated
+from django.conf import settings
 import bleach
 
 from WebGame.permissions import *
 
 from .serializers import *
 from .user_update import *
+from .response_decryptor import AESDecryptor
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
 
     def post(self, request, *args, **kwargs):
+        # decryptor = AESDecryptor(
+        #     settings.AES_SECRET_KEY,
+        #     settings.AES_IV
+        # )
+        # decrypted_msg = decryptor.decrypt(request.data)
+        # email, password = self._retrieve_login_data(decrypted_msg)
 
         email = bleach.clean(request.data.get('email'))
         password = request.data.get('password')
@@ -33,7 +41,14 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         if response.status_code == 200:
             #TODO Logging
             return response
-
+        
+    def _retrieve_login_data(self, data):
+        # Email and password are divided with '+' sign
+        plus_index = data.find('+')
+        if plus_index != -1:
+            return bleach.clean(data[:plus_index]), data[(plus_index + 1):]
+        else:
+            return None, None
 
 class MyUserList(generics.ListCreateAPIView):
     
