@@ -94,8 +94,8 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     async def clash_start(self, data):
         await clash_start_impl(self, data)
 
-    async def clash_end(self, data):
-        await clash_end_impl(self, data)
+    async def clash_end(self, data=None):
+        await clash_end_impl(self)
 
     async def game_end(self, data):
         await game_end_impl(self, data)
@@ -119,7 +119,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     # Performs: logging, sending info to player and closing connection
     async def critical_error(self, log_message):
         await critical_error_impl(self, log_message)
-        self.close()
+        await self.close()
 
     def get_game_id(self):
         return self._game_id
@@ -198,7 +198,6 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     def no_reaction_moves_left(self):
         return self._moves_table[1] == 0
-
     
     def decrease_action_moves(self):
         # 0 is index of action moves

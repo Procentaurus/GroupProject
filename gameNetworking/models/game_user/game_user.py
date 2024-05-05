@@ -60,8 +60,8 @@ class GameUser(models.Model):
 
     @database_sync_to_async
     def set_state(self, state):
-        self.state = state.value 
-        self.save()
+        self.state = state
+        self.save(force_update=True)
 
     def can_afford_reroll(self):
         return self.money >= self.reroll_price

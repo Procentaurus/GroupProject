@@ -1,16 +1,15 @@
 from pathlib import Path
 from datetime import timedelta
-import os
 
 from django.conf import settings
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-# SECURITY WARNING: keep the secret key used in production secret!
 # TODO docelowo 256 znaków lub więcej
 SECRET_KEY = 'django-insecure-i_!*j@r%biv$jm@e1)^_uhnea8f3)c*7b!*z7&xqd8(oim-53v'
+AES_IV = b"3)c*7b!*z7&xqd8("
+AES_SECRET_KEY = b"qd8(oim-53v-i_!@r%biv$jm@e1)^_uh"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -80,7 +79,7 @@ ASGI_APPLICATION = "WebGame.asgi.application"
 
 CHANNEL_LAYERS = {
     'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer', # sets redis db as layer provider
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
             "hosts": [('127.0.0.1', 6379)],
         },
@@ -102,8 +101,8 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=10),
-    "REFRESH_TOKEN_LIFETIME": timedelta(minutes=60),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "REFRESH_TOKEN_LIFETIME": timedelta(minutes=90),
     "UPDATE_LAST_LOGIN": True,                         # updates last_login field in MyUser enyity after logging procerssing token
 
     "ALGORITHM": "HS256",                             # JWT-specific config

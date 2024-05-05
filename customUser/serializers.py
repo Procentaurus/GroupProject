@@ -22,7 +22,7 @@ class MyUserAccountDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = MyUser
         fields = ['id','email', 'username', 'phone_number',
-                  'creation_date', 'hide_contact_data']
+                  'bio', 'hide_contact_data']
 
 class MyUserPublicGetSerializer(serializers.ModelSerializer):
     class Meta:
@@ -41,48 +41,58 @@ class MyUserCreateUpdateSerializer(serializers.ModelSerializer):
         fields = ('username', 'email', 'password', 'phone_number',
                   'hide_contact_data', 'bio')
         
-    def validate_email(self, value):
+    def validate_email(self, email):
+        cleaned_email = bleach.clean(email)
         try:
-            validate_email(value)
+            validate_email(cleaned_email)
         except ValidationError:
             raise serializers.ValidationError("Invalid email format")
-        return value
+        
+        if MyUser.objects.filter(email__iexact=cleaned_email).exists():
+            raise serializers.ValidationError("This email is already used.")
 
-    def validate_username(self, value):
-        value = bleach.clean(value)
-        if len(value) < 6 or len(value) > 50:
+        return cleaned_email
+
+    def validate_username(self, username):
+        cleaned_username = bleach.clean(username)
+        username_len = len(cleaned_username)
+
+        if username_len < 6 or username_len > 50:
             raise serializers.ValidationError(
                 "Username length must be between 6 and 50.")
-        return value
+        
+        if MyUser.objects.filter(username__iexact=cleaned_username).exists():
+            raise serializers.ValidationError("This username is already used.")
+        
+        return cleaned_username
 
-    def validate_password(self, value):
+    def validate_password(self, password):
         try:
-            validate_password(value)
+            validate_password(password)
         except ValidationError as e:
             raise serializers.ValidationError(str(e))
-        return value
+        return password
     
-    def validate_phone_number(self, value):
-
-        if value is None:
+    def validate_phone_number(self, phone_number):
+        if phone_number is None:
             return None
         
         number = 0
         try:
-            number = int(value)
+            number = int(phone_number)
         except:
             raise serializers.ValidationError(
                 "Phone number must be forwarded as 9 digits without"
                 + " any other signs.")
         
-        if number < 999999999 and number > 111111111:
+        if number < 999999999 and number > 100000000:
             return number
         else:
-            raise serializers.ValidationError("Ivalid value of phone number")
+            raise serializers.ValidationError("Ivalid phone number")
         
-    def validate_bio(self, value):
-        value = bleach.clean(value)
-        if len(value) > 500:
-             raise serializers.ValidationError("Provided bio is too long."
+    def validate_bio(self, bio):
+        cleaned_bio = bleach.clean(bio)
+        if len(cleaned_bio) > 500:
+            raise serializers.ValidationError("Provided bio is too long."
                                                +" You can use up to 500 signs.")
-        return value
+        return cleaned_bio
