@@ -11,6 +11,7 @@ from WebGame.permissions import *
 from .serializers import *
 from .user_update import *
 from .response_decryptor import AESDecryptor
+from .models import MyUser
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -31,16 +32,8 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 {'detail': 'Lacking required credentials: email or password.'},
                 status=status.HTTP_400_BAD_REQUEST)
 
-        user = authenticate(email=email, password=password)
-        if not user:
-            return Response(
-                {'detail': 'Invalid email or password'},
-                status=status.HTTP_400_BAD_REQUEST)
-        
-        response = super().post(request, *args, **kwargs)
-        if response.status_code == 200:
-            #TODO Logging
-            return response
+        #TODO Logging
+        return super().post(request, *args, **kwargs)
         
     def _retrieve_login_data(self, data):
         # Email and password are divided with '+' sign
