@@ -11,7 +11,7 @@ class MyUserCreator(BaseUserManager):
         if not username:
             raise ValueError("User must have an username.")
         user = self.model(
-            email=self.normalize_email(email),
+            email=email.lower(),
             username=username,
         )
         user.set_password(password)
@@ -20,7 +20,7 @@ class MyUserCreator(BaseUserManager):
     
     def create_superuser(self, email, username,password=None):
         user = self.create_user(
-            email=self.normalize_email(email),
+            email=email.lower(),
             username=username,
             password=password,
         )
@@ -32,27 +32,41 @@ class MyUserCreator(BaseUserManager):
         return user
 
 
-class MyUser(AbstractBaseUser, PermissionsMixin): 
+class MyUser(AbstractBaseUser, PermissionsMixin):
 
-    # def user_directory_path(instance, filename):
-    #     return 'avatars/user_{0}/{1}'.format(instance.username, filename)
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     email = models.EmailField(
-        max_length=50, unique=True, null=False, blank=False)
+        max_length=50,
+        unique=True,
+        null=False,
+        blank=False
+    )
     phone_number = models.PositiveIntegerField(
-        null=True, unique=True, blank=True)
+        null=True,
+        unique=True,
+        blank=True
+    )
     username = models.CharField(
-        max_length=30, unique=True, null=False, blank=False)
+        max_length=30,
+        unique=True,
+        null=False,
+        blank=False
+    )
     creation_date = models.DateTimeField(auto_now_add=True)
     lastLogin = models.DateTimeField(auto_now=True)
+    hide_contact_data = models.BooleanField(default=True)
 
     bio = models.TextField(max_length=500, default="", blank=True)
     in_game = models.BooleanField(default=False)
-    is_online = models.BooleanField(default=False)
+    games_played = models.PositiveSmallIntegerField(null=False, default=0)
+    games_won = models.PositiveSmallIntegerField(null=False, default=0)
 
-    hide_contact_data = models.BooleanField(default=True)
     # image = models.ImageField(
-    # null=True, blank=True, upload_to=user_directory_path, default="model.png")
+    #     null=True,
+    #     blank=True,
+    #     upload_to=lambda obj, filename: f'images/{obj.username}/{filename}',
+    #     default='images/model.png'
+    # )
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
