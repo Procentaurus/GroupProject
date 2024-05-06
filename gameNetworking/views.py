@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 class GameAuthenticationTokenList(generics.ListCreateAPIView):
 
     permission_classes = (
-        IsAuthenticated & ((ChoseSafeMethod & IsAdmin ) | ~ChoseSafeMethod),
+        IsAuthenticated & ((ChoseGetMethod & IsAdmin ) | ChosePostMethod),
     )
 
     def get_output_serializer_class(self):

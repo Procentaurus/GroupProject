@@ -32,6 +32,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 status=status.HTTP_400_BAD_REQUEST)
 
         #TODO Logging
+        email = email.lower()
         return super().post(request, *args, **kwargs)
         
     def _retrieve_login_data(self, data):
@@ -45,24 +46,19 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 class MyUserList(generics.ListCreateAPIView):
     
     permission_classes = (
-        IsAuthenticated | (~ChoseSafeMethod),
+        IsAuthenticated | ChosePostMethod,
     )
 
     # Choose dto for incoming data
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return MyUserCreateUpdateSerializer
-        else:
-            return MyUserPublicGetSerializer
 
     def get_output_serializer_class(self):
-        user = self.request.user
-        if user.is_anonymous:
-            return MyUserAccountDataSerializer
-        elif self.request.user.is_admin:
-            return MyUserAdminSerializer
+        if self.request.method == 'POST':
+            return MyUserGetDetailPrivateSerializer
         else:
-            return MyUserAccountDataSerializer
+            return MyUserGetAllSerializer
 
     def get_queryset(self):
         objects = MyUser.objects.all()
@@ -77,7 +73,9 @@ class MyUserList(generics.ListCreateAPIView):
         return objects
     
     def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
+        users = self.get_queryset()
+        dto = self.get_output_serializer_class()(users, many=True)
+        return Response(dto.data, status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -115,21 +113,24 @@ class MyUserDetail(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = (
         IsAuthenticated &
         (
-            (IsTheVeryUser | IsAdmin) | ChoseSafeMethod
+            ((ChoseDeleteMethod | ChosePutMethod) & (AccessHisData | IsAdmin)) |
+            ChoseGetMethod
         ),
     )
     queryset = MyUser.objects.all()
     lookup_field = 'id'
 
     def get_serializer_class(self):
-        return MyUserCreateUpdateSerializer
-
+        if self.request.method == "PUT":
+            return MyUserCreateUpdateSerializer
 
     def get_output_serializer_class(self):
         if self.request.user.id == self.get_object().id:
-            return MyUserAccountDataSerializer
+            return MyUserGetDetailPrivateSerializer
+        elif self.request.user.is_admin:
+            return MyUserAdminSerializer
         else:
-            return MyUserPublicDetailSerializer
+            return MyUserGetDetailSerializer
 
     def perform_update(self, serializer):
         user = self.get_object()
