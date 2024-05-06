@@ -53,17 +53,10 @@ class MyUserList(generics.ListCreateAPIView):
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return MyUserCreateUpdateSerializer
-        else:
-            return MyUserPublicGetSerializer
+        else: return None
 
     def get_output_serializer_class(self):
-        user = self.request.user
-        if user.is_anonymous:
-            return MyUserAccountDataSerializer
-        elif self.request.user.is_admin:
-            return MyUserAdminSerializer
-        else:
-            return MyUserAccountDataSerializer
+        return MyUserGetAllSerializer
 
     def get_queryset(self):
         objects = MyUser.objects.all()
@@ -116,21 +109,24 @@ class MyUserDetail(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = (
         IsAuthenticated &
         (
-            (IsTheVeryUser | IsAdmin) | ChoseSafeMethod
+            ((~ChoseSafeMethod) & (IsTheVeryUser | IsAdmin)) | ChoseSafeMethod
         ),
     )
     queryset = MyUser.objects.all()
     lookup_field = 'id'
 
     def get_serializer_class(self):
-        return MyUserCreateUpdateSerializer
-
+        if self.request.method == "PUT":
+            return MyUserCreateUpdateSerializer
+        else: return None
 
     def get_output_serializer_class(self):
         if self.request.user.id == self.get_object().id:
-            return MyUserAccountDataSerializer
+            return MyUserGetDetailPrivateSerializer
+        elif self.request.user.is_admin:
+            return MyUserAdminSerializer
         else:
-            return MyUserPublicDetailSerializer
+            return MyUserGetDetailSerializer
 
     def perform_update(self, serializer):
         user = self.get_object()

@@ -11,31 +11,33 @@ from .models import MyUser
 # 
 
 class MyUserAdminSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = MyUser
         fields = ['id', 'email', 'username', 'phone_number', 'creation_date',
-                  'last_login', 'hide_contact_data', 'is_admin']
+                  'last_login', 'hide_contact_data', 'is_admin', 'bio',
+                  'games_played', 'games_won'
+                ]
 
-class MyUserAccountDataSerializer(serializers.ModelSerializer):
-
+class MyUserGetAllSerializer(serializers.ModelSerializer):
     class Meta:
         model = MyUser
-        fields = ['id','email', 'username', 'phone_number',
-                  'bio', 'hide_contact_data']
+        fields = ('id', 'username', 'games_played', 'games_won')   
 
-class MyUserPublicGetSerializer(serializers.ModelSerializer):
+class MyUserGetDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = MyUser
-        fields = ('id','username', 'email')   
+        fields = ['id', 'email', 'username', 'creation_date', 'last_login',
+                  'hide_contact_data', 'bio', 'games_played', 'games_won'
+                ]
 
-class MyUserPublicDetailSerializer(serializers.ModelSerializer):
+class MyUserGetDetailPrivateSerializer(serializers.ModelSerializer):
     class Meta:
         model = MyUser
-        fields = ('id','username', 'email', 'creation_date', 'last_login')   
+        fields = ['id', 'email', 'username', 'phone_number', 'creation_date',
+                  'hide_contact_data', 'bio', 'games_played', 'games_won'
+                ]   
 
 class MyUserCreateUpdateSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = MyUser
         fields = ('username', 'email', 'password', 'phone_number',
