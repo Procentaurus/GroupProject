@@ -46,17 +46,19 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 class MyUserList(generics.ListCreateAPIView):
     
     permission_classes = (
-        IsAuthenticated | (~ChoseSafeMethod),
+        IsAuthenticated | ChosePostMethod,
     )
 
     # Choose dto for incoming data
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return MyUserCreateUpdateSerializer
-        else: return None
 
     def get_output_serializer_class(self):
-        return MyUserGetAllSerializer
+        if self.request.method == 'POST':
+            return MyUserGetDetailPrivateSerializer
+        else:
+            return MyUserGetAllSerializer
 
     def get_queryset(self):
         objects = MyUser.objects.all()
@@ -71,7 +73,9 @@ class MyUserList(generics.ListCreateAPIView):
         return objects
     
     def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
+        users = self.get_queryset()
+        dto = self.get_output_serializer_class()(users, many=True)
+        return Response(dto.data, status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -109,7 +113,8 @@ class MyUserDetail(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = (
         IsAuthenticated &
         (
-            ((~ChoseSafeMethod) & (IsTheVeryUser | IsAdmin)) | ChoseSafeMethod
+            ((ChoseDeleteMethod | ChosePutMethod) & (AccessHisData | IsAdmin)) |
+            ChoseGetMethod
         ),
     )
     queryset = MyUser.objects.all()
@@ -118,7 +123,6 @@ class MyUserDetail(generics.RetrieveUpdateDestroyAPIView):
     def get_serializer_class(self):
         if self.request.method == "PUT":
             return MyUserCreateUpdateSerializer
-        else: return None
 
     def get_output_serializer_class(self):
         if self.request.user.id == self.get_object().id:
