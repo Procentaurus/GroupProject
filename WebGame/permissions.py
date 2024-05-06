@@ -16,13 +16,13 @@ class ChoseGetMethod(permissions.BasePermission):
 class ChosePutMethod(permissions.BasePermission):
 
     def has_permission(self, request, view):
-        return True if request.method == 'POST' else False
+        return True if request.method == 'PUT' else False
 
 
 class ChosePostMethod(permissions.BasePermission):
 
     def has_permission(self, request, view):
-        return True if request.method == 'PUT' else False
+        return True if request.method == 'POST' else False
 
 
 class ChoseDeleteMethod(permissions.BasePermission):
