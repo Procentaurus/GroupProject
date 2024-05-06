@@ -32,6 +32,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 status=status.HTTP_400_BAD_REQUEST)
 
         #TODO Logging
+        email = email.lower()
         return super().post(request, *args, **kwargs)
         
     def _retrieve_login_data(self, data):

@@ -16,4 +16,4 @@ def update_username(data, user):
 
 def update_email(data, user):
     if data.get('email') is not None:
-        user.email = data.get('email')
+        user.email = data.get('email').lower()

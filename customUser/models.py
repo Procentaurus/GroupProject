@@ -11,7 +11,7 @@ class MyUserCreator(BaseUserManager):
         if not username:
             raise ValueError("User must have an username.")
         user = self.model(
-            email=self.normalize_email(email),
+            email=email.lower(),
             username=username,
         )
         user.set_password(password)
@@ -20,7 +20,7 @@ class MyUserCreator(BaseUserManager):
     
     def create_superuser(self, email, username,password=None):
         user = self.create_user(
-            email=self.normalize_email(email),
+            email=email.lower(),
             username=username,
             password=password,
         )
