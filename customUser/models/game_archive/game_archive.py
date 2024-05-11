@@ -1,10 +1,13 @@
 from uuid import uuid4
 from django.db import models
 
-from customUser.models import MyUser
+from ..my_user.my_user import MyUser
 
-from ..common import CONFLICT_SIDES
 
+CONFLICT_SIDES = (
+    ("teacher", "teacher"),
+    ("student", "student"),
+)
 
 class GameArchive(models.Model):
 

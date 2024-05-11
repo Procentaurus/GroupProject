@@ -1,3 +1,5 @@
+from customUser.models.queries import create_game_archive
+
 from gameMechanics.scripts.basic_mechanics import get_new_morale
 from gameMechanics.queries import get_a_card_serialized
 

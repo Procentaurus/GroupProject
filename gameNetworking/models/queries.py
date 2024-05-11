@@ -5,7 +5,6 @@ from django.forms import ValidationError
 
 from gameMechanics.queries import get_r_card_sync
 
-from .game_archive.game_archive import GameArchive
 from .game_user.game_user import GameUser
 from .game.game import Game
 from .owned_reaction_card.owned_reaction_card import OwnedReactionCard
@@ -192,20 +191,3 @@ def decrease_card_amount(card, amount):
         card.save()
     elif card.amount == amount:
         card.delete()
-
-
-
-### reaction card in shop ###
-
-@database_sync_to_async
-def create_game_archive(game, winner):
-    archive = GameArchive.objects.create(
-        start_date=game.start_datetime.date(),
-        start_time=game.start_datetime.time(),
-        winner=winner,
-        teacher_player=game.teacher_player.user,
-        student_player=game.student_player.user,
-        length_in_sec = (datetime.now() - game.start_datetime).total_seconds()
-    )
-    archive.save()
-    return archive
