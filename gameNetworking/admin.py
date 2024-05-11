@@ -2,6 +2,7 @@ from django.contrib import admin
 
 from .models.game_user.game_user import GameUser
 from .models.game.game import Game
+from .models.game_archive.game_archive import GameArchive
 from .models.owned_reaction_card.owned_reaction_card import OwnedReactionCard
 from .models.game_authentication_token.game_authentication_token \
     import GameAuthenticationToken
@@ -14,6 +15,7 @@ from .models.reaction_card_in_shop.reaction_card_in_shop \
 # with specified values for display and search
 #
 
+
 @admin.register(Game)
 class GameAdmin(admin.ModelAdmin):
     list_display = ('id', 'teacher_player', 'student_player')
@@ -25,6 +27,20 @@ class GameAdmin(admin.ModelAdmin):
         }),
     )
 
+
+@admin.register(GameArchive)
+class GameArchiveAdmin(admin.ModelAdmin):
+    list_display = ('id', 'start_date', 'teacher_player', 'student_player')
+    readonly_fields = ('id',)
+    ordering = ('-start_date', "-start_time")
+    add_fieldsets = ((
+        "Players", {"fields": (
+            "teacher_player",'student_player'
+            )},
+        "Game info", {"fields":('start_date', 'start_time',
+            'lenght_in_sec', 'winner')}
+        ),
+    )
 
 @admin.register(GameUser)
 class GameUserAdmin(admin.ModelAdmin):

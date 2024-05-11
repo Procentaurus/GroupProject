@@ -9,10 +9,9 @@ from ..common import CONFLICT_SIDES
 class GameArchive(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-
-    start_datetime = models.DateTimeField(auto_now_add=True)
-    end_datetime = models.DateTimeField(null=True, blank=True)
-
+    start_date = models.DateField(blank=False)
+    start_time = models.TimeField(blank=False)
+    lenght_in_sec = models.PositiveIntegerField(null=False, blank=False)
     teacher_player = models.OneToOneField(MyUser, related_name="teacher_player",
         on_delete=models.SET_NULL, null=True)
     student_player = models.OneToOneField(MyUser, related_name="student_player",
@@ -20,4 +19,4 @@ class GameArchive(models.Model):
     winner = models.CharField(choices=CONFLICT_SIDES, null=False, max_length=15)
 
     class Meta:
-        ordering = ["start_datetime"]
+        ordering = ["-start_date", "-start_time"]
