@@ -103,13 +103,11 @@ class MyUserCreateUpdateSerializer(serializers.ModelSerializer):
 
 
 class GameArchiveGetAllSerializer(serializers.ModelSerializer):
-    teacher_player = MyUserGetAllSerializer(
-        source='teacher_player', read_only=True
-    )
-    student_player = MyUserGetAllSerializer(
-        source='student_player', read_only=True
-    )
+    teacher_player = MyUserGetAllSerializer(read_only=True)
+    student_player = MyUserGetAllSerializer(read_only=True)
 
     class Meta:
         model = GameArchive
-        fields = ['start_date', 'start_time', 'lenght_in_sec', 'winner']
+        fields = ['start_date', 'start_time', 'lenght_in_sec', 'winner',
+                  'student_player', 'teacher_player'
+                ]

@@ -17,5 +17,5 @@ urlpatterns = [
     path('<str:id>/', MyUserDetail.as_view(), name='user'),
 
     # Endpoint with already finished games
-    path('archives/', GameArchiveList.as_view(), name='archive_list')
+    path('api/archives/', GameArchiveList.as_view(), name='archive_list'),
 ]

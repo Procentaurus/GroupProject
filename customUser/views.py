@@ -175,9 +175,9 @@ class MyUserDetail(generics.RetrieveUpdateDestroyAPIView):
 
 class GameArchiveList(generics.ListCreateAPIView):
 
-    # permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated,)
 
-    def get_output_serializer_class(self):
+    def get_serializer_class(self):
         return GameArchiveGetAllSerializer
 
     def get_queryset(self):
@@ -193,6 +193,4 @@ class GameArchiveList(generics.ListCreateAPIView):
         return objects
 
     def get(self, request, *args, **kwargs):
-        archives = self.get_queryset()
-        dto = self.get_output_serializer_class()(archives, many=True)
-        return Response(dto.data, status=status.HTTP_200_OK)
+        return self.list(request, *args, **kwargs)

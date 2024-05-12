@@ -1,11 +1,11 @@
 import re
-import datetime
+from datetime import datetime
 from django.db.models import Q
 
 def filter_by_date(objects, date):
     date_pattern = re.compile(r'^\d{4}-\d{2}-\d{2}$')
     if date is not None:
-        if len(date) == 11 and date_pattern.match(date):
+        if len(date) == 11 and date_pattern.match(date[1:]):
             operator = date[0]
             date_value = datetime.strptime(date[1:], "%Y-%m-%d").date()
             if operator == "=":
@@ -19,8 +19,8 @@ def filter_by_date(objects, date):
 def filter_by_username(objects, username):
     if username is not None:
         objects = objects.filter(
-            Q(student_player_username__icontains=username) |
-            Q(teacher_player_username__icontains=username)
+            Q(student_player__username__icontains=username) |
+            Q(teacher_player__username__icontains=username)
         )
     return objects
 
