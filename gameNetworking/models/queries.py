@@ -1,4 +1,5 @@
 from random import randint
+import datetime
 from channels.db import database_sync_to_async
 from django.forms import ValidationError
 
@@ -90,8 +91,11 @@ def get_game(game_id):
 def create_game(teacher_player, student_player):
     number = randint(0,1)
     next_move_player = "teacher" if number == 0 else "student"
-    game = Game.objects.create(teacher_player=teacher_player,
-        student_player=student_player, next_move_player=next_move_player)
+    game = Game.objects.create(
+        teacher_player=teacher_player,
+        student_player=student_player,
+        next_move_player=next_move_player
+    )
     return game
     
 @database_sync_to_async

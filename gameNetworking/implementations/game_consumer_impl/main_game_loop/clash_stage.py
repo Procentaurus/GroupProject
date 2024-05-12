@@ -1,3 +1,5 @@
+from customUser.models.queries import create_game_archive
+
 from gameMechanics.scripts.basic_mechanics import get_new_morale
 from gameMechanics.queries import get_a_card_serialized
 
@@ -114,10 +116,10 @@ class ReactionMoveHandler(MoveHandler):
         await self._add_gains_to_players_accounts()
         await self._remove_all_used_reaction_cards()
         await self._send_clash_result_to_players()
-
         await self._set_winner_if_exist(opp)
 
         if self._consumer.is_winner():
+            await create_game_archive(self._game, self._consumer.get_winner())
             await self._announce_winner()
             return
 

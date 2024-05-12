@@ -11,6 +11,7 @@ from .methods_impl import *
 class Game(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    start_datetime = models.DateTimeField(auto_now_add=True)
 
     teacher_player = models.OneToOneField(GameUser,
         related_name="teacher_player", on_delete=models.CASCADE, null=True)

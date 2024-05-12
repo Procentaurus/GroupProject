@@ -14,6 +14,7 @@ from .models.reaction_card_in_shop.reaction_card_in_shop \
 # with specified values for display and search
 #
 
+
 @admin.register(Game)
 class GameAdmin(admin.ModelAdmin):
     list_display = ('id', 'teacher_player', 'student_player')
@@ -24,7 +25,6 @@ class GameAdmin(admin.ModelAdmin):
             "next_move_player", "next_move_type")
         }),
     )
-
 
 @admin.register(GameUser)
 class GameUserAdmin(admin.ModelAdmin):
