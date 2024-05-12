@@ -83,6 +83,24 @@ class MyUser(AbstractBaseUser, PermissionsMixin):
 
     def set_in_game(self):
         self.in_game = True
+        self.save()
 
-    def unset_in_game(self):
+    def clear_in_game(self):
         self.in_game = False
+        self.save()
+
+    def inc_games_played(self):
+        self.games_played += 1
+        self.save()
+
+    def inc_games_won(self):
+        self.games_won += 1
+        self.save()
+
+    def dec_games_played(self):
+        self.games_played -= 1
+        self.save()
+
+    def dec_games_won(self):
+        self.games_won -= 1
+        self.save()

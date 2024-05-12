@@ -4,11 +4,13 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.contrib.auth.password_validation import validate_password
 
-from .models import MyUser
+from .models.my_user.my_user import MyUser
+from .models.game_archive.game_archive import GameArchive
 
 # 
 # DTO classes
-# 
+#
+
 
 class MyUserAdminSerializer(serializers.ModelSerializer):
     class Meta:
@@ -98,3 +100,16 @@ class MyUserCreateUpdateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Provided bio is too long."
                                                +" You can use up to 500 signs.")
         return cleaned_bio
+
+
+class GameArchiveGetAllSerializer(serializers.ModelSerializer):
+    teacher_player = MyUserGetAllSerializer(
+        source='teacher_player', read_only=True
+    )
+    student_player = MyUserGetAllSerializer(
+        source='student_player', read_only=True
+    )
+
+    class Meta:
+        model = GameArchive
+        fields = ['start_date', 'start_time', 'lenght_in_sec', 'winner']

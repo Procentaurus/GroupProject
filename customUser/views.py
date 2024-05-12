@@ -7,10 +7,12 @@ import bleach
 
 from WebGame.permissions import *
 
+from .archive_filter import *
 from .serializers import *
 from .user_update import *
 from .response_decryptor import AESDecryptor
-from .models import MyUser
+from .models.my_user.my_user import MyUser
+from .models.game_archive.game_archive import GameArchive
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -113,8 +115,8 @@ class MyUserDetail(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = (
         IsAuthenticated &
         (
-            ((ChoseDeleteMethod | ChosePutMethod) & (AccessHisData | IsAdmin)) |
-            ChoseGetMethod
+            ((ChoseDeleteMethod | ChosePutMethod) & (AccessHisData | IsAdmin))
+            | ChoseGetMethod
         ),
     )
     queryset = MyUser.objects.all()
@@ -169,3 +171,28 @@ class MyUserDetail(generics.RetrieveUpdateDestroyAPIView):
         serializer_class = self.get_output_serializer_class()
         dto = serializer_class(user).data
         return dto
+
+
+class GameArchiveList(generics.ListCreateAPIView):
+
+    # permission_classes = (IsAuthenticated,)
+
+    def get_output_serializer_class(self):
+        return GameArchiveGetAllSerializer
+
+    def get_queryset(self):
+        objects = GameArchive.objects.all()
+        username = self.request.query_params.get('username', None)
+        date = self.request.query_params.get('start_date', None)
+        length = self.request.query_params.get('length', None)
+        winner = self.request.query_params.get('winner', None)
+        objects = filter_by_date(objects, date)
+        objects = filter_by_length(objects, length)
+        objects = filter_by_winner(objects, winner)
+        objects = filter_by_username(objects, username)
+        return objects
+
+    def get(self, request, *args, **kwargs):
+        archives = self.get_queryset()
+        dto = self.get_output_serializer_class()(archives, many=True)
+        return Response(dto.data, status=status.HTTP_200_OK)

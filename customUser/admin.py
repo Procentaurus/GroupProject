@@ -18,7 +18,8 @@ class MyUserAdmin(UserAdmin): # used in django admin, enables more data for admi
             {"fields": ("email", "username", "phone_number", "password")}
         ),
         ("Additional",
-            {"fields": ("in_game", "hide_contact_data", "is_active", "is_admin")}
+            {"fields": ("in_game", "hide_contact_data", "is_active", "is_admin",
+                        'games_won', 'games_played')}
         ),
         ("Set up", {"fields": ("id", "last_login", "creation_date", "bio")}),
     )
