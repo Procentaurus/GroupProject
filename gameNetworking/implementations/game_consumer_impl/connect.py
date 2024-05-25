@@ -24,14 +24,14 @@ class Connector:
             await self._send_game_info_to_players()
             mng = InitCardsManager(self._consumer)
             await mng.manage_cards()
-            # await initialize_game_archive()
+            self._consumer.limit_players_time()
 
     async def _initialize_game_networking(self):
         await self._set_opponent()
 
         game = await self._create_game()
         self._game = game
-        await self._set_users_in_game()
+        # await self._set_users_in_game()
 
         await self._add_players_channels_to_group(game.id)
         self._consumer.set_opponent_channel_name(self._opp.channel_name)

@@ -103,6 +103,9 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     async def game_creation(self, data):
         await game_creation_impl(self, data)
 
+    async def hub_stage_end(self, data=None):
+        await hub_stage_end_impl(self)
+
     # Used for player's mistakes during game flow
     # that do not require complex response
     # Performs: logging and sending info to player
@@ -180,7 +183,10 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     def set_opponent_channel_name(self, opponent_channel_name):
         self._opponent_channel_name = opponent_channel_name
-    
+
+    def limit_players_time(self):
+        limit_players_time_impl(self)
+
     def init_table_for_new_clash(self):
         init_table_for_new_clash_impl(self)
 

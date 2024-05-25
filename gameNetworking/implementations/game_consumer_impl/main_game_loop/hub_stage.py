@@ -45,7 +45,7 @@ class ReadyMoveHandler(MoveHandler):
         return True
 
     async def _perform_move_mechanics(self):
-        opponent = self._consumer.get_opponent()
+        opponent = await get_game_user(self._consumer.get_opponent().id)
         if opponent.is_in_hub():
             await self._g_u.set_state("await_clash_start")
         elif opponent.wait_for_clash_start():
