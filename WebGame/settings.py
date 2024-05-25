@@ -77,11 +77,21 @@ TEMPLATES = [
 WSGI_APPLICATION = 'WebGame.wsgi.application'
 ASGI_APPLICATION = "WebGame.asgi.application"
 
+
+
+#################################    REDIS    #################################
+REDIS_LAYER_HOST = '127.0.0.1'
+REDIS_LAYER_PORT = 6379
+REDIS_LAYER_DB = 0
+REDIS_SCHEDULER_HOST = '127.0.0.1'
+REDIS_SCHEDULER_PORT = 6379
+REDIS_SCHEDULER_DB = 1
+
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [('127.0.0.1', 6379)],
+            "hosts": [(REDIS_LAYER_HOST, REDIS_LAYER_PORT, REDIS_LAYER_DB)],
         },
     },
 }

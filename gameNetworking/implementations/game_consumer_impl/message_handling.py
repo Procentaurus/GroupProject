@@ -1,7 +1,9 @@
 from autobahn.exception import Disconnected
 
+from ...implementations.game_consumer_impl.main_game_loop.hub_stage import \
+    ReadyMoveHandler
 from .main_game_loop.common import *
-from ...models.queries import get_game_user
+from ...models.queries import get_game_user, get_game
 
 
 #
@@ -80,6 +82,11 @@ async def game_creation_impl(consumer, data):
 
     opp = await get_game_user(data.get("opponent_id"))
     consumer.set_opponent(opp)
+
+async def hub_stage_end_impl(consumer):
+    game = await get_game(consumer.get_game_id())
+    handler = ReadyMoveHandler(consumer, game)
+    await handler.perform_move()
 
 async def error_impl(consumer, message, log_message):    
     await consumer.send_json({

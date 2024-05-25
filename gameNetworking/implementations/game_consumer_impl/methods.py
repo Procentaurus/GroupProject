@@ -1,7 +1,8 @@
 import json
 
-from gameNetworking.enums import GameStage
-from gameNetworking.models.queries import get_game_user
+from ...enums import GameStage
+from ...models.queries import get_game_user
+from ...scheduler.scheduler import add_delayed_task
 
 
 def init_table_for_new_clash_impl(consumer):
@@ -19,6 +20,19 @@ def update_game_stage_impl(consumer):
         consumer.set_game_stage(GameStage.CLASH)
     else:
         consumer.set_game_stage(GameStage.HUB)
+
+
+def limit_players_time_impl(consumer):
+    add_delayed_task(
+        f'limit_hub_time_{consumer.get_game_user().id}',
+        30,
+        'gameNetworking.scheduler.tasks.limit_hub_time'
+    )
+    add_delayed_task(
+        f'limit_hub_time_{consumer.get_opponent().id}',
+        30,
+        'gameNetworking.scheduler.tasks.limit_hub_time'
+    )
 
 async def refresh_game_user_impl(consumer):
     game_user_id = consumer.get_game_user().id
