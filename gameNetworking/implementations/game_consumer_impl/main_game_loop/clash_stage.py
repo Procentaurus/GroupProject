@@ -62,10 +62,11 @@ class ActionMoveHandler(MoveHandler):
             {"action_card" : await get_a_card_serialized(self._a_card)},
             "opponent_move"
         )
-    
+
         self._consumer.decrease_action_moves()
         if self._consumer.no_action_moves_left():
             await game_user.set_state(PlayerState.AWAIT_CLASH_END)
+        self._consumer.limit_player_reaction_time()
 
     def _any_card_sent(self):
         return False if (self._a_card is None or self._a_card == []) else True
@@ -140,7 +141,7 @@ class ReactionMoveHandler(MoveHandler):
 
         mng = InitCardsManager(self._consumer)
         await mng.manage_cards()
-        self._consumer.limit_players_time()
+        self._consumer.limit_players_hub_time()
 
     async def set_user_states(self, opp):
         await self._g_u.set_state("in_hub")

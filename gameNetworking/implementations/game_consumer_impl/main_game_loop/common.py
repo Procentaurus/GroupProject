@@ -1,4 +1,5 @@
 from gameMechanics.scripts.initial_shop import get_initial_shop_for_player
+from django.conf import settings
 
 from ....models.queries import add_reaction_card_to_shop
 from .abstract import MoveHandler
@@ -205,7 +206,11 @@ class InitCardsManager:
         await self._send_cards()
 
     async def _get_cards(self):
-        i_s_c_g = InitShopCardsGetter(self._g_u, 5, 2)
+        i_s_c_g = InitShopCardsGetter(
+            self._g_u,
+            settings.INIT_R_CARDS_NUMBER,
+            settings.INIT_A_CARDS_NUMBER
+        )
         (player_a_cards, player_r_cards) = await i_s_c_g.get_player_cards()
         self._player_a_cards = player_a_cards
         self._player_r_cards = player_r_cards
