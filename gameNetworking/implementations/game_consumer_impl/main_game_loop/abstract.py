@@ -23,9 +23,9 @@ class MoveHandler(ABC):
         pass
 
     @abstractmethod
-    async def _perform_move_mechanics(self):
+    async def _perform_move_mechanics(self, is_delayed):
         pass
 
-    async def perform_move(self):
+    async def perform_move(self, is_delayed=False):
         if not await self._verify_move(): return
-        await self._perform_move_mechanics()
+        await self._perform_move_mechanics(is_delayed)
