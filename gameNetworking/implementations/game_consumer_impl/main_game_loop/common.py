@@ -1,7 +1,6 @@
 from gameMechanics.scripts.initial_shop import get_initial_shop_for_player
 
-from ....models.queries import add_reaction_card_to_shop, \
-    remove_reaction_card_from_shop
+from ....models.queries import add_reaction_card_to_shop
 from .abstract import MoveHandler
 
 
@@ -17,18 +16,17 @@ class SurrenderMoveHandler(MoveHandler):
         g_u = self._consumer.get_game_user()
         self._consumer.logger.info(
             f"{g_u.conflict_side} player has surrendered")
-        winner = self._get_winner_side()
-        self._consumer.set_winner(winner)
+        winner_side = self._get_winner_side(g_u)
+        self._consumer.set_winner(winner_side)
         self._consumer.set_closure_from_user_side(False)
-        await self._send_game_end_info()
+        await self._send_game_end_info(winner_side)
 
-    async def _send_game_end_info(self, winner):
+    async def _send_game_end_info(self, winner_side):
         await self._consumer.send_message_to_group(
-            {"winner" : winner, "after_surrender" : True},
+            {"winner" : winner_side, "after_surrender" : True},
             "game_end")
         
-    async def _get_winner_side(self):
-        g_u = self._consumer.get_game_user()
+    async def _get_winner_side(self, g_u):
         return "student" if g_u.is_teacher() else "teacher"
 
     
