@@ -1,3 +1,5 @@
+from customUser.models.queries import create_game_archive
+
 from gameMechanics.scripts.basic_mechanics import get_new_morale
 from gameMechanics.queries import get_a_card_serialized
 
@@ -58,7 +60,8 @@ class ActionMoveHandler(MoveHandler):
         await game_user.remove_action_card(self._a_card)
         await self._consumer.send_message_to_opponent(
             {"action_card" : await get_a_card_serialized(self._a_card)},
-            "opponent_move")
+            "opponent_move"
+        )
     
         self._consumer.decrease_action_moves()
         if self._consumer.no_action_moves_left():
@@ -114,10 +117,10 @@ class ReactionMoveHandler(MoveHandler):
         await self._add_gains_to_players_accounts()
         await self._remove_all_used_reaction_cards()
         await self._send_clash_result_to_players()
-
         await self._set_winner_if_exist(opp)
 
         if self._consumer.is_winner():
+            await create_game_archive(self._game, self._consumer.get_winner())
             await self._announce_winner()
             return
 
@@ -137,6 +140,7 @@ class ReactionMoveHandler(MoveHandler):
 
         mng = InitCardsManager(self._consumer)
         await mng.manage_cards()
+        self._consumer.limit_players_time()
 
     async def set_user_states(self, opp):
         await self._g_u.set_state("in_hub")
