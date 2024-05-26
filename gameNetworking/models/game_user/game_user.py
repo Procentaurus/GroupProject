@@ -1,6 +1,7 @@
 from uuid import uuid4
 from django.db import models
 from channels.db import database_sync_to_async
+from django.conf import settings
 
 from customUser.models import MyUser
 from gameMechanics.models import ActionCard
@@ -68,7 +69,7 @@ class GameUser(models.Model):
     
     @database_sync_to_async
     def increase_reroll_price(self):
-        self.reroll_price += 5
+        self.reroll_price += settings.REROLL_PRICE_INCREASE_VALUE
         self.save()
 
     async def buy_reroll(self):

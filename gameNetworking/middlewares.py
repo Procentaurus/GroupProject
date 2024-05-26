@@ -1,7 +1,5 @@
-from channels.middleware import BaseMiddleware
-import json
-
 from .models.queries import *
+
 
 # Implementation of getting data about player's single-use token
 class GameAuthenticationTokenMiddleware:

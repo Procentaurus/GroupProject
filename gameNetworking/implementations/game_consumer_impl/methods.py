@@ -1,4 +1,5 @@
 import json
+from django.conf import settings
 
 from ...enums import GameStage
 from ...models.queries import get_game_user
@@ -21,17 +22,30 @@ def update_game_stage_impl(consumer):
     else:
         consumer.set_game_stage(GameStage.HUB)
 
+def limit_player_action_time_impl(consumer):
+    add_delayed_task(
+        f'limit_action_time_{consumer.get_opponent().id}',
+        settings.ACTION_MOVE_TIMEOUT,
+        settings.ACTION_MOVE_TIMEOUT_FUNC
+    )
 
-def limit_players_time_impl(consumer):
+def limit_player_reaction_time_impl(consumer):
+    add_delayed_task(
+        f'limit_reaction_time_{consumer.get_opponent().id}',
+        settings.REACTION_MOVE_TIMEOUT,
+        settings.REACTION_MOVE_TIMEOUT_FUNC
+    )
+
+def limit_players_hub_time_impl(consumer):
     add_delayed_task(
         f'limit_hub_time_{consumer.get_game_user().id}',
-        30,
-        'gameNetworking.scheduler.tasks.limit_hub_time'
+        settings.HUB_STAGE_TIMEOUT,
+        settings.HUB_STAGE_TIMEOUT_FUNC
     )
     add_delayed_task(
         f'limit_hub_time_{consumer.get_opponent().id}',
-        30,
-        'gameNetworking.scheduler.tasks.limit_hub_time'
+        settings.HUB_STAGE_TIMEOUT,
+        settings.HUB_STAGE_TIMEOUT_FUNC
     )
 
 async def refresh_game_user_impl(consumer):
