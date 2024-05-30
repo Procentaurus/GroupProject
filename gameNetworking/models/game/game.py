@@ -46,8 +46,8 @@ class Game(models.Model):
         return result
     
     @database_sync_to_async
-    def save(self, consumer):
-        save_impl(self, consumer)
+    def backup(self, consumer):
+        backup_impl(self, consumer)
 
     def delete(self, *args, **kwargs):
         if self.teacher_player:
