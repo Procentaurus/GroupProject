@@ -124,3 +124,7 @@ class GameUser(models.Model):
     @database_sync_to_async
     def remove_all_action_cards_from_shop(self):
         remove_all_action_cards_from_shop_impl(self)
+
+    @database_sync_to_async
+    def save(self):
+        save_impl(self)

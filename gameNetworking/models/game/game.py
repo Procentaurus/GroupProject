@@ -44,3 +44,12 @@ class Game(models.Model):
     def get_opponent_player(self, game_user):
         result = get_opponent_player_impl(self, game_user)
         return result
+    
+    @database_sync_to_async
+    def save(self, consumer):
+        save_impl(self, consumer)
+
+    def delete(self, *args, **kwargs):
+        if self.teacher_player:
+            self.teacher_player.delete()
+        super().delete(*args, **kwargs)

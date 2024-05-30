@@ -19,3 +19,9 @@ def update_after_turn_impl(game):
 
     game.save()
     return True
+
+def save_impl(game, consumer):
+    game.turns_to_inc = consumer.get_turns_to_inc()
+    game.moves_per_clash = consumer.get_moves_per_clash()
+    game.stage = bool(consumer.get_game_stage())
+    game.save()
