@@ -3,7 +3,7 @@ from gameMechanics.scripts.basic_mechanics import get_rerolled_cards
 from gameNetworking.enums import MessageType
 
 from ....models.queries import *
-from ....scheduler.scheduler import remove_task
+from ....scheduler.scheduler import remove_delayed_task
 from .checkers import *
 from .common import SurrenderMoveHandler, ShopCardsAdder, CardSender
 from .abstract import MoveHandler, StageHandler
@@ -60,7 +60,7 @@ class ReadyMoveHandler(MoveHandler):
         await self._g_u.remove_all_action_cards_from_shop()
         await remove_all_reaction_cards_from_shop(self._g_u)
         if not is_delayed:
-            remove_task(f'limit_hub_time_{self._g_u.id}')
+            remove_delayed_task(f'limit_hub_time_{self._g_u.id}')
 
     async def _send_clash_start_info(self):
         await self._consumer.send_message_to_group(

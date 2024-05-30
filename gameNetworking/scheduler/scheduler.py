@@ -16,7 +16,7 @@ def add_delayed_task(task_name, delay_in_sec, func_path):
     redis_client.zadd('tasks', {task_name: task_time})
     redis_client.hset('task_funcs', task_name, func_path)
 
-def remove_task(task_name):
+def remove_delayed_task(task_name):
     redis_client.zrem('tasks', task_name)
     redis_client.hdel('task_funcs', task_name)
    

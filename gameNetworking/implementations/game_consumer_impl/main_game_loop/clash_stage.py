@@ -5,7 +5,7 @@ from gameMechanics.queries import get_a_card_serialized
 
 from ....enums import MessageType, PlayerState
 from ....models.queries import add_reaction_card_to_owned, remove_reaction_card
-from ....scheduler.scheduler import remove_task
+from ....scheduler.scheduler import remove_delayed_task
 from .common import SurrenderMoveHandler, InitCardsManager
 from .abstract import MoveHandler, StageHandler
 from .checkers import *
@@ -67,7 +67,7 @@ class ActionMoveHandler(MoveHandler):
         if self._consumer.get_action_moves_left() == 0:
             await game_user.set_state(PlayerState.AWAIT_CLASH_END)
         if not is_delayed:
-            remove_task(f'limit_action_time_{game_user.id}')
+            remove_delayed_task(f'limit_action_time_{game_user.id}')
         self._consumer.limit_player_reaction_time()
 
     def _any_card_sent(self):
@@ -146,6 +146,8 @@ class ReactionMoveHandler(MoveHandler):
 
         mng = InitCardsManager(self._consumer)
         await mng.manage_cards()
+        if not is_delayed:
+            remove_delayed_task(f'limit_reaction_time_{self._g_u.id}')
         self._consumer.limit_players_hub_time()
 
     async def set_user_states(self, opp):
