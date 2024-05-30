@@ -22,6 +22,10 @@ class Game(models.Model):
         choices=CONFLICT_SIDES, max_length=15, null=False)
     next_move_type = models.CharField(
         choices=MOVE_TYPES, max_length=15, null=False, default="action")
+    
+    turns_to_inc = models.PositiveSmallIntegerField(default=0)
+    moves_per_clash = models.PositiveSmallIntegerField(default=0)
+    stage = models.BooleanField(default=0)
 
     @database_sync_to_async
     def get_teacher_player(self):

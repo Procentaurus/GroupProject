@@ -27,11 +27,14 @@ class GameUser(models.Model):
     conflict_side = models.CharField(
         choices=CONFLICT_SIDES, null=False, max_length=15)
     reroll_price = models.PositiveSmallIntegerField(default=30)
-
     owned_action_cards = models.ManyToManyField(
         ActionCard, related_name="owned_action_cards")
     action_cards_in_shop = models.ManyToManyField(
         ActionCard, related_name="action_cards_in_shop")
+    
+    action_moves_left = models.PositiveSmallIntegerField(default=0)
+    reaction_moves_left = models.PositiveSmallIntegerField(default=0)
+    opp_played_action_card_id = models.UUIDField(null=True)
 
     class Meta:
         ordering = ["started_waiting"]
