@@ -24,7 +24,7 @@ class Connector:
             await self._send_game_info_to_players()
             mng = InitCardsManager(self._consumer)
             await mng.manage_cards()
-            self._consumer.limit_players_time()
+            self._consumer.limit_players_hub_time()
 
     async def _initialize_game_networking(self):
         await self._set_opponent()

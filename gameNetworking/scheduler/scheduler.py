@@ -1,4 +1,3 @@
-# myapp/utils.py
 import time
 import redis
 import threading

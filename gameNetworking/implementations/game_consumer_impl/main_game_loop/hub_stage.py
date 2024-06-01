@@ -1,8 +1,9 @@
 from gameMechanics.scripts.basic_mechanics import get_rerolled_cards
 
-from gameNetworking.enums import PlayerState, MessageType
+from gameNetworking.enums import MessageType
 
 from ....models.queries import *
+from ....scheduler.scheduler import remove_task
 from .checkers import *
 from .common import SurrenderMoveHandler, ShopCardsAdder, CardSender
 from .abstract import MoveHandler, StageHandler
@@ -44,12 +45,13 @@ class ReadyMoveHandler(MoveHandler):
         if not await p_v.verify_player_in_hub("purchase move"): return False
         return True
 
-    async def _perform_move_mechanics(self):
+    async def _perform_move_mechanics(self, is_delayed):
         opponent = await get_game_user(self._consumer.get_opponent().id)
         if opponent.is_in_hub():
             await self._g_u.set_state("await_clash_start")
         elif opponent.wait_for_clash_start():
             await self._send_clash_start_info()
+            self._consumer.limit_player_action_time()
         else:
             await self._consumer.critical_error(
                 f"Improper opponent player state: {opponent.state}")
@@ -57,6 +59,8 @@ class ReadyMoveHandler(MoveHandler):
 
         await self._g_u.remove_all_action_cards_from_shop()
         await remove_all_reaction_cards_from_shop(self._g_u)
+        if not is_delayed:
+            remove_task(f'limit_hub_time_{self._g_u.id}')
 
     async def _send_clash_start_info(self):
         await self._consumer.send_message_to_group(
@@ -76,7 +80,7 @@ class RerollMoveHandler(MoveHandler):
         if not await p_v.verify_player_can_reroll(): return False
         return True
 
-    async def _perform_move_mechanics(self):
+    async def _perform_move_mechanics(self, is_delayed):
         g_u = self._consumer.get_game_user()
         await g_u.buy_reroll()
         g_u.increase_reroll_price()
@@ -118,7 +122,7 @@ class PurchaseMoveHandler(MoveHandler):
 
         return True
     
-    async def _perform_move_mechanics(self):
+    async def _perform_move_mechanics(self, is_delayed):
         g_u = self._consumer.get_game_user()
 
         if self._any_action_cards_sent():

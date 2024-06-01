@@ -6,8 +6,12 @@ from django.conf import settings
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# TODO docelowo 256 znaków lub więcej
-SECRET_KEY = 'django-insecure-i_!*j@r%biv$jm@e1)^_uhnea8f3)c*7b!*z7&xqd8(oim-53v'
+SECRET_KEY = '78NwJjMS1M8Bg55/dV59eS/CK6dNm3KRl9WhLtW7pOyoSNfHQ4h+DEaDRjEEJgF' \
+    + '9x6PtqphjTDlzLUJ1WetCF4uMk1K1qI4ePuQ0K+ydvM4oyZ7G9Lwjuqqgf5KMhRHpBvv8c' \
+    + '7JCQdGEz+IENLf5V/VC43MPOjG72ju9rS+klWubXyY8CznZJk8Aupk6Q8/oRSp6zJY2iBo' \
+    + 'T7yW7trv1j7F/jjrBiDmyM7Y+pa8IhvvSRsb8V3iUQURpv3KRmSmd8GVlwXubQdIna/GKA' \
+    + 'rqyEz71/lkQQmRJDPNn1YzOY7+QyoDSOGftw78CpjxPaKvRRzGZb+7l4gL+vZNdT0gJ+k5' \
+    + 'Wn0AVhaJ3J4X+qoJjX3A='
 AES_IV = b"3)c*7b!*z7&xqd8("
 AES_SECRET_KEY = b"qd8(oim-53v-i_!@r%biv$jm@e1)^_uh"
 
@@ -25,8 +29,8 @@ AUTH_USER_MODEL = "customUser.MyUser"
 
 INSTALLED_APPS = [
 
-    'daphne',           # used for running asgi server       
-    'corsheaders',      # used for enabling communication between frontend and backend
+    'daphne', # used for running asgi server       
+    'corsheaders', # used to enable communication between frontend and backend
 
     'rest_framework',
     'channels',  
@@ -83,6 +87,7 @@ ASGI_APPLICATION = "WebGame.asgi.application"
 REDIS_LAYER_HOST = '127.0.0.1'
 REDIS_LAYER_PORT = 6379
 REDIS_LAYER_DB = 0
+
 REDIS_SCHEDULER_HOST = '127.0.0.1'
 REDIS_SCHEDULER_PORT = 6379
 REDIS_SCHEDULER_DB = 1
@@ -95,6 +100,26 @@ CHANNEL_LAYERS = {
         },
     },
 }
+
+
+#############################    GAME SETTINGS    #############################
+ACTION_MOVE_TIMEOUT = 30
+REACTION_MOVE_TIMEOUT = 60
+HUB_STAGE_TIMEOUT = 60
+
+ACTION_MOVE_TIMEOUT_FUNC = 'gameNetworking.scheduler.tasks.limit_action_time'
+REACTION_MOVE_TIMEOUT_FUNC = 'gameNetworking.scheduler.tasks.limit_reaction_time'
+HUB_STAGE_TIMEOUT_FUNC = 'gameNetworking.scheduler.tasks.limit_hub_time'
+
+INIT_MOVES_PER_CLASH = 1
+MAX_MOVES_PER_CLASH = 3
+TURNS_BETWEEN_NUM_MOVES_INC = 5
+
+INIT_A_CARDS_NUMBER = 2
+INIT_R_CARDS_NUMBER = 5
+
+REROLL_PRICE_INCREASE_VALUE = 10
+
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -113,7 +138,7 @@ REST_FRAMEWORK = {
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
     "REFRESH_TOKEN_LIFETIME": timedelta(minutes=90),
-    "UPDATE_LAST_LOGIN": True,                         # updates last_login field in MyUser enyity after logging procerssing token
+    "UPDATE_LAST_LOGIN": True,
 
     "ALGORITHM": "HS256",                             # JWT-specific config
     "SIGNING_KEY": settings.SECRET_KEY,

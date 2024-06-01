@@ -5,6 +5,7 @@ from gameMechanics.queries import get_a_card_serialized
 
 from ....enums import MessageType, PlayerState
 from ....models.queries import add_reaction_card_to_owned, remove_reaction_card
+from ....scheduler.scheduler import remove_task
 from .common import SurrenderMoveHandler, InitCardsManager
 from .abstract import MoveHandler, StageHandler
 from .checkers import *
@@ -52,20 +53,22 @@ class ActionMoveHandler(MoveHandler):
         c_v = CardVerifier(self._consumer, a_c_c)
         if not await c_v.verify_cards_for_clash(): return False
         if not await g_v.verify_turn_update_successful(): return False
-
         return True
 
-    async def _perform_move_mechanics(self):
+    async def _perform_move_mechanics(self, is_delayed):
         game_user = self._consumer.get_game_user()
         await game_user.remove_action_card(self._a_card)
         await self._consumer.send_message_to_opponent(
             {"action_card" : await get_a_card_serialized(self._a_card)},
             "opponent_move"
         )
-    
+
         self._consumer.decrease_action_moves()
         if self._consumer.no_action_moves_left():
             await game_user.set_state(PlayerState.AWAIT_CLASH_END)
+        if not is_delayed:
+            remove_task(f'limit_action_time_{game_user.id}')
+        self._consumer.limit_player_reaction_time()
 
     def _any_card_sent(self):
         return False if (self._a_card is None or self._a_card == []) else True
@@ -107,7 +110,7 @@ class ReactionMoveHandler(MoveHandler):
 
         return True
 
-    async def _perform_move_mechanics(self):
+    async def _perform_move_mechanics(self, is_delayed):
         opp = self._consumer.get_opponent()
         await self._consumer.send_message_to_opponent(
             {"reaction_cards" : await self._get_opponent_move_resp_body()},
@@ -140,7 +143,9 @@ class ReactionMoveHandler(MoveHandler):
 
         mng = InitCardsManager(self._consumer)
         await mng.manage_cards()
-        self._consumer.limit_players_time()
+        if not is_delayed:
+            remove_task(f'limit_reaction_time_{self._g_u.id}')
+        self._consumer.limit_players_hub_time()
 
     async def set_user_states(self, opp):
         await self._g_u.set_state("in_hub")

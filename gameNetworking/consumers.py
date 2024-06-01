@@ -1,6 +1,7 @@
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels.exceptions import StopConsumer
 import logging
+from django.conf import settings
 
 from .implementations.game_consumer_impl.clean import Disconnector
 from .implementations.game_consumer_impl.methods import *
@@ -31,28 +32,29 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         self._a_card_played_by_opponent = None
         self._last_move_send_time = None
 
-        # Specifies how many action moves can be done in 1 clash 
-        self._moves_per_clash = 1
-        self._max_moves_per_clash = 3
+        self._moves_per_clash = settings.INIT_MOVES_PER_CLASH
+        self._max_moves_per_clash = settings.MAX_MOVES_PER_CLASH
 
         # Number of turns that specify how often action_moves_per_clash
         # is incremented
-        self._turns_between_inc = (5 - 1)
+        self._turns_between_inc = (settings.TURNS_BETWEEN_NUM_MOVES_INC - 1)
 
         #Number of turns until the next incrementation
-        self._turns_to_inc = (5 - 1)
+        self._turns_to_inc = (settings.TURNS_BETWEEN_NUM_MOVES_INC - 1)
 
         # This table represents number of moves that
         # player performs in each clash.
         # Index 0 represent number of actions
         # and index 1 number of reactions
-        self._moves_table = [1, 1]
+        self._moves_table = [
+            settings.INIT_MOVES_PER_CLASH,
+            settings.INIT_MOVES_PER_CLASH
+        ]
 
     async def connect(self):
         connector = Connector(self)
         await connector.connect()
 
-    # is called when socket connection is close
     async def disconnect(self, *args):
         disconnector = Disconnector(self)
         await disconnector.disconnect()           
@@ -103,8 +105,14 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     async def game_creation(self, data):
         await game_creation_impl(self, data)
 
-    async def hub_stage_end(self, data=None):
-        await hub_stage_end_impl(self)
+    async def hub_stage_timeout(self, data=None):
+        await hub_stage_timeout_impl(self)
+
+    async def action_move_timeout(self, data=None):
+        await action_move_timeout_impl(self)
+
+    async def reaction_move_timeout(self, data=None):
+        await reaction_move_timeout_impl(self)
 
     # Used for player's mistakes during game flow
     # that do not require complex response
@@ -184,8 +192,14 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     def set_opponent_channel_name(self, opponent_channel_name):
         self._opponent_channel_name = opponent_channel_name
 
-    def limit_players_time(self):
-        limit_players_time_impl(self)
+    def limit_players_hub_time(self):
+        limit_players_hub_time_impl(self)
+
+    def limit_player_action_time(self):
+        limit_player_action_time_impl(self)
+
+    def limit_player_reaction_time(self):
+        limit_player_reaction_time_impl(self)
 
     def init_table_for_new_clash(self):
         init_table_for_new_clash_impl(self)
