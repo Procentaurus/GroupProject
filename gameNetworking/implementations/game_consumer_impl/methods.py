@@ -6,15 +6,12 @@ from ...models.queries import get_game_user
 from ...scheduler.scheduler import add_delayed_task
 
 
-def init_table_for_new_clash_impl(consumer):
+def update_moves_per_clash_impl(consumer):
     consumer._turns_to_inc -= 1
     if consumer._turns_to_inc == 0:
-        consumer._turns_to_inc = consumer._turns_between_inc
-        if consumer._moves_per_clash < consumer._max_moves_per_clash:
+        consumer._turns_to_inc = (settings.TURNS_BETWEEN_NUM_MOVES_INC - 1)
+        if consumer._moves_per_clash < settings.MAX_MOVES_PER_CLASH:
             consumer._moves_per_clash += 1
-
-    for i in range(2):
-        consumer._moves_table[i] = consumer._moves_per_clash
 
 def update_game_stage_impl(consumer):
     if consumer.get_game_stage() == GameStage.HUB:

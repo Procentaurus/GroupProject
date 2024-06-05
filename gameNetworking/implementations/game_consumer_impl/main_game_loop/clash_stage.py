@@ -199,8 +199,8 @@ class ReactionMoveHandler(MoveHandler):
 
     async def _add_all_gains_to_opp_account(self):
         opp = await self._game.get_opponent_player(self._g_u)
-        await opp.set_morale(self._new_user_morale)
-        await opp.add_money(self._money_user_gained)
+        await opp.set_morale(self._new_opp_morale)
+        await opp.add_money(self._money_opp_gained)
         await self._add_all_action_cards(opp, self._opp_a_cards_gained)
         await self._add_all_reaction_cards(opp, self._opp_r_cards_gained)
 
