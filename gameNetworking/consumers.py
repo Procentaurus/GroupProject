@@ -201,8 +201,13 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     def limit_player_reaction_time(self):
         limit_player_reaction_time_impl(self)
 
+    def _update_moves_per_clash(self):
+        update_moves_per_clash_impl(self)
+
     def init_table_for_new_clash(self):
-        init_table_for_new_clash_impl(self)
+        self._update_moves_per_clash()
+        for i in range(2):
+            self._moves_table[i] = self._moves_per_clash
 
     def update_game_stage(self):
         update_game_stage_impl(self)

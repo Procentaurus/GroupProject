@@ -45,7 +45,6 @@ class GameUser(models.Model):
         self.morale = morale
         self.save()
 
-    @database_sync_to_async
     def has_lost(self):
         return (self.morale <= 0)
 
