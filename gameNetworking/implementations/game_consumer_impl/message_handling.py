@@ -62,6 +62,7 @@ async def clash_start_impl(consumer, data):
     })
 
 async def clash_end_impl(consumer):
+    consumer.init_table_for_new_clash()
     consumer.update_game_stage()
     await consumer.send_json({
         'type' : "clash_end",

@@ -136,7 +136,6 @@ class ReactionMoveHandler(MoveHandler):
             await e_s.send_improper_state_error("reaction_move")
             return
  
-        self._consumer.init_table_for_new_clash()
         await self._consumer.send_message_to_opponent({}, "clash_end")
         await self._consumer.clash_end()
         await self.set_user_states(opp)
@@ -173,9 +172,9 @@ class ReactionMoveHandler(MoveHandler):
         self._set_new_user_morale(new_user_morale)
 
     async def _set_winner_if_exist(self, opp):
-        if await opp.has_lost():
+        if opp.has_lost():
             self._consumer.set_winner(self._g_u.conflict_side)
-        elif await self._g_u.has_lost():
+        elif self._g_u.has_lost():
             self._consumer.set_winner(opp.conflict_side)
 
     async def _send_clash_result_to_players(self):
