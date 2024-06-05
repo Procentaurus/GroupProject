@@ -111,6 +111,9 @@ class ReactionMoveHandler(MoveHandler):
         return True
 
     async def _perform_move_mechanics(self, is_delayed):
+        if not is_delayed:
+            remove_task(f'limit_reaction_time_{self._g_u.id}')
+
         opp = self._consumer.get_opponent()
         await self._consumer.send_message_to_opponent(
             {"reaction_cards" : await self._get_opponent_move_resp_body()},
@@ -129,6 +132,7 @@ class ReactionMoveHandler(MoveHandler):
 
         self._consumer.decrease_reaction_moves()
         if not self._consumer.no_action_moves_left():
+            self._consumer.limit_player_action_time()
             return
 
         if not opp.wait_for_clash_end():
@@ -142,8 +146,6 @@ class ReactionMoveHandler(MoveHandler):
 
         mng = InitCardsManager(self._consumer)
         await mng.manage_cards()
-        if not is_delayed:
-            remove_task(f'limit_reaction_time_{self._g_u.id}')
         self._consumer.limit_players_hub_time()
 
     async def set_user_states(self, opp):
