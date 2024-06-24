@@ -1,4 +1,4 @@
-import datetime
+from django.utils import timezone
 
 from .game_archive.game_archive import GameArchive
 
@@ -14,7 +14,7 @@ async def create_game_archive(game, winner):
         winner=winner,
         teacher_player=teacher_player,
         student_player=student_player,
-        length_in_sec = (datetime.now() - game.start_datetime).total_seconds()
+        length_in_sec = (timezone.now() - game.start_datetime).total_seconds()
     )
     archive.save()
     return archive
