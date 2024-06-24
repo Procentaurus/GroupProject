@@ -15,7 +15,7 @@ class GameArchive(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     start_date = models.DateField(blank=False)
     start_time = models.TimeField(blank=False)
-    lenght_in_sec = models.PositiveIntegerField(null=False, blank=False)
+    length_in_sec = models.PositiveIntegerField(null=False, blank=False)
     teacher_player = models.ForeignKey(MyUser, related_name="teacher_player",
         on_delete=models.SET_NULL, null=True)
     student_player = models.ForeignKey(MyUser, related_name="student_player",
