@@ -19,9 +19,12 @@ def update_game_stage_impl(consumer):
     else:
         consumer.set_game_stage(GameStage.HUB)
 
-def limit_player_action_time_impl(consumer):
+def limit_player_action_time_impl(consumer, player_side):
+    opp = consumer.get_opponent()
+    g_u = consumer.get_game_user()
+    id = opp.id if player_side == opp.conflict_side else g_u.id
     add_delayed_task(
-        f'limit_action_time_{consumer.get_opponent().id}',
+        f'limit_action_time_{id}',
         settings.ACTION_MOVE_TIMEOUT,
         settings.ACTION_MOVE_TIMEOUT_FUNC
     )

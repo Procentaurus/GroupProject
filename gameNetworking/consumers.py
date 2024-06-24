@@ -195,8 +195,8 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     def limit_players_hub_time(self):
         limit_players_hub_time_impl(self)
 
-    def limit_player_action_time(self):
-        limit_player_action_time_impl(self)
+    def limit_player_action_time(self, player_side):
+        limit_player_action_time_impl(self, player_side)
 
     def limit_player_reaction_time(self):
         limit_player_reaction_time_impl(self)

@@ -51,7 +51,7 @@ class ReadyMoveHandler(MoveHandler):
             await self._g_u.set_state("await_clash_start")
         elif opponent.wait_for_clash_start():
             await self._send_clash_start_info()
-            self._consumer.limit_player_action_time()
+            self._consumer.limit_player_action_time(self._game.next_move_player)
         else:
             await self._consumer.critical_error(
                 f"Improper opponent player state: {opponent.state}")

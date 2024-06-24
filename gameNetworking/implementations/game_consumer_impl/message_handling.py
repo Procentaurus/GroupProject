@@ -88,13 +88,13 @@ async def game_creation_impl(consumer, data):
 
 async def hub_stage_timeout_impl(consumer):
     consumer.logger.info("Hub stage timeout")
-    game = await get_game(consumer.get_game_id())
-    handler = ReadyMoveHandler(consumer, game)
-    await handler.perform_move(True)
     await consumer.send_json({
         'type': "timeout",
         'move': 'ready move'
     })
+    game = await get_game(consumer.get_game_id())
+    handler = ReadyMoveHandler(consumer, game)
+    await handler.perform_move(True)
 
 async def action_move_timeout_impl(consumer):
     consumer.logger.info("Action move timeout")
@@ -105,6 +105,10 @@ async def action_move_timeout_impl(consumer):
 
 async def reaction_move_timeout_impl(consumer):
     consumer.logger.info("Reaction move timeout")
+    await consumer.send_json({
+        'type': "timeout",
+        'move': 'reaction move'
+    })
     game = await get_game(consumer.get_game_id())
     handler = ReactionMoveHandler(
         consumer,
@@ -112,10 +116,6 @@ async def reaction_move_timeout_impl(consumer):
         {'reaction_cards': []}
     )
     await handler.perform_move(True)
-    await consumer.send_json({
-        'type': "timeout",
-        'move': 'reaction move'
-    })
 
 async def error_impl(consumer, message, log_message):    
     await consumer.send_json({
