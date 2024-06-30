@@ -1,6 +1,6 @@
 from channels.layers import get_channel_layer
 
-from ..models.queries import get_game_user, get_game, delete_game
+from ..models.queries import get_game_user, delete_game
 
 
 async def limit_hub_time(user_id):
@@ -30,7 +30,5 @@ async def limit_reaction_time(user_id):
             {'type': 'reaction_move_timeout'}
         )
 
-async def clean_game_data(game_id):
-    game = await get_game(game_id)
-    if game:
-        await delete_game(game.id)
+async def limit_game_data_lifetime(game_id):
+    await delete_game(game_id)

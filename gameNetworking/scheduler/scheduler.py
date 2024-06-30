@@ -2,6 +2,7 @@ import time
 import redis
 import threading
 import asyncio
+from django.utils import timezone
 from django.conf import settings
 from importlib import import_module
 
@@ -48,6 +49,18 @@ async def check_tasks():
                 await run_task(task.decode('utf-8'))
                 redis_client.zrem('tasks', task)
         await asyncio.sleep(1)
+
+def get_all_delayed_tasks():
+    tasks_with_remaining_time = {}
+    tasks = redis_client.zrange('tasks', 0, -1, withscores=True)
+    for task_name, task_time in tasks:
+        task_name = task_name.decode('utf-8')
+        remaining_time = (task_time - timezone.now()).total_seconds()
+        
+        if remaining_time > 0:
+            tasks_with_remaining_time[task_name] = remaining_time
+
+    return tasks_with_remaining_time
 
 def start_task_checker():
     loop = asyncio.new_event_loop()

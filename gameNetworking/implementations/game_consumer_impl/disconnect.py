@@ -12,13 +12,14 @@ class Disconnector:
     async def disconnect(self):
         g_id = self._consumer.get_game_id()
         game = await get_game(g_id)
-        if game is not None:
+        if not game.is_backuped:
             await self._send_game_end_info_to_opponent()
             add_delayed_task(
-                f'limit_game_data_lifetime{g_id}',
+                f'limit_game_data_lifetime_{g_id}',
                 settings.DELETE_GAME_TIMEOUT,
                 settings.DELETE_GAME_TIMEOUT_FUNC
             )
+            await game.backup()
             self.remove_all_delayed_tasks()
         await self._remove_player_from_group(g_id)
  

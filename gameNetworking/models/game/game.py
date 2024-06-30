@@ -25,7 +25,9 @@ class Game(models.Model):
     
     turns_to_inc = models.PositiveSmallIntegerField(default=0)
     moves_per_clash = models.PositiveSmallIntegerField(default=0)
-    stage = models.BooleanField(default=0)
+    stage = models.BooleanField(default=False)
+    is_backuped = models.BooleanField(default=False)
+    delayed_tasks = models.JSONField(default=dict)
 
     @database_sync_to_async
     def get_teacher_player(self):
@@ -52,4 +54,6 @@ class Game(models.Model):
     def delete(self, *args, **kwargs):
         if self.teacher_player:
             self.teacher_player.delete()
+        if self.student_player:
+            self.student_player.delete()
         super().delete(*args, **kwargs)

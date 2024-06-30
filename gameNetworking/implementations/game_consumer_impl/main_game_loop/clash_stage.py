@@ -112,7 +112,7 @@ class ReactionMoveHandler(MoveHandler):
 
     async def _perform_move_mechanics(self, is_delayed):
         if not is_delayed:
-            remove_task(f'limit_reaction_time_{self._g_u.id}')
+            remove_delayed_task(f'limit_reaction_time_{self._g_u.id}')
 
         opp = self._consumer.get_opponent()
         await self._consumer.send_message_to_opponent(
