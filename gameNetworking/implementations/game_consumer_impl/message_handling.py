@@ -16,7 +16,7 @@ from .main_game_loop.common import *
 async def opponent_move_impl(consumer, data):
     if data.get("action_card") is not None:
         a_card = data.get("action_card")
-        consumer.set_a_card_played_by_opponent(a_card["id"])
+        consumer.set_action_card_id_played_by_opp(a_card["id"])
         await consumer.send_json({
             'type' : "opponent_move",
             'action_card' : a_card,
@@ -26,6 +26,12 @@ async def opponent_move_impl(consumer, data):
             'type' : "opponent_move",
             'reaction_cards' : data.get("reaction_cards"),
         })
+
+async def opponent_disconnect_impl(consumer):
+    await consumer.send_json({
+        "type" : "opponent_disconnect"
+    })
+    await consumer.close()
 
 async def purchase_result_impl(consumer, data):
     await consumer.send_json({

@@ -5,7 +5,7 @@ from gameMechanics.queries import get_a_card_serialized
 
 from ....enums import MessageType, PlayerState
 from ....models.queries import add_reaction_card_to_owned, remove_reaction_card
-from ....scheduler.scheduler import remove_task
+from ....scheduler.scheduler import remove_delayed_task
 from .common import SurrenderMoveHandler, InitCardsManager
 from .abstract import MoveHandler, StageHandler
 from .checkers import *
@@ -64,10 +64,10 @@ class ActionMoveHandler(MoveHandler):
         )
 
         self._consumer.decrease_action_moves()
-        if self._consumer.no_action_moves_left():
+        if self._consumer.get_action_moves_left() == 0:
             await game_user.set_state(PlayerState.AWAIT_CLASH_END)
         if not is_delayed:
-            remove_task(f'limit_action_time_{game_user.id}')
+            remove_delayed_task(f'limit_action_time_{game_user.id}')
         self._consumer.limit_player_reaction_time()
 
     def _any_card_sent(self):
@@ -112,7 +112,7 @@ class ReactionMoveHandler(MoveHandler):
 
     async def _perform_move_mechanics(self, is_delayed):
         if not is_delayed:
-            remove_task(f'limit_reaction_time_{self._g_u.id}')
+            remove_delayed_task(f'limit_reaction_time_{self._g_u.id}')
 
         opp = self._consumer.get_opponent()
         await self._consumer.send_message_to_opponent(
@@ -131,8 +131,7 @@ class ReactionMoveHandler(MoveHandler):
             return
 
         self._consumer.decrease_reaction_moves()
-        if not self._consumer.no_action_moves_left():
-            self._consumer.limit_player_action_time()
+        if self._consumer.get_action_moves_left() > 0:
             return
 
         if not opp.wait_for_clash_end():
@@ -143,9 +142,12 @@ class ReactionMoveHandler(MoveHandler):
         await self._consumer.send_message_to_opponent({}, "clash_end")
         await self._consumer.clash_end()
         await self.set_user_states(opp)
+        self._consumer.set_action_card_id_played_by_opp(None)
 
         mng = InitCardsManager(self._consumer)
         await mng.manage_cards()
+        if not is_delayed:
+            remove_delayed_task(f'limit_reaction_time_{self._g_u.id}')
         self._consumer.limit_players_hub_time()
 
     async def set_user_states(self, opp):
@@ -163,10 +165,9 @@ class ReactionMoveHandler(MoveHandler):
         return resp_body
 
     async def _process_clash_results(self, opp):
+        a_card = self._consumer.get_action_card_id_played_by_opp()
         (new_opp_morale, opp_money, new_user_morale, user_money) = (
-            await get_new_morale(
-                self._g_u, opp, self._consumer.get_a_card_played_by_opponent(),
-                self._r_cards)
+            await get_new_morale(self._g_u, opp, a_card, self._r_cards)
         )
         self._set_money_opp_gained(opp_money)
         self._set_new_opp_morale(new_opp_morale)

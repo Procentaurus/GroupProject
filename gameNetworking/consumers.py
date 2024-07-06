@@ -3,7 +3,7 @@ from channels.exceptions import StopConsumer
 import logging
 from django.conf import settings
 
-from .implementations.game_consumer_impl.clean import Disconnector
+from .implementations.game_consumer_impl.disconnect import Disconnector
 from .implementations.game_consumer_impl.methods import *
 from .implementations.game_consumer_impl.connect import Connector
 from .implementations.game_consumer_impl.message_handling import *
@@ -25,19 +25,12 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         self._opponent = None
         self._opponent_channel_name = None
 
-        self._closure_from_user_side = True
+        self._closed_after_disconnect = True
         self._valid_json_sent = False
 
         self._game_stage = GameStage.HUB
-        self._a_card_played_by_opponent = None
-        self._last_move_send_time = None
-
+        self._action_card_id_played_by_opp = None
         self._moves_per_clash = settings.INIT_MOVES_PER_CLASH
-        self._max_moves_per_clash = settings.MAX_MOVES_PER_CLASH
-
-        # Number of turns that specify how often action_moves_per_clash
-        # is incremented
-        self._turns_between_inc = (settings.TURNS_BETWEEN_NUM_MOVES_INC - 1)
 
         #Number of turns until the next incrementation
         self._turns_to_inc = (settings.TURNS_BETWEEN_NUM_MOVES_INC - 1)
@@ -60,8 +53,6 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         await disconnector.disconnect()           
         raise StopConsumer()
 
-    # responsible for managing current user messages,
-    # effectively main game loop function
     async def receive_json(self, data):
         loop_handler = GameLoopHandler(self, data)
         await loop_handler.perform_game_loop()
@@ -80,6 +71,9 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     async def opponent_move(self, data):
         await opponent_move_impl(self, data)
+
+    async def opponent_disconnect(self, data=None):
+        await opponent_disconnect_impl(self)
 
     async def purchase_result(self, data):
         await purchase_result_impl(self, data)
@@ -135,6 +129,12 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     def get_game_id(self):
         return self._game_id
     
+    def get_turns_to_inc(self):
+        return self._turns_to_inc
+    
+    def get_moves_per_clash(self):
+        return self._moves_per_clash
+    
     def get_opponent(self):
         return self._opponent
 
@@ -149,24 +149,21 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     def is_winner(self):
         return (self._winner is not None)
-    
-    def get_a_card_played_by_opponent(self):
-        return self._a_card_played_by_opponent
-    
+
+    def get_action_card_id_played_by_opp(self):
+        return self._action_card_id_played_by_opp
+
     def get_game_stage(self):
         return self._game_stage
 
     def get_opponent_channel_name(self):
         return self._opponent_channel_name
 
-    def get_closure_from_user_side(self):
-        return self._closure_from_user_side
-
-    def get_last_move_send_time(self):
-        return self._last_move_send_time
+    def closed_after_disconnect(self):
+        return self._closed_after_disconnect
     
-    def set_closure_from_user_side(self, closure_from_user_side):
-        self._closure_from_user_side = closure_from_user_side
+    def set_closed_after_disconnect(self, closed_after_disconnect):
+        self._closed_after_disconnect = closed_after_disconnect
     
     def set_game_id(self, game_id):
         self._game_id = game_id
@@ -183,8 +180,8 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     def set_game_stage(self, game_stage):
         self._game_stage = game_stage
 
-    def set_a_card_played_by_opponent(self, action_card_id):
-        self._a_card_played_by_opponent = action_card_id
+    def set_action_card_id_played_by_opp(self, action_card_id):
+        self._action_card_id_played_by_opp = action_card_id
     
     def set_game_user(self, game_user):
         self._game_user = game_user
@@ -217,12 +214,12 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     async def refresh_opponent(self):
         await refresh_opponent_impl(self)
+    
+    def get_action_moves_left(self):
+        return self._moves_table[0]
 
-    def no_action_moves_left(self):
-        return self._moves_table[0] == 0
-
-    def no_reaction_moves_left(self):
-        return self._moves_table[1] == 0
+    def get_reaction_moves_left(self):
+        return self._moves_table[1]
     
     def decrease_action_moves(self):
         # 0 is index of action moves
@@ -231,4 +228,3 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     def decrease_reaction_moves(self):
         # 1 is index of reaction moves
         self._moves_table[1] -= 1
-

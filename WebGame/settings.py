@@ -106,10 +106,12 @@ CHANNEL_LAYERS = {
 ACTION_MOVE_TIMEOUT = 30
 REACTION_MOVE_TIMEOUT = 60
 HUB_STAGE_TIMEOUT = 60
+DELETE_GAME_TIMEOUT = 120
 
 ACTION_MOVE_TIMEOUT_FUNC = 'gameNetworking.scheduler.tasks.limit_action_time'
 REACTION_MOVE_TIMEOUT_FUNC = 'gameNetworking.scheduler.tasks.limit_reaction_time'
 HUB_STAGE_TIMEOUT_FUNC = 'gameNetworking.scheduler.tasks.limit_hub_time'
+DELETE_GAME_TIMEOUT_FUNC = 'gameNetworking.scheduler.tasks.limit_game_data_lifetime'
 
 INIT_MOVES_PER_CLASH = 1
 MAX_MOVES_PER_CLASH = 3

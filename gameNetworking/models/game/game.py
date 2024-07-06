@@ -22,21 +22,38 @@ class Game(models.Model):
         choices=CONFLICT_SIDES, max_length=15, null=False)
     next_move_type = models.CharField(
         choices=MOVE_TYPES, max_length=15, null=False, default="action")
+    
+    turns_to_inc = models.PositiveSmallIntegerField(default=0)
+    moves_per_clash = models.PositiveSmallIntegerField(default=0)
+    stage = models.BooleanField(default=False)
+    is_backuped = models.BooleanField(default=False)
+    delayed_tasks = models.JSONField(default=dict)
 
     @database_sync_to_async
     def get_teacher_player(self):
         return self.teacher_player
-        
+ 
     @database_sync_to_async
     def get_student_player(self):
         return self.student_player
-    
+
     @database_sync_to_async
     def update_after_turn(self):
         result = update_after_turn_impl(self)
         return result
-    
+
     @database_sync_to_async
     def get_opponent_player(self, game_user):
         result = get_opponent_player_impl(self, game_user)
         return result
+
+    @database_sync_to_async
+    def backup(self, consumer):
+        backup_impl(self, consumer)
+
+    def delete(self, *args, **kwargs):
+        if self.teacher_player:
+            self.teacher_player.delete()
+        if self.student_player:
+            self.student_player.delete()
+        super().delete(*args, **kwargs)
