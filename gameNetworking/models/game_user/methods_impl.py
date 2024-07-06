@@ -42,8 +42,10 @@ def remove_all_action_cards_from_shop_impl(game_user):
     game_user.save()
 
 def backup_impl(game_user, consumer):
-    played_a_card = consumer.get_action_card_id_played_by_opp()
-    game_user.opp_played_action_card_id = played_a_card.id
     game_user.action_moves_left = consumer.get_action_moves_left()
     game_user.reaction_moves_left = consumer.get_reaction_moves_left()
+    played_a_card = consumer.get_action_card_id_played_by_opp()
+    if played_a_card is not None:
+        game_user.opp_played_action_card_id = played_a_card
+
     game_user.save()

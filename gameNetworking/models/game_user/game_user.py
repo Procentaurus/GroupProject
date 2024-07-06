@@ -31,10 +31,10 @@ class GameUser(models.Model):
         ActionCard, related_name="owned_action_cards")
     action_cards_in_shop = models.ManyToManyField(
         ActionCard, related_name="action_cards_in_shop")
-    
+
     action_moves_left = models.PositiveSmallIntegerField(default=0)
     reaction_moves_left = models.PositiveSmallIntegerField(default=0)
-    opp_played_action_card_id = models.UUIDField(null=True)
+    opp_played_action_card_id = models.UUIDField(null=True, blank= True)
 
     class Meta:
         ordering = ["started_waiting"]
@@ -126,5 +126,5 @@ class GameUser(models.Model):
         remove_all_action_cards_from_shop_impl(self)
 
     @database_sync_to_async
-    def backup(self):
-        backup_impl(self)
+    def backup(self, consumer):
+        backup_impl(self, consumer)

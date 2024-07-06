@@ -27,6 +27,12 @@ async def opponent_move_impl(consumer, data):
             'reaction_cards' : data.get("reaction_cards"),
         })
 
+async def opponent_disconnect_impl(consumer):
+    await consumer.send_json({
+        "type" : "opponent_disconnect"
+    })
+    await consumer.close()
+
 async def purchase_result_impl(consumer, data):
     await consumer.send_json({
         "type" : "purchase_result",

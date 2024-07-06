@@ -32,21 +32,21 @@ class Game(models.Model):
     @database_sync_to_async
     def get_teacher_player(self):
         return self.teacher_player
-        
+ 
     @database_sync_to_async
     def get_student_player(self):
         return self.student_player
-    
+
     @database_sync_to_async
     def update_after_turn(self):
         result = update_after_turn_impl(self)
         return result
-    
+
     @database_sync_to_async
     def get_opponent_player(self, game_user):
         result = get_opponent_player_impl(self, game_user)
         return result
-    
+
     @database_sync_to_async
     def backup(self, consumer):
         backup_impl(self, consumer)

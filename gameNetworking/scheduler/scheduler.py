@@ -1,7 +1,7 @@
-import time
 import redis
 import threading
 import asyncio
+from datetime import timedelta, datetime
 from django.utils import timezone
 from django.conf import settings
 from importlib import import_module
@@ -13,8 +13,8 @@ redis_client = redis.StrictRedis(
 )
 
 def add_delayed_task(task_name, delay_in_sec, func_path):
-    task_time = time.time() + delay_in_sec
-    redis_client.zadd('tasks', {task_name: task_time})
+    task_time = datetime.now(timezone.utc) + timedelta(seconds=delay_in_sec)
+    redis_client.zadd('tasks', {task_name: task_time.timestamp()})
     redis_client.hset('task_funcs', task_name, func_path)
 
 def remove_delayed_task(task_name):
@@ -42,7 +42,7 @@ async def run_task(task_name):
 
 async def check_tasks():
     while True:
-        now = time.time()
+        now = datetime.now(timezone.utc).timestamp()
         tasks = redis_client.zrangebyscore('tasks', 0, now)
         if tasks:
             for task in tasks:
@@ -50,17 +50,35 @@ async def check_tasks():
                 redis_client.zrem('tasks', task)
         await asyncio.sleep(1)
 
-def get_all_delayed_tasks():
-    tasks_with_remaining_time = {}
+def get_all_delayed_tasks(first_player_id, second_player_id):
+    remaining_tasks = {}
     tasks = redis_client.zrange('tasks', 0, -1, withscores=True)
-    for task_name, task_time in tasks:
-        task_name = task_name.decode('utf-8')
-        remaining_time = (task_time - timezone.now()).total_seconds()
-        
-        if remaining_time > 0:
-            tasks_with_remaining_time[task_name] = remaining_time
 
-    return tasks_with_remaining_time
+    def filter_tasks_by_players():
+        ids = [first_player_id, second_player_id]
+        filtered_tasks = {}
+        for task_name, task_time in tasks:
+            task_name = task_name.decode('utf-8')
+            if any(task_name.endswith(id) for id in ids):
+                filtered_tasks[task_name] = task_time
+        return filtered_tasks
+    
+    def reformat_timestamp(task_time):
+        task_time = datetime.fromtimestamp(task_time)
+        return timezone.make_aware(task_time, timezone=timezone.utc)
+
+    def calculate_time_difference():
+        return (
+            task_time - datetime.now(timezone.utc) - timedelta(hours=2)
+        ).total_seconds()
+
+    filtered_tasks = filter_tasks_by_players()
+    for task_name, task_time in filtered_tasks.items():
+        task_time = reformat_timestamp(task_time)
+        remaining_time = calculate_time_difference()
+        if remaining_time > 0:
+            remaining_tasks[task_name] = round(remaining_time, 0)
+    return remaining_tasks
 
 def start_task_checker():
     loop = asyncio.new_event_loop()

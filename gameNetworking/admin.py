@@ -20,8 +20,8 @@ class GameAdmin(admin.ModelAdmin):
     readonly_fields = ('id',)
     add_fieldsets = (
         ("Main section", {"fields": (
-            "teacher_player",'student_player',
-            "next_move_player", "next_move_type")
+            "teacher_player",'student_player', "stage", "is_backuped"
+            "next_move_player", "next_move_type", "delayed_tasks")
         }),
     )
 
@@ -32,7 +32,9 @@ class GameUserAdmin(admin.ModelAdmin):
     add_fieldsets = (
         ("Main", {"fields": ("id", "user")}),
         ("Game Data", {"fields": (
-            "state", "morale", "money", "conflict_side")}),
+            "state", "morale", "money", "conflict_side", "action_moves_left",
+            "reaction_moves_left", "opp_played_action_card_id")
+        }),
         ("Cards", {"fields":(
             "owned_action_cards", "action_cards_in_shop"
         )})

@@ -25,7 +25,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         self._opponent = None
         self._opponent_channel_name = None
 
-        self._closure_from_user_side = True
+        self._closed_after_disconnect = True
         self._valid_json_sent = False
 
         self._game_stage = GameStage.HUB
@@ -71,6 +71,9 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     async def opponent_move(self, data):
         await opponent_move_impl(self, data)
+
+    async def opponent_disconnect(self, data=None):
+        await opponent_disconnect_impl(self)
 
     async def purchase_result(self, data):
         await purchase_result_impl(self, data)
@@ -156,11 +159,11 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     def get_opponent_channel_name(self):
         return self._opponent_channel_name
 
-    def get_closure_from_user_side(self):
-        return self._closure_from_user_side
+    def closed_after_disconnect(self):
+        return self._closed_after_disconnect
     
-    def set_closure_from_user_side(self, closure_from_user_side):
-        self._closure_from_user_side = closure_from_user_side
+    def set_closed_after_disconnect(self, closed_after_disconnect):
+        self._closed_after_disconnect = closed_after_disconnect
     
     def set_game_id(self, game_id):
         self._game_id = game_id
