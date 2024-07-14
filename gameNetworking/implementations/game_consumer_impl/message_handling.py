@@ -1,4 +1,5 @@
 from autobahn.exception import Disconnected
+from django.conf import settings
 
 from ...implementations.game_consumer_impl.main_game_loop.hub_stage import \
     ReadyMoveHandler
@@ -74,6 +75,12 @@ async def clash_end_impl(consumer):
         'type' : "clash_end",
     })
 
+async def rejoin_waiting_impl(consumer):
+    await consumer.send_json({
+        'type' : "rejoin_waiting",
+        'time_for_opponent_to_rejoin' : settings.REJOIN_TIMEOUT
+    })
+
 async def game_end_impl(consumer, data):  
     try:
         await consumer.send_json({
@@ -88,7 +95,6 @@ async def game_end_impl(consumer, data):
 async def game_creation_impl(consumer, data):
     consumer.set_game_id(data.get("game_id"))
     consumer.set_opponent_channel_name(data.get("channel_name"))
-
     opp = await get_game_user(data.get("opponent_id"))
     consumer.set_opponent(opp)
 

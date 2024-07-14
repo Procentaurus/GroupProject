@@ -14,7 +14,6 @@ from .implementations.game_consumer_impl.main_game_loop.main_game_loop \
 
 class GameConsumer(AsyncJsonWebsocketConsumer):
 
-    # intialization of variables used only by the current user
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.logger = logging.getLogger(__name__)
@@ -32,7 +31,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         self._action_card_id_played_by_opp = None
         self._moves_per_clash = settings.INIT_MOVES_PER_CLASH
 
-        #Number of turns until the next incrementation
+        # Number of turns until the next incrementation
         self._turns_to_inc = (settings.TURNS_BETWEEN_NUM_MOVES_INC - 1)
 
         # This table represents number of moves that
@@ -92,6 +91,12 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     async def clash_end(self, data=None):
         await clash_end_impl(self)
+
+    # async def game_reconnect(self, data):
+    #     await game_reconnect_impl(self, data)
+
+    async def rejoin_waiting(self, data=None):
+        await rejoin_waiting_impl(self)
 
     async def game_end(self, data):
         await game_end_impl(self, data)

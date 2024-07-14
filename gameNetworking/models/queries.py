@@ -1,5 +1,5 @@
 from random import randint
-import datetime
+from django.db.models import Q
 from channels.db import database_sync_to_async
 from django.forms import ValidationError
 
@@ -25,6 +25,13 @@ def get_game_user(game_user_id):
         return None
     
 @database_sync_to_async
+def get_game_user_with_user(user):
+    try:
+        return GameUser.objects.get(user=user)
+    except GameUser.DoesNotExist:
+        return None
+    
+@database_sync_to_async
 def get_longest_waiting_player(conflict_side):
     try:
         return GameUser.objects.filter(conflict_side=conflict_side).first()
@@ -36,8 +43,7 @@ def get_number_of_waiting_players(conflict_side):
     return GameUser.objects.filter(conflict_side=conflict_side).count()
 
 @database_sync_to_async
-def create_game_user(token, conflict_side, channel_name):
-    user = token.user
+def create_game_user(user, conflict_side, channel_name):
     game_user = GameUser.objects.create(user=user, conflict_side=conflict_side,
         channel_name=channel_name)
     return game_user
@@ -86,6 +92,12 @@ def get_game(game_id):
         return Game.objects.get(id=game_id)
     except Game.DoesNotExist:
         return None
+    
+@database_sync_to_async
+def get_game_with_game_user(game_user):
+    return Game.objects.filter(
+        Q(teacher_player=game_user) | Q(student_player=game_user)
+    ).first()
     
 @database_sync_to_async
 def create_game(teacher_player, student_player):

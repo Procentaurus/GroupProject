@@ -50,7 +50,7 @@ async def check_tasks():
                 redis_client.zrem('tasks', task)
         await asyncio.sleep(1)
 
-def get_all_delayed_tasks(first_player_id, second_player_id):
+def get_all_game_tasks(first_player_id, second_player_id):
     remaining_tasks = {}
     tasks = redis_client.zrange('tasks', 0, -1, withscores=True)
 

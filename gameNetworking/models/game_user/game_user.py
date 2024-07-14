@@ -48,6 +48,11 @@ class GameUser(models.Model):
         self.morale = morale
         self.save()
 
+    @database_sync_to_async
+    def update_channel_name(self, channel_name):
+        self.channel_name = channel_name
+        self.save()
+
     def has_lost(self):
         return (self.morale <= 0)
 
