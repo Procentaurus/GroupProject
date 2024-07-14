@@ -142,11 +142,9 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         return self._moves_table[1]
     
     def decrease_action_moves(self):
-        # 0 is index of action moves
         self._moves_table[0] -= 1
 
     def decrease_reaction_moves(self):
-        # 1 is index of reaction moves
         self._moves_table[1] -= 1
 
     ##### Basic consumer methods #####
