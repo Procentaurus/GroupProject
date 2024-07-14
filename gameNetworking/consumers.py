@@ -43,94 +43,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
             settings.INIT_MOVES_PER_CLASH
         ]
 
-    async def connect(self):
-        connector = Connector(self)
-        await connector.connect()
-
-    async def disconnect(self, *args):
-        disconnector = Disconnector(self)
-        await disconnector.disconnect()           
-        raise StopConsumer()
-
-    async def receive_json(self, data):
-        loop_handler = GameLoopHandler(self, data)
-        await loop_handler.perform_game_loop()
-        self.set_valid_json_sent(False)
-
-    async def decode_json(self, text_data, **kwargs):
-        json_data = await decode_json_impl(self, text_data)
-        return json_data
-
-    # sends messages to both players' mailboxes
-    async def send_message_to_group(self, data, event):
-        await send_message_to_group_impl(self, data, event)
-
-    async def send_message_to_opponent(self, data, event):
-        await send_message_to_opponent_impl(self, data, event)
-
-    async def opponent_move(self, data):
-        await opponent_move_impl(self, data)
-
-    async def opponent_disconnect(self, data=None):
-        await opponent_disconnect_impl(self)
-
-    async def purchase_result(self, data):
-        await purchase_result_impl(self, data)
-
-    async def clash_result(self, data):
-        await clash_result_impl(self, data)
-
-    async def card_package(self, data):
-        await card_package_impl(self, data)
-
-    async def game_start(self, data):
-        await game_start_impl(self, data)
-
-    async def clash_start(self, data):
-        await clash_start_impl(self, data)
-
-    async def clash_end(self, data=None):
-        await clash_end_impl(self)
-
-    # async def game_reconnect(self, data):
-    #     await game_reconnect_impl(self, data)
-
-    async def rejoin_waiting(self, data=None):
-        await rejoin_waiting_impl(self)
-
-    async def game_end(self, data):
-        await game_end_impl(self, data)
-
-    async def game_creation(self, data):
-        await game_creation_impl(self, data)
-
-    async def hub_stage_timeout(self, data=None):
-        await hub_stage_timeout_impl(self)
-
-    async def action_move_timeout(self, data=None):
-        await action_move_timeout_impl(self)
-
-    async def reaction_move_timeout(self, data=None):
-        await reaction_move_timeout_impl(self)
-
-    # Used for player's mistakes during game flow
-    # that do not require complex response
-    # Performs: logging and sending info to player
-    async def error(self, message, log_message = None):
-        await error_impl(self, message, log_message)
-
-    # Used for player's mistakes during game flow
-    # that do require complex response
-    # Performs: logging and sending info to player
-    async def complex_error(self, message, log_message, data):
-        await complex_error_impl(self, message, log_message, data)
-
-    # Used for game flow errors
-    # Performs: logging, sending info to player and closing connection
-    async def critical_error(self, log_message):
-        await critical_error_impl(self, log_message)
-        await self.close()
-
+    ##### Getters #####
     def get_game_id(self):
         return self._game_id
     
@@ -151,22 +64,8 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     
     def get_winner(self):
         return self._winner
-
-    def is_winner(self):
-        return (self._winner is not None)
-
-    def get_action_card_id_played_by_opp(self):
-        return self._action_card_id_played_by_opp
-
-    def get_game_stage(self):
-        return self._game_stage
-
-    def get_opponent_channel_name(self):
-        return self._opponent_channel_name
-
-    def closed_after_disconnect(self):
-        return self._closed_after_disconnect
     
+    ##### Setters #####
     def set_closed_after_disconnect(self, closed_after_disconnect):
         self._closed_after_disconnect = closed_after_disconnect
     
@@ -193,6 +92,22 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     def set_opponent_channel_name(self, opponent_channel_name):
         self._opponent_channel_name = opponent_channel_name
+
+    ##### State changing functions #####
+    def is_winner(self):
+        return (self._winner is not None)
+
+    def get_action_card_id_played_by_opp(self):
+        return self._action_card_id_played_by_opp
+
+    def get_game_stage(self):
+        return self._game_stage
+
+    def get_opponent_channel_name(self):
+        return self._opponent_channel_name
+
+    def closed_after_disconnect(self):
+        return self._closed_after_disconnect
 
     def limit_players_hub_time(self):
         limit_players_hub_time_impl(self)
@@ -233,3 +148,93 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     def decrease_reaction_moves(self):
         # 1 is index of reaction moves
         self._moves_table[1] -= 1
+
+    ##### Basic consumer methods #####
+    async def connect(self):
+        connector = Connector(self)
+        await connector.connect()
+
+    async def disconnect(self, *args):
+        disconnector = Disconnector(self)
+        await disconnector.disconnect()           
+        raise StopConsumer()
+
+    async def receive_json(self, data):
+        loop_handler = GameLoopHandler(self, data)
+        await loop_handler.perform_game_loop()
+        self.set_valid_json_sent(False)
+
+    async def decode_json(self, text_data, **kwargs):
+        json_data = await decode_json_impl(self, text_data)
+        return json_data
+
+    # sends messages to both players' mailboxes
+    async def send_message_to_group(self, data, event):
+        await send_message_to_group_impl(self, data, event)
+
+    async def send_message_to_opponent(self, data, event):
+        await send_message_to_opponent_impl(self, data, event)
+
+    ##### Message handlers #####
+    async def opponent_move(self, data):
+        await opponent_move_impl(self, data)
+
+    async def opponent_disconnect(self, data=None):
+        await opponent_disconnect_impl(self)
+
+    async def purchase_result(self, data):
+        await purchase_result_impl(self, data)
+
+    async def clash_result(self, data):
+        await clash_result_impl(self, data)
+
+    async def card_package(self, data):
+        await card_package_impl(self, data)
+
+    async def game_start(self, data):
+        await game_start_impl(self, data)
+
+    async def clash_start(self, data):
+        await clash_start_impl(self, data)
+
+    async def clash_end(self, data=None):
+        await clash_end_impl(self)
+
+    async def game_reconnect(self, data=None):
+        await game_reconnect_impl(self)
+
+    async def opponent_rejoin_waiting(self, data=None):
+        await opponent_rejoin_waiting_impl(self)
+
+    async def game_end(self, data):
+        await game_end_impl(self, data)
+
+    async def game_creation(self, data):
+        await game_creation_impl(self, data)
+
+    async def hub_stage_timeout(self, data=None):
+        await hub_stage_timeout_impl(self)
+
+    async def action_move_timeout(self, data=None):
+        await action_move_timeout_impl(self)
+
+    async def reaction_move_timeout(self, data=None):
+        await reaction_move_timeout_impl(self)
+
+    # Used for player's mistakes during game flow
+    # that do not require complex response
+    # Performs: logging and sending info to player
+    async def error(self, message, log_message = None):
+        await error_impl(self, message, log_message)
+
+    # Used for player's mistakes during game flow
+    # that do require complex response
+    # Performs: logging and sending info to player
+    async def complex_error(self, message, log_message, data):
+        await complex_error_impl(self, message, log_message, data)
+
+    # Used for game flow errors
+    # Performs: logging, sending info to player and closing connection
+    async def critical_error(self, log_message):
+        await critical_error_impl(self, log_message)
+        await self.close()
