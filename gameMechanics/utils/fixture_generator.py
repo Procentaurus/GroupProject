@@ -1,3 +1,4 @@
+# fixture_generator.py
 import json
 import os
 import uuid
@@ -6,7 +7,6 @@ import csv
 # Define the file path
 output_file_path = os.path.join(os.path.dirname(__file__), '..\\fixtures\\basicCards.json')
 
-# Convert Python data to JSON and save to file
 def save_json_file(output_file_path, fixture_data_from_csv):
     if os.path.exists(output_file_path):
         with open(output_file_path, 'r') as json_file:
@@ -23,7 +23,6 @@ def save_json_file(output_file_path, fixture_data_from_csv):
     with open(output_file_path, 'w') as json_file:
         json.dump(existing_data, json_file, indent=4)
 
-# Get reactionCard data from csv
 def read_card_csv_generate_list(csv_file_path, model):
     fixture_data = []
 
@@ -41,7 +40,8 @@ def read_card_csv_generate_list(csv_file_path, model):
                         "values": row['values'],
                         "price": row['price'],
                         "playerType": row['playerType'],
-                        "type": row['type']
+                        "type": row['type'],
+                        "image": row['image']
                     }
                 })
             if model == 'gameMechanics.actioncard':
@@ -53,7 +53,8 @@ def read_card_csv_generate_list(csv_file_path, model):
                         "description": row['description'],
                         "price": row['price'],
                         "playerType": row['playerType'],
-                        "pressure": row['pressure']
+                        "pressure": row['pressure'],
+                        "image": row['image']
                     }
                 })
     
