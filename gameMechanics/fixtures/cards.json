@@ -1,352 +1,382 @@
 [
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "b79295a5-4f24-410c-8a85-1bb809c50ef6",
+        "pk": "42e613ab-83e4-441c-96f9-0dc77536d03c",
         "fields": {
             "name": "Junior Bully",
             "description": "Redirect 5 damage",
             "values": "redirect=5;block=5",
             "price": "2",
             "playerType": "student",
-            "type": "Brute"
+            "type": "Brute",
+            "image": "card_images/example.png"
         }
     },
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "d368c24f-47ed-4304-99c0-941b9ac76390",
+        "pk": "3d19cdf2-0721-46de-b7b5-3e6e4461bf54",
         "fields": {
             "name": "Freshman Bully",
             "description": "Redirect 10 damage",
             "values": "redirect=10;block=10",
             "price": "4",
             "playerType": "student",
-            "type": "Brute"
+            "type": "Brute",
+            "image": "card_images/example.png"
         }
     },
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "5c8b45ff-0160-4dad-9225-ad304eeb74e6",
+        "pk": "3298676c-375c-4a68-9b72-dd76a0ff81a6",
         "fields": {
             "name": "Senior Bully",
             "description": "Redirect 15 damage",
             "values": "redirect=15;block=15",
             "price": "6",
             "playerType": "student",
-            "type": "Brute"
+            "type": "Brute",
+            "image": "card_images/example.png"
         }
     },
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "e71a86a0-2138-447f-a916-a95fba661ee6",
+        "pk": "b005916f-dc7b-45fc-a2b1-464d0ced39c7",
         "fields": {
             "name": "Drunk Uncle Roger",
             "description": "Add 10 damage to current redirection",
             "values": "redirect=10",
             "price": "5",
             "playerType": "student",
-            "type": "Brute"
+            "type": "Brute",
+            "image": "card_images/example.png"
         }
     },
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "38a586c4-4fe5-42c3-be39-73443351190b",
+        "pk": "8eb44193-36e1-489b-827b-46f8bc601fac",
         "fields": {
             "name": "Protein Shake",
             "description": "If your blocked damage is above 10, redirect 10 at your opponent",
             "values": "conditional_value=blocked;conditional_threshold=10;redirect=10;block=10",
             "price": "5",
             "playerType": "student",
-            "type": "Brute"
+            "type": "Brute",
+            "image": "card_images/example.png"
         }
     },
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "aace1067-a508-4c07-854f-50b89b8ec7d3",
+        "pk": "915676b7-138b-42e0-8293-2c2a49a515d9",
         "fields": {
             "name": "Junior Nerd",
             "description": "Block 5 damage",
             "values": "block=5",
             "price": "2",
             "playerType": "student",
-            "type": "Intelligence"
+            "type": "Intelligence",
+            "image": "card_images/example.png"
         }
     },
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "e647ff9f-7462-4289-8136-0e748be632fb",
+        "pk": "a1c934ae-9a70-4226-bc97-5948f097e446",
         "fields": {
             "name": "Freshman Nerd",
             "description": "Block 10 damage",
             "values": "block=10",
             "price": "4",
             "playerType": "student",
-            "type": "Intelligence"
+            "type": "Intelligence",
+            "image": "card_images/example.png"
         }
     },
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "383bd494-18fb-43db-9706-0e5a31b6ec55",
+        "pk": "4a952329-7797-45d8-9f86-19b7ea75967e",
         "fields": {
             "name": "Senior Nerd",
             "description": "Block 15 damage",
             "values": "block=15",
             "price": "6",
             "playerType": "student",
-            "type": "Intelligence"
+            "type": "Intelligence",
+            "image": "card_images/example.png"
         }
     },
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "e0ef8482-9007-4310-9bd3-be86ddf1098a",
+        "pk": "e2091ead-b107-4a95-8a4d-50971d2a1cca",
         "fields": {
             "name": "Math Expert",
             "description": "Block 10% of incoming damage",
             "values": "percentage_value=blocked;percentage=10",
             "price": "5",
             "playerType": "student",
-            "type": "Intelligence"
+            "type": "Intelligence",
+            "image": "card_images/example.png"
         }
     },
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "9300626d-e244-48a4-bf45-e14dbf3c4f60",
+        "pk": "0e008d70-b690-4499-b549-c1dc774cc14e",
         "fields": {
             "name": "Senior's Notebook",
             "description": "If your redirected damage is above 10, block 10 incoming damage",
             "values": "conditional_value=redirected;conditional_threshold=10;block=10",
             "price": "5",
             "playerType": "student",
-            "type": "Intelligence"
+            "type": "Intelligence",
+            "image": "card_images/example.png"
         }
     },
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "f0336ced-89af-4c8d-9257-d12103c65bee",
+        "pk": "1593e2b7-4534-4261-aaf2-394289bcc8ed",
         "fields": {
             "name": "PE Substitute",
             "description": "Redirect 5 damage",
             "values": "redirect=5;block=5",
             "price": "2",
             "playerType": "teacher",
-            "type": "Brute"
+            "type": "Brute",
+            "image": "card_images/example.png"
         }
     },
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "a1c7fa11-81ba-4f06-9c1c-694f3a1f2419",
+        "pk": "2d31e0f3-ffc1-45c4-a2ea-253226ac482e",
         "fields": {
             "name": "PE teacher",
             "description": "Redirect 10 damage",
             "values": "redirect=10;block=10",
             "price": "4",
             "playerType": "teacher",
-            "type": "Brute"
+            "type": "Brute",
+            "image": "card_images/example.png"
         }
     },
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "60f81530-1439-450b-8037-5c45f1024998",
+        "pk": "13279960-8255-4f75-8307-53c5e56172ad",
         "fields": {
             "name": "Hank, Football Coach",
             "description": "Redirect 15 damage",
             "values": "redirect=15;block=15",
             "price": "6",
             "playerType": "teacher",
-            "type": "Brute"
+            "type": "Brute",
+            "image": "card_images/example.png"
         }
     },
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "570a35aa-d43e-4e03-81d6-1367c5e4f441",
+        "pk": "46ee4af8-0d0e-4849-a60f-43b479e2266b",
         "fields": {
             "name": "Hank's Son",
             "description": "Add 10 damage to current redirection",
             "values": "redirect=10",
             "price": "5",
             "playerType": "teacher",
-            "type": "Brute"
+            "type": "Brute",
+            "image": "card_images/example.png"
         }
     },
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "c79a6086-235d-4da2-bfa1-c86286579783",
+        "pk": "c4399569-a39a-4def-88c8-666e12909a97",
         "fields": {
             "name": "Training Session",
             "description": "If your blocked damage is above 10, redirect 10 at your opponent",
             "values": "conditional_value=blocked;conditional_threshold=10;redirect=10;block=10",
             "price": "5",
             "playerType": "teacher",
-            "type": "Brute"
+            "type": "Brute",
+            "image": "card_images/example.png"
         }
     },
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "482f62c1-9268-45dd-a026-709f8891d89a",
+        "pk": "4ddf73bc-35df-404d-b8c0-8ce01cdf3e75",
         "fields": {
             "name": "Science Substitute",
             "description": "Block 5 damage",
             "values": "block=5",
             "price": "2",
             "playerType": "teacher",
-            "type": "Intelligence"
+            "type": "Intelligence",
+            "image": "card_images/example.png"
         }
     },
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "b797a424-b737-4d51-902d-5be4fdf76bfb",
+        "pk": "82ba4ed8-0fb4-4f4b-8167-0319216b47d6",
         "fields": {
             "name": "Science teacher",
             "description": "Block 10 damage",
             "values": "block=10",
             "price": "4",
             "playerType": "teacher",
-            "type": "Intelligence"
+            "type": "Intelligence",
+            "image": "card_images/example.png"
         }
     },
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "643d3e36-9023-4cf2-b2cc-9b333b9fc0f6",
+        "pk": "98274a26-b99a-4a37-a38c-266212976c02",
         "fields": {
             "name": "Ross, Paleontologist",
             "description": "Block 15 damage",
             "values": "block=15",
             "price": "6",
             "playerType": "teacher",
-            "type": "Intelligence"
+            "type": "Intelligence",
+            "image": "card_images/example.png"
         }
     },
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "800bb3c6-d7b2-4866-be02-fdf0d2a044a5",
+        "pk": "3cf064e7-3d37-42a5-95b3-01aeed70dd02",
         "fields": {
             "name": "Math teacher",
             "description": "Block 10% of incoming damage",
             "values": "percentage_value=blocked;percentage=10",
             "price": "5",
             "playerType": "teacher",
-            "type": "Intelligence"
+            "type": "Intelligence",
+            "image": "card_images/example.png"
         }
     },
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "a21ca1c5-6072-4d9b-963f-feb704c9d2c5",
+        "pk": "93d1033d-d475-4412-af76-4fb02b9b17f9",
         "fields": {
             "name": "Entry Test",
             "description": "If your redirected damage is above 10, block 10 incoming damage",
             "values": "conditional_value=redirected;conditional_threshold=10;block=10",
             "price": "5",
             "playerType": "teacher",
-            "type": "Intelligence"
+            "type": "Intelligence",
+            "image": "card_images/example.png"
         }
     },
     {
         "model": "gameMechanics.actioncard",
-        "pk": "2951aa28-6fab-4244-be44-fd5bbaa81441",
+        "pk": "47c5ccf0-34f6-4b8a-b274-1d3e4a532edb",
         "fields": {
-            "name": "Clog The Toilet",
+            "name": "Clog The School Toilet",
             "description": "Deal 20 damage",
             "price": "3",
             "playerType": "student",
-            "pressure": "0"
+            "pressure": "0",
+            "image": "card_images/example.png"
         }
     },
     {
         "model": "gameMechanics.actioncard",
-        "pk": "4171ee86-fbe5-4dbb-9df4-5b684968b603",
+        "pk": "d1028168-117b-4263-81bd-a99b9d298823",
         "fields": {
             "name": "Shoot A Spitball",
             "description": "Deal 20 damage",
             "price": "3",
             "playerType": "student",
-            "pressure": "0"
+            "pressure": "0",
+            "image": "card_images/example.png"
         }
     },
     {
         "model": "gameMechanics.actioncard",
-        "pk": "d23979c0-6c07-4ddb-bc3d-c6826e83e908",
+        "pk": "20626564-6364-40c9-867d-ef3975f432df",
         "fields": {
-            "name": "Bite teacher Pencil",
+            "name": "Bite On The teacher's Pencil",
             "description": "Deal 20 damage",
             "price": "3",
             "playerType": "student",
-            "pressure": "0"
+            "pressure": "0",
+            "image": "card_images/example.png"
         }
     },
     {
         "model": "gameMechanics.actioncard",
-        "pk": "9a593072-8989-4bdb-83d2-838808c82102",
+        "pk": "1909ef81-5358-47e5-92e1-185b67e25ff1",
         "fields": {
             "name": "Eat Class Markers",
             "description": "Deal 20 damage",
             "price": "3",
             "playerType": "student",
-            "pressure": "0"
+            "pressure": "0",
+            "image": "card_images/example.png"
         }
     },
     {
         "model": "gameMechanics.actioncard",
-        "pk": "a131d20c-3491-4c98-af1f-499ca95b2082",
+        "pk": "bd64e091-f04b-49e0-a537-fe82382c8597",
         "fields": {
-            "name": "Report To Parents",
+            "name": "Report To Your Parents",
             "description": "Deal 20 damage",
             "price": "3",
             "playerType": "student",
-            "pressure": "0"
+            "pressure": "0",
+            "image": "card_images/example.png"
         }
     },
     {
         "model": "gameMechanics.actioncard",
-        "pk": "ae41df4e-c2a4-4e77-adc8-2ab6fe93c317",
+        "pk": "f867bbf5-60ef-4236-9563-a8b0209dae2b",
         "fields": {
-            "name": "Invite Parents",
+            "name": "Report To student's Parents",
             "description": "Deal 20 damage",
             "price": "3",
             "playerType": "teacher",
-            "pressure": "0"
+            "pressure": "0",
+            "image": "card_images/example.png"
         }
     },
     {
         "model": "gameMechanics.actioncard",
-        "pk": "e27c1519-ec3f-4c11-96aa-97e2e4bdc7fa",
+        "pk": "87934445-b242-4161-bced-b785df4a1863",
         "fields": {
-            "name": "Ground student",
+            "name": "Ground The student",
             "description": "Deal 20 damage",
             "price": "3",
             "playerType": "teacher",
-            "pressure": "0"
+            "pressure": "0",
+            "image": "card_images/example.png"
         }
     },
     {
         "model": "gameMechanics.actioncard",
-        "pk": "9dc7471d-8b4a-4e3d-a7ba-d5213e1096a8",
+        "pk": "2a2d85d5-b7fd-4119-8068-1d9f0abd3e6f",
         "fields": {
             "name": "Biology Exam",
             "description": "Deal 20 damage",
             "price": "3",
             "playerType": "teacher",
-            "pressure": "0"
+            "pressure": "0",
+            "image": "card_images/example.png"
         }
     },
     {
         "model": "gameMechanics.actioncard",
-        "pk": "4b1cd883-f3c5-4d85-b66f-690703447318",
+        "pk": "35c1df3f-04ca-4f3f-a460-07b04ce9797d",
         "fields": {
             "name": "Math Homework",
             "description": "Deal 20 damage",
             "price": "3",
             "playerType": "teacher",
-            "pressure": "0"
+            "pressure": "0",
+            "image": "card_images/example.png"
         }
     },
     {
         "model": "gameMechanics.actioncard",
-        "pk": "2744ef42-c598-44c8-8d29-bd12dd100ccf",
+        "pk": "ee6540c4-826f-4734-ae92-7ca3bd397048",
         "fields": {
             "name": "Cancel A Break",
             "description": "Deal 20 damage",
             "price": "3",
             "playerType": "teacher",
-            "pressure": "0"
+            "pressure": "0",
+            "image": "card_images/example.png"
         }
     }
 ]
