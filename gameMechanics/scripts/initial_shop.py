@@ -9,8 +9,15 @@ from gameMechanics.serializers import ReactionCardDataSerializer, ActionCardData
 
 @database_sync_to_async
 def get_random_card_ids(model, count, player_type):
+    print("------------------------------",model)
+    print(count)
+    print(player_type)
     all_instances = model.objects.filter(playerType=player_type)
+    print("all_instances")
+    print(all_instances)
     random_instances = random.sample(list(all_instances), count)
+    print("random_instances")
+    print(random_instances)
 
     # Serialize instances using appropriate serializer
     if model == ReactionCard:
