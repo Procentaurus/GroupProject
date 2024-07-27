@@ -99,6 +99,14 @@ class GameUser(models.Model):
 
     def is_student(self):
         return self.conflict_side == "student"
+    
+    @database_sync_to_async
+    def get_owned_action_cards(self):
+        return list(self.owned_action_cards.all())
+
+    @database_sync_to_async
+    def get_action_cards_in_shop(self):
+        return list(self.action_cards_in_shop.all())
 
     @database_sync_to_async
     def check_action_card_owned(self, action_card_id):

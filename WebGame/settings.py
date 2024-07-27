@@ -109,11 +109,12 @@ HUB_STAGE_TIMEOUT = 60
 DELETE_GAME_TIMEOUT = 60
 REJOIN_TIMEOUT = 30
 
-ACTION_MOVE_TIMEOUT_FUNC = 'gameNetworking.scheduler.tasks.limit_action_time'
-REACTION_MOVE_TIMEOUT_FUNC = 'gameNetworking.scheduler.tasks.limit_reaction_time'
-HUB_STAGE_TIMEOUT_FUNC = 'gameNetworking.scheduler.tasks.limit_hub_time'
-DELETE_GAME_TIMEOUT_FUNC = 'gameNetworking.scheduler.tasks.limit_game_data_lifetime'
-REJOIN_TIMEOUT_FUNC = 'gameNetworking.scheduler.tasks.limit_opponent_rejoin_time'
+TIMEOUT_FUNC_MODULE = 'gameNetworking.scheduler.tasks'
+ACTION_MOVE_TIMEOUT_FUNC = TIMEOUT_FUNC_MODULE + '.' + 'limit_action_time'
+REACTION_MOVE_TIMEOUT_FUNC = TIMEOUT_FUNC_MODULE + '.' + 'limit_reaction_time'
+HUB_STAGE_TIMEOUT_FUNC = TIMEOUT_FUNC_MODULE + '.' + 'limit_hub_time'
+DELETE_GAME_TIMEOUT_FUNC = TIMEOUT_FUNC_MODULE + '.' + 'limit_game_data_lifetime'
+REJOIN_TIMEOUT_FUNC = TIMEOUT_FUNC_MODULE + '.' + 'limit_opponent_rejoin_time'
 
 INIT_MOVES_PER_CLASH = 1
 MAX_MOVES_PER_CLASH = 3

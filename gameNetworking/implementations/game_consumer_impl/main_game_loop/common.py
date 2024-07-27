@@ -103,7 +103,7 @@ class ErrorSender:
         await self._consumer.critical_error("Updating game turn impossible.")
 
 
-class InfoSender:
+class InitInfoSender:
 
     def __init__(self, consumer):
         self._consumer = consumer
@@ -111,7 +111,6 @@ class InfoSender:
     async def _send_game_creation_info_to_opp(self, game_id, opp_id):
         await self._consumer.send_message_to_opponent(
             {"game_id": str(game_id),
-            "channel_name": self._consumer.channel_name,
             "opponent_id": str(opp_id)},
             "game_creation")
         

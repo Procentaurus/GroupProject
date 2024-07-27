@@ -8,9 +8,8 @@ async def send_message_to_group_impl(consumer, data, event):
     )
 
 async def send_message_to_opponent_impl(consumer, data, event):
-    opponent_channel_name = consumer.get_opponent_channel_name()
     await consumer.channel_layer.send(
-        opponent_channel_name,
+        consumer.get_opponent().channel_name,
         {
             'type': event,
             **data,

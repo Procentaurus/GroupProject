@@ -75,9 +75,22 @@ async def clash_end_impl(consumer):
         'type' : "clash_end",
     })
 
-async def rejoin_waiting_impl(consumer):
+async def game_reconnect_impl(consumer, data):
+    await consumer.refresh_opponent()
     await consumer.send_json({
-        'type' : "rejoin_waiting",
+        'type' : "game_reconnect",
+        **data
+    })
+
+async def time_info_impl(consumer, data):
+    await consumer.send_json({
+        "type": "time_info",
+        "time_remaining": data.get("time_remaining")
+    })
+
+async def opponent_rejoin_waiting_impl(consumer):
+    await consumer.send_json({
+        'type' : "opponent_rejoin_waiting",
         'time_for_opponent_to_rejoin' : settings.REJOIN_TIMEOUT
     })
 
@@ -94,9 +107,8 @@ async def game_end_impl(consumer, data):
 
 async def game_creation_impl(consumer, data):
     consumer.set_game_id(data.get("game_id"))
-    consumer.set_opponent_channel_name(data.get("channel_name"))
-    opp = await get_game_user(data.get("opponent_id"))
-    consumer.set_opponent(opp)
+    opponent = await get_game_user(data.get("opponent_id"))
+    consumer.set_opponent(opponent)
 
 async def hub_stage_timeout_impl(consumer):
     consumer.logger.info("Hub stage timeout")
@@ -157,5 +169,4 @@ async def critical_error_impl(consumer, log_message):
         'type' : "error",
         'info' : "SERVER ERROR OCCURED",
     })
-
     consumer.logger.error(log_message)

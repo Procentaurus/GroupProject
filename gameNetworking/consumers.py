@@ -22,7 +22,6 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         self._winner = None
         self._game_user = None
         self._opponent = None
-        self._opponent_channel_name = None
 
         self._closed_after_disconnect = True
         self._valid_json_sent = False
@@ -90,21 +89,30 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     def set_game_user(self, game_user):
         self._game_user = game_user
 
-    def set_opponent_channel_name(self, opponent_channel_name):
-        self._opponent_channel_name = opponent_channel_name
-
     ##### State changing functions #####
     def is_winner(self):
         return (self._winner is not None)
+    
+    def reset_turns_to_inc(self):
+        self._turns_to_inc = (settings.TURNS_BETWEEN_NUM_MOVES_INC - 1)
+    
+    def decrement_turn_to_inc(self):
+        self._turns_to_inc -= 1
+
+    def is_time_for_moves_per_clash_incrementation(self):
+        return self._turns_to_inc == 0
+
+    def increment_moves_per_clash(self):
+        self._moves_per_clash += 1
+
+    def is_moves_per_clash_maximal(self):
+        return self._moves_per_clash == (settings.MAX_MOVES_PER_CLASH - 1)
 
     def get_action_card_id_played_by_opp(self):
         return self._action_card_id_played_by_opp
 
     def get_game_stage(self):
         return self._game_stage
-
-    def get_opponent_channel_name(self):
-        return self._opponent_channel_name
 
     def closed_after_disconnect(self):
         return self._closed_after_disconnect
@@ -117,6 +125,9 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     def limit_player_reaction_time(self):
         limit_player_reaction_time_impl(self)
+
+    def update_after_reconnect(self, game, player, opponent):
+        update_after_reconnect_impl(self, game, player, opponent)
 
     def _update_moves_per_clash(self):
         update_moves_per_clash_impl(self)
@@ -200,6 +211,9 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     async def game_reconnect(self, data=None):
         await game_reconnect_impl(self)
+
+    async def time_info(self, data):
+        await time_info_impl(self, data)
 
     async def opponent_rejoin_waiting(self, data=None):
         await opponent_rejoin_waiting_impl(self)

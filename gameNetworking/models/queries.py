@@ -124,10 +124,18 @@ def delete_game(game_id):
 ### owned reaction card ###
 
 @database_sync_to_async
+def get_owned_reaction_cards(game_user):
+    owned_cards = OwnedReactionCard.objects.filter(game_user=game_user)
+    return [
+        {"card": owned_card.reaction_card, "amount": owned_card.amount}
+        for owned_card in owned_cards
+    ]
+
+@database_sync_to_async
 def check_reaction_card_owned(game_user, r_card_id, amount):  
     owned_r_card = OwnedReactionCard.objects.filter(
         reaction_card__id=r_card_id, game_user=game_user).first()
-    
+
     if owned_r_card is not None:
         return True if owned_r_card.amount >= amount else False
     else: return False
@@ -155,6 +163,14 @@ def remove_reaction_card(game_user, r_card_id, amount):
 
 
 ### reaction card in shop ###
+
+@database_sync_to_async
+def get_reaction_cards_in_shop(game_user):
+    cards_in_shop = ReactionCardInShop.objects.filter(game_user=game_user)
+    return [
+        {"card": card_in_shop.reaction_card, "number": card_in_shop.amount}
+        for card_in_shop in cards_in_shop
+    ]
 
 @database_sync_to_async  
 def check_reaction_card_in_shop(game_user, r_card_id, amount):
