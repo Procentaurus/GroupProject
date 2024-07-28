@@ -127,7 +127,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         limit_player_reaction_time_impl(self)
 
     def update_after_reconnect(self, game, player, opponent):
-        update_after_reconnect_impl(self, game, player, opponent)
+        pass
 
     def _update_moves_per_clash(self):
         update_moves_per_clash_impl(self)
@@ -250,3 +250,5 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     async def critical_error(self, log_message):
         await critical_error_impl(self, log_message)
         await self.close()
+
+GameConsumer.update_after_reconnect = update_after_reconnect_impl

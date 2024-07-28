@@ -5,16 +5,17 @@ from ...enums import GameStage
 from ...models.queries import get_game_user
 from ...scheduler.scheduler import add_delayed_task
 
-def update_after_reconnect_impl(consumer, game, player, opponent):
-    consumer.set_opponent(opponent)
-    consumer._game_user = player
-    consumer._game_id = game.id
-    consumer._game_stage = GameStage.CLASH if game.stage else GameStage.HUB
-    consumer._turns_to_inc = game.turns_to_inc
-    consumer._moves_per_clash = game.moves_per_clash
-    consumer._action_card_id_played_by_opp = player.opp_played_action_card_id
-    consumer._moves_table = [
-        player.action_moves_left, player.reaction_moves_left
+def update_after_reconnect_impl(self, game, player, opponent):
+    self._opponent = opponent
+    self._game_user = player
+    self._game_id = game.id
+    self._game_stage = GameStage.CLASH if game.stage else GameStage.HUB
+    self._turns_to_inc = game.turns_to_inc
+    self._moves_per_clash = game.moves_per_clash
+    self._action_card_id_played_by_opp = player.opp_played_action_card_id
+    self._moves_table = [
+        player.action_moves_left,
+        player.reaction_moves_left
     ]
 
 def update_moves_per_clash_impl(consumer):
