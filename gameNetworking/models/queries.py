@@ -168,11 +168,11 @@ def remove_reaction_card(game_user, r_card_id, amount):
 def get_reaction_cards_in_shop(game_user):
     cards_in_shop = ReactionCardInShop.objects.filter(game_user=game_user)
     return [
-        {"card": card_in_shop.reaction_card, "number": card_in_shop.amount}
+        {"card": card_in_shop.reaction_card, "amount": card_in_shop.amount}
         for card_in_shop in cards_in_shop
     ]
 
-@database_sync_to_async  
+@database_sync_to_async
 def check_reaction_card_in_shop(game_user, r_card_id, amount):
     r_card_in_shop = ReactionCardInShop.objects.filter(
         reaction_card__id=r_card_id, game_user=game_user).first()

@@ -237,7 +237,7 @@ class ReactionMoveHandler(MoveHandler):
                     game_user, r_card_data.get("id"), r_card_data.get("amount"))
 
     async def _announce_winner(self):
-        self._consumer.set_closure_from_user_side(False)
+        self._consumer.set_closed_after_disconnect(False)
         await self._consumer.send_message_to_group(
             {"winner" : self._consumer.get_winner()},
             "game_end")

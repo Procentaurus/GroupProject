@@ -1,6 +1,6 @@
 from gameMechanics.serializers import *
 
-from ...scheduler.scheduler import remove_delayed_task
+from ...scheduler.scheduler import remove_delayed_task, get_all_game_tasks
 from ...scheduler.scheduler import add_delayed_task
 from ...scheduler.scheduler import verify_task_exists
 from ...models.queries import *
@@ -51,7 +51,7 @@ class Connector:
             if game_user is not None:
                 game = await get_game_with_game_user(game_user)
                 if game is not None:
-                    opponent = await game.get_opponent_player()
+                    opponent = await game.get_opponent_player(game_user)
                     if opponent is not None:
                         return game_user, game, opponent
             return None, None, None
@@ -59,7 +59,7 @@ class Connector:
         def is_saved_game_data_available(game_user, game, opponent):
             if game_user is None or game is None or opponent is None:
                 return False
-            else: True
+            else: return True
 
         game_user, game, opponent = await retrieve_saved_game_data()
         if is_saved_game_data_available(game_user, game, opponent):
@@ -127,7 +127,7 @@ class Connector:
             remove_delayed_task(f'limit_game_data_lifetime_{game.id}')
             await self._consumer.refresh_opponent()
             opponent = self._consumer.get_opponent()
-            self._add_players_channels_to_group(game)
+            await self._add_players_channels_to_group(game)
             await self._consumer.game_reconnect(
                 await self._create_reconnect_message_body(player, game)
             )
@@ -135,7 +135,7 @@ class Connector:
                 await self._create_reconnect_message_body(opponent, game),
                 'game_reconnect'
             )
-            self.reactivate_all_game_tasks(game, opponent)
+            await self._reactivate_all_game_tasks(game, opponent)
         else:
             remove_delayed_task(f'limit_game_data_lifetime_{game.id}')
             await self._consumer.opponent_rejoin_waiting()
@@ -146,9 +146,10 @@ class Connector:
             )
             add_delayed_task(
                 f'limit_game_data_lifetime_{game.id}',
-                settings.REJOIN_TIMEOUT,
+                (settings.REJOIN_TIMEOUT + settings.DELETE_GAME_DELAY),
                 settings.DELETE_GAME_TIMEOUT_FUNC
             )
+            await game.clear_backup_status()
 
     async def _create_reconnect_message_body(self, player, game):
 
@@ -173,7 +174,7 @@ class Connector:
                 action_cards_in_shop.append(ActionCardDataSerializer(card).data)
             return action_cards_in_shop
 
-        async def get_serialized_r_cards_in_shop():
+        async def get_serialized_r_cards_in_shop(player):
             reaction_cards_in_shop = []
             for card_data in await get_reaction_cards_in_shop(player):
                 reaction_cards_in_shop.append({
@@ -190,16 +191,20 @@ class Connector:
             'reaction_cards_owned': await get_serialized_owned_r_cards(player)
         }
         if self._consumer.get_game_stage() == GameStage.HUB:
-            body['owned_action_cards'] = await get_serialized_a_cards_in_shop(
+            body['action_cards_in_shop'] = await get_serialized_a_cards_in_shop(
                                                 player)
             body['reaction_cards_in_shop'] = await get_serialized_r_cards_in_shop(
                                                     player)
         return body
 
-    async def reactivate_all_game_tasks(self, game, opponent):
-        
-        async def send_time_info_to_task_owner(task_id, opponent_id):
-            if task_id == opponent_id:
+    async def _reactivate_all_game_tasks(self, game, opponent):
+
+        def is_opponent_task_owner(task_id, opponent_id):
+            return task_id == opponent_id
+
+        for task_data, task_time in game.delayed_tasks.items():
+            task_func, task_id = task_data.rsplit('_', 1)
+            if is_opponent_task_owner(task_id, str(opponent.id)):
                 await self._consumer.send_message_to_opponent(
                     {"time_remaining": int(task_time)},
                     'time_info'
@@ -208,14 +213,10 @@ class Connector:
                 await self._consumer.time_info({
                     "time_remaining": int(task_time)
                 })
-
-        for task_data, task_time in game.delayed_tasks.items():
-            task_func, task_id = task_data.rsplit('_', 1)
-            await send_time_info_to_task_owner(task_id, opponent.id)
             add_delayed_task(
                 task_data,
                 int(task_time),
-                settings.TIMEOUT_FUNC_MODULE + '.' + str(task_func),
+                settings.TIMEOUT_MODULE + '.' + str(task_func),
             )
 
     async def _set_in_game_status(self, game_user):

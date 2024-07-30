@@ -1,5 +1,7 @@
 from channels.layers import get_channel_layer
 
+from customUser.models.queries import create_game_archive
+
 from ..models.queries import get_game_user, delete_game
 
 
@@ -45,3 +47,4 @@ async def limit_opponent_rejoin_time(game_user_id):
              'after_surrender': True
             }
         )
+    # TODO create game archive

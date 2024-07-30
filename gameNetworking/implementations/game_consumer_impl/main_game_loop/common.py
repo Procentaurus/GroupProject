@@ -13,24 +13,25 @@ class SurrenderMoveHandler(MoveHandler):
     async def _verify_move(self):
         return True
 
-    async def perform_move_mechanics(self):
+    async def _perform_move_mechanics(self, is_delayed):
         g_u = self._consumer.get_game_user()
         self._consumer.logger.info(
             f"{g_u.conflict_side} player has surrendered")
-        winner_side = self._get_winner_side(g_u)
+        winner_side = await self._get_winner_side(g_u)
         self._consumer.set_winner(winner_side)
-        self._consumer.set_closure_from_user_side(False)
+        self._consumer.set_closed_after_disconnect(False)
         await self._send_game_end_info(winner_side)
+        # TODO add game archive creation
 
     async def _send_game_end_info(self, winner_side):
         await self._consumer.send_message_to_group(
             {"winner" : winner_side, "after_surrender" : True},
             "game_end")
-        
+
     async def _get_winner_side(self, g_u):
         return "student" if g_u.is_teacher() else "teacher"
 
-    
+
 class ErrorSender:
 
     def __init__(self, consumer):
@@ -46,7 +47,6 @@ class ErrorSender:
             f"{side} player tried to use cards that do not exist",
             {"not_existing_cards" : data}
         )
-
 
     async def send_cards_not_in_shop_info(self, cards):
         side = self._consumer.get_game_user().conflict_side
@@ -85,15 +85,15 @@ class ErrorSender:
         await self._consumer.error(
             f"Wrong message type in the {self._consumer.get_game_stage()}"
             +" game stage.")
-        
+   
     async def send_invalid_token_info(self, conflict_side):
         await self.consumer.error("You have used invalid token",
             f"Invalid authentication token used by {conflict_side} player")
-        
+
     async def send_invalid_conflict_side_info(self, conflict_side):
         await self.consumer.error("You have chosen invalid conflict side",
             f"Invalid conflict side chosen by {conflict_side} player")
-        
+
     async def send_game_not_started_info(self, conflict_side):
         await self._consumer.error(
             f"{conflict_side} player made move before the game"
@@ -113,13 +113,13 @@ class InitInfoSender:
             {"game_id": str(game_id),
             "opponent_id": str(opp_id)},
             "game_creation")
-        
+
     async def _send_game_start_info_to_opp(self, opp):
         await self._consumer.send_message_to_opponent(
             {"initial_money_amount" : opp.money,
             "initial_morale" : opp.morale},
             "game_start")
-        
+
     async def _send_game_start_info(self):   
         g_u = self._consumer.get_game_user()
         await self._consumer.game_start(
@@ -138,7 +138,7 @@ class InitShopCardsGetter:
         conflict_side = "teacher" if self._g_u.is_teacher() else "student"
         return (await get_initial_shop_for_player(
             self._num_a_cards, self._num_r_cards, conflict_side))[::-1]
-    
+
     async def get_opponent_cards(self):
         conflict_side = "student" if self._g_u.is_teacher() else "teacher"
         return (await get_initial_shop_for_player(
