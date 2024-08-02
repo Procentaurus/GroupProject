@@ -1,5 +1,3 @@
-from customUser.models.queries import create_game_archive
-
 from gameMechanics.scripts.basic_mechanics import get_new_morale
 from gameMechanics.queries import get_a_card_serialized
 
@@ -13,15 +11,15 @@ from .checkers import *
 
 class ClashStageHandler(StageHandler):
 
-    def __init__(self, consumer, game, message_type, data):
-        super().__init__(consumer, game, message_type, data)
+    def __init__(self, consumer, message_type, data):
+        super().__init__(consumer, message_type, data)
 
     async def perform_stage(self):
         handler = None
         if self._message_type == MessageType.ACTION_MOVE:
-            handler = ActionMoveHandler(self._consumer, self._game, self._data)
+            handler = ActionMoveHandler(self._consumer, self._data)
         elif self._message_type == MessageType.REACTION_MOVE:
-            handler = ReactionMoveHandler(self._consumer, self._game, self._data)
+            handler = ReactionMoveHandler(self._consumer, self._data)
         elif self._message_type == MessageType.SURRENDER_MOVE:
             handler = SurrenderMoveHandler(self._consumer)
         else:
@@ -34,9 +32,9 @@ class ClashStageHandler(StageHandler):
 
 class ActionMoveHandler(MoveHandler):
 
-    def __init__(self, consumer, game, data):
+    def __init__(self, consumer, data):
         super().__init__(consumer)
-        self._game = game
+        self._game = consumer.get_game()
         self._a_card = data.get("id")
 
     async def _verify_move(self):
@@ -76,9 +74,9 @@ class ActionMoveHandler(MoveHandler):
 
 class ReactionMoveHandler(MoveHandler):
 
-    def __init__(self, consumer, game, data):
+    def __init__(self, consumer, data):
         super().__init__(consumer)
-        self._game = game
+        self._game = consumer.get_game()
         self._r_cards = data.get("reaction_cards")
         self._g_u = self._consumer.get_game_user()
 
@@ -107,7 +105,6 @@ class ReactionMoveHandler(MoveHandler):
         c_v = CardVerifier(self._consumer, r_c_c)
         if not await c_v.verify_cards_for_clash(): return False
         if not await g_v.verify_turn_update_successful(): return False
-
         return True
 
     async def _perform_move_mechanics(self, is_delayed):
@@ -126,7 +123,6 @@ class ReactionMoveHandler(MoveHandler):
         await self._set_winner_if_exist(opp)
 
         if self._consumer.is_winner():
-            await create_game_archive(self._game, self._consumer.get_winner())
             await self._announce_winner()
             return
 

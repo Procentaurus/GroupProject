@@ -15,7 +15,7 @@ class GameAuthenticationTokenMiddleware:
             user = await token.get_game_user()
             scope['user'] = user
             scope['token'] = token
-                
+  
             return await self.inner(scope, receive, send)
         else:
             return

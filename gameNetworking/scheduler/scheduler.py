@@ -13,14 +13,16 @@ redis_client = redis.StrictRedis(
 )
 
 def add_delayed_task(task_name, delay_in_sec, func_path):
+    print(f"add_delayed_task, task_name={task_name}, delay={delay_in_sec}")
     task_time = datetime.now(timezone.utc) + timedelta(seconds=delay_in_sec)
     redis_client.zadd('tasks', {task_name: task_time.timestamp()})
     redis_client.hset('task_funcs', task_name, func_path)
 
 def remove_delayed_task(task_name):
+    print(f"remove_delayed_task, task_name={task_name}")
     redis_client.zrem('tasks', task_name)
     redis_client.hdel('task_funcs', task_name)
-   
+
 async def run_task(task_name):
 
     def get_func():
@@ -38,7 +40,6 @@ async def run_task(task_name):
         func = get_func()
         id = get_id(task_name)
         await func(id)
-        redis_client.hdel('task_funcs', task_name)
 
 async def check_tasks():
     while True:
@@ -47,8 +48,9 @@ async def check_tasks():
         if tasks:
             for task in tasks:
                 await run_task(task.decode('utf-8'))
-                redis_client.zrem('tasks', task)
-        await asyncio.sleep(1)
+                remove_delayed_task(task.decode('utf-8'))
+                await asyncio.sleep(0.005)
+        await asyncio.sleep(0.1)
 
 def get_all_game_tasks(first_player_id, second_player_id):
     remaining_tasks = {}
@@ -62,7 +64,7 @@ def get_all_game_tasks(first_player_id, second_player_id):
             if any(task_name.endswith(id) for id in ids):
                 filtered_tasks[task_name] = task_time
         return filtered_tasks
-    
+
     def reformat_timestamp(task_time):
         task_time = datetime.fromtimestamp(task_time)
         return timezone.make_aware(task_time, timezone=timezone.utc)

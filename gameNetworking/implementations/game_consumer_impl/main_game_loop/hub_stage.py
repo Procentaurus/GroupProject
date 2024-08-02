@@ -11,15 +11,15 @@ from .abstract import MoveHandler, StageHandler
 
 class HubStageHandler(StageHandler):
 
-    def __init__(self, consumer, game, message_type, data):
-        super().__init__(consumer, game, message_type, data)
+    def __init__(self, consumer, message_type, data):
+        super().__init__(consumer, message_type, data)
 
     async def perform_stage(self):
         handler = None
         if self._message_type == MessageType.PURCHASE_MOVE:
             handler = PurchaseMoveHandler(self._consumer, self._data)
         elif self._message_type == MessageType.READY_MOVE:
-            handler = ReadyMoveHandler(self._consumer, self._game)
+            handler = ReadyMoveHandler(self._consumer)
         elif self._message_type == MessageType.SURRENDER_MOVE:
             handler = SurrenderMoveHandler(self._consumer)
         elif self._message_type == MessageType.REROLL_MOVE:
@@ -34,9 +34,9 @@ class HubStageHandler(StageHandler):
 
 class ReadyMoveHandler(MoveHandler):
 
-    def __init__(self, consumer, game):
+    def __init__(self, consumer):
         super().__init__(consumer)
-        self._game = game
+        self._game = self._consumer.get_game()
         self._g_u = self._consumer.get_game_user()
 
     async def _verify_move(self):
@@ -46,21 +46,23 @@ class ReadyMoveHandler(MoveHandler):
         return True
 
     async def _perform_move_mechanics(self, is_delayed):
-        opponent = await get_game_user(self._consumer.get_opponent().id)
+        opponent = self._consumer.get_opponent()
+        print(f"ReadyMoveHandler, {opponent.id} -> {opponent.state}")
         if opponent.is_in_hub():
             await self._g_u.set_state("await_clash_start")
         elif opponent.wait_for_clash_start():
             await self._send_clash_start_info()
             self._consumer.limit_player_action_time(self._game.next_move_player)
         else:
-            await self._consumer.critical_error(
-                f"Improper opponent player state: {opponent.state}")
+            if not is_delayed:
+                await self._consumer.critical_error(
+                    f"Improper opponent player state: {opponent.state}")
             return
 
         await self._g_u.remove_all_action_cards_from_shop()
         await remove_all_reaction_cards_from_shop(self._g_u)
         if not is_delayed:
-            remove_delayed_task(f'limit_hub_time_{self._g_u.id}')
+            remove_delayed_task(f'limit_hub_time_{str(self._g_u.id)}')
 
     async def _send_clash_start_info(self):
         await self._consumer.send_message_to_group(

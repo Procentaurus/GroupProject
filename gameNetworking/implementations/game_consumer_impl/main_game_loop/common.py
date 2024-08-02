@@ -1,5 +1,6 @@
-from gameMechanics.scripts.initial_shop import get_initial_shop_for_player
 from django.conf import settings
+
+from gameMechanics.scripts.initial_shop import get_initial_shop_for_player
 
 from ....models.queries import add_reaction_card_to_shop
 from .abstract import MoveHandler
@@ -18,12 +19,7 @@ class SurrenderMoveHandler(MoveHandler):
         self._consumer.logger.info(
             f"{g_u.conflict_side} player has surrendered")
         winner_side = await self._get_winner_side(g_u)
-        self._consumer.set_winner(winner_side)
         self._consumer.set_closed_after_disconnect(False)
-        await self._send_game_end_info(winner_side)
-        # TODO add game archive creation
-
-    async def _send_game_end_info(self, winner_side):
         await self._consumer.send_message_to_group(
             {"winner" : winner_side, "after_surrender" : True},
             "game_end")

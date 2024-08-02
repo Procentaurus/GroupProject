@@ -1,5 +1,7 @@
 from django.conf import settings
 
+from customUser.models.queries import create_game_archive
+
 from ...models.queries import get_game, delete_game, delete_game_user
 from ...scheduler.scheduler import add_delayed_task, remove_delayed_task
 
@@ -10,10 +12,11 @@ class Disconnector:
         self._consumer = consumer
 
     async def disconnect(self):
-        g_id = self._consumer.get_game_id()
+        game = self._consumer.get_game()
         if self._consumer.closed_after_disconnect():
-            game = await get_game(g_id)
+            await self._consumer.refresh_game()
             player = self._consumer.get_game_user()
+            game = self._consumer.get_game()
             if game:
                 await player.backup(self._consumer)
                 if not game.is_backuped:
@@ -23,17 +26,22 @@ class Disconnector:
                     await game.backup(self._consumer)
                     self._remove_all_gameplay_tasks()
                     add_delayed_task(
-                        f'limit_game_data_lifetime_{g_id}',
+                        f'limit_game_data_lifetime_{game.id}',
                         settings.DELETE_GAME_TIMEOUT,
                         settings.DELETE_GAME_TIMEOUT_FUNC
                     )
             else:
                 await delete_game_user(player.id)
             return
-        await delete_game(g_id)
+        winner = self._consumer.get_winner()
         await self._consumer.send_message_to_opponent(
-                {"winner" : self._consumer.get_winner()}, "game_end")
-        await self._remove_player_from_group(g_id)
+            {"winner" : winner},
+            "game_end"
+        )
+        await create_game_archive(game, winner)
+        await self._remove_player_from_group(game.id)
+        await delete_game(game.id)
+        self._remove_all_gameplay_tasks()
 
     async def _remove_player_from_group(self, game_id):
         await self._consumer.channel_layer.group_discard(
@@ -48,3 +56,4 @@ class Disconnector:
         remove_delayed_task(f'limit_reaction_time_{opp_id}')
         remove_delayed_task(f'limit_hub_time_{g_u_id}')
         remove_delayed_task(f'limit_hub_time_{opp_id}')
+        remove_delayed_task(f'limit_opponent_rejoin_time_{g_u_id}')

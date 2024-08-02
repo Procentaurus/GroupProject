@@ -18,7 +18,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         super().__init__(*args, **kwargs)
         self.logger = logging.getLogger(__name__)
 
-        self._game_id = None
+        self._game = None
         self._winner = None
         self._game_user = None
         self._opponent = None
@@ -43,15 +43,15 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         ]
 
     ##### Getters #####
-    def get_game_id(self):
-        return self._game_id
-    
+    def get_game(self):
+        return self._game
+
     def get_turns_to_inc(self):
         return self._turns_to_inc
-    
+
     def get_moves_per_clash(self):
         return self._moves_per_clash
-    
+
     def get_opponent(self):
         return self._opponent
 
@@ -60,16 +60,16 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     def get_game_user(self):
         return self._game_user
-    
+
     def get_winner(self):
         return self._winner
-    
+
     ##### Setters #####
     def set_closed_after_disconnect(self, closed_after_disconnect):
         self._closed_after_disconnect = closed_after_disconnect
-    
-    def set_game_id(self, game_id):
-        self._game_id = game_id
+
+    def set_game(self, game):
+        self._game = game
 
     def set_opponent(self, opponent):
         self._opponent = opponent
@@ -85,17 +85,17 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     def set_action_card_id_played_by_opp(self, action_card_id):
         self._action_card_id_played_by_opp = action_card_id
-    
+
     def set_game_user(self, game_user):
         self._game_user = game_user
 
     ##### State changing functions #####
     def is_winner(self):
         return (self._winner is not None)
-    
+
     def reset_turns_to_inc(self):
         self._turns_to_inc = (settings.TURNS_BETWEEN_NUM_MOVES_INC - 1)
-    
+
     def decrement_turn_to_inc(self):
         self._turns_to_inc -= 1
 
@@ -143,15 +143,18 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     async def refresh_game_user(self):
         await refresh_game_user_impl(self)
 
+    async def refresh_game(self):
+        await refresh_game_impl(self)
+
     async def refresh_opponent(self):
         await refresh_opponent_impl(self)
-    
+
     def get_action_moves_left(self):
         return self._moves_table[0]
 
     def get_reaction_moves_left(self):
         return self._moves_table[1]
-    
+
     def decrease_action_moves(self):
         self._moves_table[0] -= 1
 

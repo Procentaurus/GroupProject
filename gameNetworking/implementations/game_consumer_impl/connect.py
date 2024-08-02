@@ -68,7 +68,7 @@ class Connector:
             await self._connect_to_new_game()
 
     async def _connect_to_new_game(self):
-        # await delete_game_token(game_user)
+         # TODO usuwać game token -> await delete_game_token(game_user)
         game_user = await self._create_game_user()
         self._consumer.set_game_user(game_user)
         num_t = await get_number_of_waiting_players("teacher")
@@ -76,9 +76,10 @@ class Connector:
         if num_t > 0 and num_s > 0:
             opponent = await self._find_opponent()
             game = await self._create_game(game_user, opponent)
-            self._consumer.set_game_id(game.id)
+            self._consumer.set_game(game)
             self._consumer.set_opponent(opponent)
-            # await self._set_in_game_status()
+            print(f"connect_to_new_game, opp_id={opponent.id}, player_id={game_user.id}")
+            # TODO ustawić in_game status -> await self._set_in_game_status()
             await self._add_players_channels_to_group(game)
             await self._send_initial_game_info_to_players(game, game_user)
             await self._init_shop_for_game()
@@ -135,7 +136,8 @@ class Connector:
                 await self._create_reconnect_message_body(opponent, game),
                 'game_reconnect'
             )
-            await self._reactivate_all_game_tasks(game, opponent)
+            self._reactivate_all_game_tasks(game)
+            await self._inform_players_about_reactivated_tasks(game, opponent)
         else:
             remove_delayed_task(f'limit_game_data_lifetime_{game.id}')
             await self._consumer.opponent_rejoin_waiting()
@@ -143,11 +145,6 @@ class Connector:
                 f'limit_opponent_rejoin_time_{player.id}',
                 settings.REJOIN_TIMEOUT,
                 settings.REJOIN_TIMEOUT_FUNC
-            )
-            add_delayed_task(
-                f'limit_game_data_lifetime_{game.id}',
-                (settings.REJOIN_TIMEOUT + settings.DELETE_GAME_DELAY),
-                settings.DELETE_GAME_TIMEOUT_FUNC
             )
             await game.clear_backup_status()
 
@@ -196,15 +193,11 @@ class Connector:
             body['reaction_cards_in_shop'] = await get_serialized_r_cards_in_shop(
                                                     player)
         return body
-
-    async def _reactivate_all_game_tasks(self, game, opponent):
-
-        def is_opponent_task_owner(task_id, opponent_id):
-            return task_id == opponent_id
-
+    
+    async def _inform_players_about_reactivated_tasks(self, game, opponent):
         for task_data, task_time in game.delayed_tasks.items():
-            task_func, task_id = task_data.rsplit('_', 1)
-            if is_opponent_task_owner(task_id, str(opponent.id)):
+            _, task_id = task_data.rsplit('_', 1)
+            if task_id == str(opponent.id):
                 await self._consumer.send_message_to_opponent(
                     {"time_remaining": int(task_time)},
                     'time_info'
@@ -213,6 +206,10 @@ class Connector:
                 await self._consumer.time_info({
                     "time_remaining": int(task_time)
                 })
+
+    def _reactivate_all_game_tasks(self, game):
+        for task_data, task_time in game.delayed_tasks.items():
+            task_func, _ = task_data.rsplit('_', 1)
             add_delayed_task(
                 task_data,
                 int(task_time),

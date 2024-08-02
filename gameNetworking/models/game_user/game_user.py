@@ -73,7 +73,7 @@ class GameUser(models.Model):
 
     def can_afford_reroll(self):
         return self.money >= self.reroll_price
-    
+
     @database_sync_to_async
     def increase_reroll_price(self):
         self.reroll_price += settings.REROLL_PRICE_INCREASE_VALUE
@@ -84,22 +84,22 @@ class GameUser(models.Model):
 
     def is_in_hub(self):
         return self.state == PlayerState.IN_HUB
-    
+
     def wait_for_clash_end(self):
         return self.state == PlayerState.AWAIT_CLASH_END
-    
+
     def is_in_clash(self):
         return self.state == PlayerState.IN_CLASH
-    
+
     def wait_for_clash_start(self):
         return self.state == PlayerState.AWAIT_CLASH_START
-    
+
     def is_teacher(self):
         return self.conflict_side == "teacher"
 
     def is_student(self):
         return self.conflict_side == "student"
-    
+
     @database_sync_to_async
     def get_owned_action_cards(self):
         return list(self.owned_action_cards.all())
@@ -112,7 +112,7 @@ class GameUser(models.Model):
     def check_action_card_owned(self, action_card_id):
         result = check_action_card_owned_impl(self, action_card_id)
         return result
-    
+
     @database_sync_to_async
     def check_action_card_in_shop(self, action_card_id):
         result = check_action_card_in_shop_impl(self, action_card_id)
@@ -121,15 +121,15 @@ class GameUser(models.Model):
     @database_sync_to_async
     def remove_action_card(self, action_card_id):
         remove_action_card_impl(self, action_card_id)
-    
+
     @database_sync_to_async
     def remove_action_card_from_shop(self, action_card_id):
         remove_action_card_from_shop_impl(self, action_card_id)
-        
+    
     @database_sync_to_async
     def add_action_card(self, action_card_id):
         add_action_card_impl(self, action_card_id)
-    
+
     @database_sync_to_async
     def add_action_card_to_shop(self, action_card_id):
         add_action_card_to_shop_impl(self, action_card_id)

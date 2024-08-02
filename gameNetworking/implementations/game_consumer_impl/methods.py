@@ -2,13 +2,13 @@ import json
 from django.conf import settings
 
 from ...enums import GameStage
-from ...models.queries import get_game_user
+from ...models.queries import get_game_user, get_game
 from ...scheduler.scheduler import add_delayed_task
 
 def update_after_reconnect_impl(self, game, player, opponent):
     self._opponent = opponent
     self._game_user = player
-    self._game_id = game.id
+    self._game = game
     self._game_stage = GameStage.CLASH if game.stage else GameStage.HUB
     self._turns_to_inc = game.turns_to_inc
     self._moves_per_clash = game.moves_per_clash
@@ -49,6 +49,8 @@ def limit_player_reaction_time_impl(consumer):
     )
 
 def limit_players_hub_time_impl(consumer):
+    print(f"limit_players_hub_time, player_id={consumer.get_game_user().id}")
+    print(f"limit_players_hub_time, opp_id={consumer.get_opponent().id}")
     add_delayed_task(
         f'limit_hub_time_{consumer.get_game_user().id}',
         settings.HUB_STAGE_TIMEOUT,
@@ -64,6 +66,11 @@ async def refresh_game_user_impl(consumer):
     game_user_id = consumer.get_game_user().id
     refreshed_game_user = await get_game_user(game_user_id)
     consumer.set_game_user(refreshed_game_user)
+
+async def refresh_game_impl(consumer):
+    game_id = consumer.get_game().id
+    refreshed_game = await get_game(game_id)
+    consumer.set_game(refreshed_game)
 
 async def refresh_opponent_impl(consumer):
     opp_id = consumer.get_opponent().id

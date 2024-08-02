@@ -27,7 +27,7 @@ class GameAuthenticationTokenList(generics.ListCreateAPIView):
 
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
-    
+
     def create(self, request, *args, **kwargs):
 
         user = request.user
@@ -39,15 +39,13 @@ class GameAuthenticationTokenList(generics.ListCreateAPIView):
 
             serializer_class = self.get_output_serializer_class()
             dto = serializer_class(token).data
-            
+ 
             return Response(dto, status=status.HTTP_201_CREATED)
-        
         elif number_of_found_tokens > 1:
             logger.error(
                 "Multiple game tokens connected to player %s",
                 user.username)
             return Response(None, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
         else:
             return Response("You have already requested game token.",
                 status=status.HTTP_400_BAD_REQUEST)

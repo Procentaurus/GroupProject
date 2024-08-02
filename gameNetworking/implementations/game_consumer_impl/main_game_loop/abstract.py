@@ -3,9 +3,9 @@ from abc import ABC, abstractmethod
 
 class StageHandler(ABC):
 
-    def __init__(self, consumer, game, message_type, data):
+    def __init__(self, consumer, message_type, data):
         self._consumer = consumer
-        self._game = game
+        self._game = consumer.get_game()
         self._message_type = message_type
         self._data = data
 

@@ -23,14 +23,14 @@ def get_game_user(game_user_id):
         return GameUser.objects.get(id=game_user_id)
     except GameUser.DoesNotExist:
         return None
-    
+
 @database_sync_to_async
 def get_game_user_with_user(user):
     try:
         return GameUser.objects.get(user=user)
     except GameUser.DoesNotExist:
         return None
-    
+
 @database_sync_to_async
 def get_longest_waiting_player(conflict_side):
     try:
@@ -92,13 +92,13 @@ def get_game(game_id):
         return Game.objects.get(id=game_id)
     except Game.DoesNotExist:
         return None
-    
+ 
 @database_sync_to_async
 def get_game_with_game_user(game_user):
     return Game.objects.filter(
         Q(teacher_player=game_user) | Q(student_player=game_user)
     ).first()
-    
+
 @database_sync_to_async
 def create_game(teacher_player, student_player):
     number = randint(0,1)
@@ -109,7 +109,7 @@ def create_game(teacher_player, student_player):
         next_move_player=next_move_player
     )
     return game
-    
+
 @database_sync_to_async
 def delete_game(game_id):
     try:
@@ -208,7 +208,7 @@ def remove_all_reaction_cards_from_shop(game_user):
 
     for r_card in r_cards_in_shop:
         r_card.delete()
-        
+   
 def increase_card_amount(card, amount):
     card.amount += amount
     card.save()

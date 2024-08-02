@@ -100,13 +100,17 @@ async def game_end_impl(consumer, data):
             'type' : "game_end",
             **data
         })
+        if data.get('after_surrender') == True:
+            consumer.set_closed_after_disconnect(False)
+            consumer.set_winner(data.get('winner'))
     except Disconnected:
         consumer.logger.warning("Tried to sent through closed socket.")
 
     await consumer.close()
 
 async def game_creation_impl(consumer, data):
-    consumer.set_game_id(data.get("game_id"))
+    game = await get_game(data.get("game_id"))
+    consumer.set_game(game)
     opponent = await get_game_user(data.get("opponent_id"))
     consumer.set_opponent(opponent)
 
@@ -116,8 +120,7 @@ async def hub_stage_timeout_impl(consumer):
         'type': "timeout",
         'move': 'ready move'
     })
-    game = await get_game(consumer.get_game_id())
-    handler = ReadyMoveHandler(consumer, game)
+    handler = ReadyMoveHandler(consumer)
     await handler.perform_move(True)
 
 async def action_move_timeout_impl(consumer):
@@ -133,10 +136,8 @@ async def reaction_move_timeout_impl(consumer):
         'type': "timeout",
         'move': 'reaction move'
     })
-    game = await get_game(consumer.get_game_id())
     handler = ReactionMoveHandler(
         consumer,
-        game,
         {'reaction_cards': []}
     )
     await handler.perform_move(True)

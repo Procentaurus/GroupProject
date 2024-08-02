@@ -5,6 +5,7 @@ from .common import *
 
 
 class CardVerifier:
+
     def __init__(self, consumer, card_checker):
         self._consumer = consumer
         self._c_c = card_checker
@@ -23,7 +24,7 @@ class CardVerifier:
             await e_s.send_cards_not_exist_info(not_existing_cards)
             return False
         return True
-    
+
     async def _verify_cards_in_shop(self):
         g_u = self._consumer.get_game_user()
         cards_not_in_shop = await self._c_c.check_cards_in_shop(g_u)
@@ -41,7 +42,7 @@ class CardVerifier:
             await e_s.send_card_not_owned_info(cards_not_owned)
             return False
         return True
-    
+
     async def verify_cards_for_purchase(self):
         if not self._c_c.is_cards_data_empty():
             if await self._verify_cards_data_structure():
@@ -49,7 +50,7 @@ class CardVerifier:
                     return await self._verify_cards_in_shop()
             return False
         return True
-    
+
     async def verify_cards_for_clash(self):
         if not self._c_c.is_cards_data_empty():
             if await self._verify_cards_data_structure():
@@ -88,9 +89,8 @@ class ActionCardsChecker(CardChecker):
             card_exist = await check_action_card_exist(card_id)
             if not card_exist:
                 not_existing_cards.append(card_id)
-
         return not_existing_cards
-    
+
     async def check_cards_in_shop(self, game_user):
         cards_not_in_shop = []
 
@@ -99,16 +99,14 @@ class ActionCardsChecker(CardChecker):
                 card_id)
             if not action_card_in_shop:
                 cards_not_in_shop.append(card_id)
-
         return cards_not_in_shop
-    
+
     async def check_cards_owned(self, game_user):
         cards_not_owned = []
 
         for card_id in self._cards_data:
             if not await game_user.check_action_card_owned(card_id):
                 cards_not_owned.append(card_id)
-        
         return cards_not_owned
 
 
@@ -138,7 +136,7 @@ class ReactionCardsChecker(CardChecker):
                 not_existing_cards.append(id)
 
         return not_existing_cards
-    
+
     async def check_cards_in_shop(self, game_user):
         cards_not_in_shop = []
 
@@ -149,18 +147,15 @@ class ReactionCardsChecker(CardChecker):
                 game_user, id, amount)
             if not card_in_shop:
                 cards_not_in_shop.append([id, amount])
-
         return cards_not_in_shop
-    
+
     async def check_cards_owned(self, game_user):
         cards_not_owned = []
-
         for card_data in self._cards_data:
             id = card_data.get("id")
             amount = card_data.get("amount")
             if not await check_reaction_card_owned(game_user, id, amount):
                 cards_not_owned.append([id, amount])
-        
         return cards_not_owned
 
 
@@ -183,18 +178,15 @@ class CardCostVerifier:
             id = card_data.get("id")
             card = await get_r_card(id)
             cards_total_price += card.price
-
         return cards_total_price
-    
+
     async def _count_a_cards_cost(self):
         cards_total_price = 0
-
         for card_id in self._a_cards_data:
             action_card = await get_a_card(card_id)
             cards_total_price += action_card.price
-
         return cards_total_price
-    
+
     async def _can_player_afford_cards(self):
         player_money = self._consumer.get_game_user().money
         a_cards_cost = await self._count_a_cards_cost()
@@ -203,7 +195,7 @@ class CardCostVerifier:
         if player_money >= a_cards_cost + r_cards_cost:
             return True
         return False
-    
+
     async def verify_player_can_afford_cards(self):   
         if not await self._can_player_afford_cards():
             e_s = ErrorSender(self._consumer)
@@ -224,21 +216,21 @@ class PlayerVerifier:
             await e_s.send_improper_move_info("readyness already declared")
             return True
         return False
-    
+
     async def verify_player_in_hub(self, move):
         if not self._player.is_in_hub():
             e_s = ErrorSender(self._consumer)
             await e_s.send_improper_state_error(move)
             return False
         return True
-    
+
     async def verify_player_in_clash(self):
         if not self._player.is_in_clash():
             e_s = ErrorSender(self._consumer)
             await e_s.send_improper_state_error("action_move")
             return False
         return True
-    
+
     async def verify_player_in_clash_or_wait_for_clash_end(self):
         p = self._player
         if not p.is_in_clash() and not p.wait_for_clash_end():
@@ -246,7 +238,7 @@ class PlayerVerifier:
             await e_s.send_improper_state_error("reaction_move")
             return False
         return True
-    
+
     async def verify_player_can_reroll(self):
         if not self._player.can_afford_reroll():
             e_s = ErrorSender(self._consumer)
@@ -257,13 +249,12 @@ class PlayerVerifier:
 
 class GameVerifier:
 
-    def __init__(self, consumer, game):
+    def __init__(self, consumer):
         self._consumer = consumer
-        self._game = game
-    
+        self._game = consumer.get_game()
+
     async def verify_game_exist(self):
-        g = await get_game(self._consumer.get_game_id())
-        if g is None:
+        if self._game is None:
             game_user = self._consumer.get_game_user()
             e_s = ErrorSender(self._consumer)
             await e_s.send_game_not_started_info(game_user.conflict_side)
@@ -276,14 +267,14 @@ class GameVerifier:
             await e_s.send_improper_move_info("wrong move type")
             return False
         return True
-        
+   
     async def verify_turn_update_successful(self):
         if not await self._game.update_after_turn():
             e_s = ErrorSender(self._consumer)
             await e_s.send_turn_update_fail_error()
             return False
         return True
-    
+
     async def verify_next_move_performer(self):
         game_user = self._consumer.get_game_user()
         if self._game.next_move_player != game_user.conflict_side:

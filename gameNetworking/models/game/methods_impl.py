@@ -1,5 +1,6 @@
 from ...scheduler.scheduler import get_all_game_tasks
 
+
 def get_opponent_player_impl(game, game_user):
     if game_user.id == game.student_player.id:
         return game.teacher_player

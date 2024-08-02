@@ -1,13 +1,11 @@
 from channels.layers import get_channel_layer
 
-from customUser.models.queries import create_game_archive
-
 from ..models.queries import get_game_user, delete_game
-
 
 async def limit_hub_time(opponent_id):
     opponent = await get_game_user(opponent_id)
     if opponent:
+        print(f"limit_hub_time, opponent_state={opponent.state}, opponent_id={opponent_id}")
         channel_layer = get_channel_layer()
         await channel_layer.send(
             opponent.channel_name,
@@ -47,4 +45,3 @@ async def limit_opponent_rejoin_time(game_user_id):
              'after_surrender': True
             }
         )
-    # TODO create game archive
