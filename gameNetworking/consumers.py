@@ -42,7 +42,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
             settings.INIT_MOVES_PER_CLASH
         ]
 
-    ##### Getters #####
+    ################################# Getters ##################################
     def get_game(self):
         return self._game
 
@@ -63,8 +63,23 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     def get_winner(self):
         return self._winner
+    
+    def get_action_card_id_played_by_opp(self):
+        return self._action_card_id_played_by_opp
 
-    ##### Setters #####
+    def get_game_stage(self):
+        return self._game_stage
+
+    def closed_after_disconnect(self):
+        return self._closed_after_disconnect
+    
+    def get_action_moves_left(self):
+        return self._moves_table[0]
+
+    def get_reaction_moves_left(self):
+        return self._moves_table[1]
+
+    ################################# Setters ##################################
     def set_closed_after_disconnect(self, closed_after_disconnect):
         self._closed_after_disconnect = closed_after_disconnect
 
@@ -89,79 +104,62 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     def set_game_user(self, game_user):
         self._game_user = game_user
 
-    ##### State changing functions #####
+    ########################### Params updating methods ########################
     def is_winner(self):
-        return (self._winner is not None)
+        pass
 
     def reset_turns_to_inc(self):
-        self._turns_to_inc = (settings.TURNS_BETWEEN_NUM_MOVES_INC - 1)
+        pass
 
     def decrement_turn_to_inc(self):
-        self._turns_to_inc -= 1
+        pass
 
-    def is_time_for_moves_per_clash_incrementation(self):
-        return self._turns_to_inc == 0
+    def is_time_for_moves_per_clash_inc(self):
+        pass
 
     def increment_moves_per_clash(self):
-        self._moves_per_clash += 1
+        pass
 
     def is_moves_per_clash_maximal(self):
-        return self._moves_per_clash == (settings.MAX_MOVES_PER_CLASH - 1)
-
-    def get_action_card_id_played_by_opp(self):
-        return self._action_card_id_played_by_opp
-
-    def get_game_stage(self):
-        return self._game_stage
-
-    def closed_after_disconnect(self):
-        return self._closed_after_disconnect
+        pass
 
     def limit_players_hub_time(self):
-        limit_players_hub_time_impl(self)
+        pass
 
     def limit_player_action_time(self, player_side):
-        limit_player_action_time_impl(self, player_side)
+        pass
 
     def limit_player_reaction_time(self):
-        limit_player_reaction_time_impl(self)
+        pass
 
     def update_after_reconnect(self, game, player, opponent):
         pass
 
     def _update_moves_per_clash(self):
-        update_moves_per_clash_impl(self)
+        pass
 
     def init_table_for_new_clash(self):
-        self._update_moves_per_clash()
-        for i in range(2):
-            self._moves_table[i] = self._moves_per_clash
+        pass
 
     def update_game_stage(self):
-        update_game_stage_impl(self)
+        pass
 
     async def refresh_game_user(self):
-        await refresh_game_user_impl(self)
+        pass
 
     async def refresh_game(self):
-        await refresh_game_impl(self)
+        pass
 
     async def refresh_opponent(self):
-        await refresh_opponent_impl(self)
-
-    def get_action_moves_left(self):
-        return self._moves_table[0]
-
-    def get_reaction_moves_left(self):
-        return self._moves_table[1]
+        pass
 
     def decrease_action_moves(self):
-        self._moves_table[0] -= 1
+        pass
 
     def decrease_reaction_moves(self):
-        self._moves_table[1] -= 1
+        pass
 
-    ##### Basic consumer methods #####
+    ############################ Basic consumer methods ########################
     async def connect(self):
         connector = Connector(self)
         await connector.connect()
@@ -177,8 +175,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         self.set_valid_json_sent(False)
 
     async def decode_json(self, text_data, **kwargs):
-        json_data = await decode_json_impl(self, text_data)
-        return json_data
+        pass
 
     # sends messages to both players' mailboxes
     async def send_message_to_group(self, data, event):
@@ -187,7 +184,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     async def send_message_to_opponent(self, data, event):
         await send_message_to_opponent_impl(self, data, event)
 
-    ##### Message handlers #####
+    ############################ Message handlers ##############################
     async def opponent_move(self, data):
         await opponent_move_impl(self, data)
 
@@ -254,4 +251,22 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         await critical_error_impl(self, log_message)
         await self.close()
 
-GameConsumer.update_after_reconnect = update_after_reconnect_impl
+GameConsumer.update_after_reconnect = update_after_reconnect
+GameConsumer.is_winner = is_winner
+GameConsumer.reset_turns_to_inc = reset_turns_to_inc
+GameConsumer.decrement_turn_to_inc = decrement_turn_to_inc
+GameConsumer.is_time_for_moves_per_clash_inc = is_time_for_moves_per_clash_inc
+GameConsumer.increment_moves_per_clash = increment_moves_per_clash
+GameConsumer.is_moves_per_clash_maximal = is_moves_per_clash_maximal
+GameConsumer.limit_players_hub_time = limit_players_hub_time
+GameConsumer.limit_player_reaction_time = limit_player_reaction_time
+GameConsumer.limit_player_action_time = limit_player_action_time
+GameConsumer.update_game_stage = update_game_stage
+GameConsumer._update_moves_per_clash = update_moves_per_clash
+GameConsumer.decrease_action_moves = decrease_action_moves
+GameConsumer.decrease_reaction_moves = decrease_reaction_moves
+GameConsumer.refresh_game_user = refresh_game_user
+GameConsumer.refresh_game = refresh_game
+GameConsumer.refresh_opponent = refresh_opponent
+GameConsumer.decode_json = decode_json
+GameConsumer.init_table_for_new_clash = init_table_for_new_clash
