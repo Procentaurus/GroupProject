@@ -7,7 +7,7 @@ def check_action_card_owned_impl(game_user, a_card_id):
         return True
     except Exception as e:
         return False
-    
+
 def add_action_card_impl(game_user, a_card_id):
     action_card = get_a_card_sync(a_card_id)
     game_user.owned_action_cards.add(action_card)

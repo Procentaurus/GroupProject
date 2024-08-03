@@ -1,5 +1,5 @@
 from random import randint
-import datetime
+from django.db.models import Q
 from channels.db import database_sync_to_async
 from django.forms import ValidationError
 
@@ -23,7 +23,14 @@ def get_game_user(game_user_id):
         return GameUser.objects.get(id=game_user_id)
     except GameUser.DoesNotExist:
         return None
-    
+
+@database_sync_to_async
+def get_game_user_with_user(user):
+    try:
+        return GameUser.objects.get(user=user)
+    except GameUser.DoesNotExist:
+        return None
+
 @database_sync_to_async
 def get_longest_waiting_player(conflict_side):
     try:
@@ -36,8 +43,7 @@ def get_number_of_waiting_players(conflict_side):
     return GameUser.objects.filter(conflict_side=conflict_side).count()
 
 @database_sync_to_async
-def create_game_user(token, conflict_side, channel_name):
-    user = token.user
+def create_game_user(user, conflict_side, channel_name):
     game_user = GameUser.objects.create(user=user, conflict_side=conflict_side,
         channel_name=channel_name)
     return game_user
@@ -86,7 +92,13 @@ def get_game(game_id):
         return Game.objects.get(id=game_id)
     except Game.DoesNotExist:
         return None
-    
+ 
+@database_sync_to_async
+def get_game_with_game_user(game_user):
+    return Game.objects.filter(
+        Q(teacher_player=game_user) | Q(student_player=game_user)
+    ).first()
+
 @database_sync_to_async
 def create_game(teacher_player, student_player):
     number = randint(0,1)
@@ -97,7 +109,7 @@ def create_game(teacher_player, student_player):
         next_move_player=next_move_player
     )
     return game
-    
+
 @database_sync_to_async
 def delete_game(game_id):
     try:
@@ -112,10 +124,18 @@ def delete_game(game_id):
 ### owned reaction card ###
 
 @database_sync_to_async
+def get_owned_reaction_cards(game_user):
+    owned_cards = OwnedReactionCard.objects.filter(game_user=game_user)
+    return [
+        {"card": owned_card.reaction_card, "amount": owned_card.amount}
+        for owned_card in owned_cards
+    ]
+
+@database_sync_to_async
 def check_reaction_card_owned(game_user, r_card_id, amount):  
     owned_r_card = OwnedReactionCard.objects.filter(
         reaction_card__id=r_card_id, game_user=game_user).first()
-    
+
     if owned_r_card is not None:
         return True if owned_r_card.amount >= amount else False
     else: return False
@@ -144,7 +164,15 @@ def remove_reaction_card(game_user, r_card_id, amount):
 
 ### reaction card in shop ###
 
-@database_sync_to_async  
+@database_sync_to_async
+def get_reaction_cards_in_shop(game_user):
+    cards_in_shop = ReactionCardInShop.objects.filter(game_user=game_user)
+    return [
+        {"card": card_in_shop.reaction_card, "amount": card_in_shop.amount}
+        for card_in_shop in cards_in_shop
+    ]
+
+@database_sync_to_async
 def check_reaction_card_in_shop(game_user, r_card_id, amount):
     r_card_in_shop = ReactionCardInShop.objects.filter(
         reaction_card__id=r_card_id, game_user=game_user).first()
@@ -180,7 +208,7 @@ def remove_all_reaction_cards_from_shop(game_user):
 
     for r_card in r_cards_in_shop:
         r_card.delete()
-        
+   
 def increase_card_amount(card, amount):
     card.amount += amount
     card.save()

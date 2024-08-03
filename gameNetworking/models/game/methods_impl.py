@@ -1,4 +1,6 @@
-from ...scheduler.scheduler import get_all_delayed_tasks
+from ...scheduler.scheduler import get_all_game_tasks
+from ...enums import GameStage
+
 
 def get_opponent_player_impl(game, game_user):
     if game_user.id == game.student_player.id:
@@ -25,8 +27,8 @@ def update_after_turn_impl(game):
 def backup_impl(game, consumer):
     game.turns_to_inc = consumer.get_turns_to_inc()
     game.moves_per_clash = consumer.get_moves_per_clash()
-    game.stage = bool(consumer.get_game_stage())
-    game.delayed_tasks = get_all_delayed_tasks(
+    game.stage = True if consumer.get_game_stage() == GameStage.CLASH else False
+    game.delayed_tasks = get_all_game_tasks(
         str(consumer.get_game_user().id), str(consumer.get_opponent().id)
     )
     game.is_backuped = True

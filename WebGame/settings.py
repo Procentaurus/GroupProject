@@ -102,16 +102,26 @@ CHANNEL_LAYERS = {
 }
 
 
-#############################    GAME SETTINGS    #############################
+#############################    GAME SETTINGS    ##############################
 ACTION_MOVE_TIMEOUT = 30
 REACTION_MOVE_TIMEOUT = 60
 HUB_STAGE_TIMEOUT = 60
-DELETE_GAME_TIMEOUT = 120
+DELETE_GAME_TIMEOUT = 100
+REJOIN_TIMEOUT = 30       # Must be smaller value than DELETE_GAME_TIMEOUT !!!
 
-ACTION_MOVE_TIMEOUT_FUNC = 'gameNetworking.scheduler.tasks.limit_action_time'
-REACTION_MOVE_TIMEOUT_FUNC = 'gameNetworking.scheduler.tasks.limit_reaction_time'
-HUB_STAGE_TIMEOUT_FUNC = 'gameNetworking.scheduler.tasks.limit_hub_time'
-DELETE_GAME_TIMEOUT_FUNC = 'gameNetworking.scheduler.tasks.limit_game_data_lifetime'
+TIMEOUT_MODULE = 'gameNetworking.scheduler.tasks'
+
+ACTION_MOVE_TIMEOUT_FUNC_NAME = 'limit_action_time'
+REACTION_MOVE_TIMEOUT_FUNC_NAME = 'limit_reaction_time'
+HUB_STAGE_TIMEOUT_FUNC_NAME = 'limit_hub_time'
+DELETE_GAME_TIMEOUT_FUNC_NAME = 'limit_game_data_lifetime'
+REJOIN_TIMEOUT_FUNC_NAME = 'limit_opponent_rejoin_time'
+
+ACTION_MOVE_TIMEOUT_FUNC = TIMEOUT_MODULE + '.' + ACTION_MOVE_TIMEOUT_FUNC_NAME
+REACTION_MOVE_TIMEOUT_FUNC = TIMEOUT_MODULE + '.' + REACTION_MOVE_TIMEOUT_FUNC_NAME
+HUB_STAGE_TIMEOUT_FUNC = TIMEOUT_MODULE + '.' + HUB_STAGE_TIMEOUT_FUNC_NAME
+DELETE_GAME_TIMEOUT_FUNC = TIMEOUT_MODULE + '.' + DELETE_GAME_TIMEOUT_FUNC_NAME
+REJOIN_TIMEOUT_FUNC = TIMEOUT_MODULE + '.' + REJOIN_TIMEOUT_FUNC_NAME
 
 INIT_MOVES_PER_CLASH = 1
 MAX_MOVES_PER_CLASH = 3
@@ -119,8 +129,8 @@ TURNS_BETWEEN_NUM_MOVES_INC = 5
 
 INIT_A_CARDS_NUMBER = 2
 INIT_R_CARDS_NUMBER = 5
-
 REROLL_PRICE_INCREASE_VALUE = 10
+################################################################################
 
 
 REST_FRAMEWORK = {

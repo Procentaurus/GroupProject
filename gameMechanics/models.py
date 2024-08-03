@@ -19,7 +19,7 @@ class ActionCard(models.Model):
         validators=[MinValueValidator(0), MaxValueValidator(10)]
     )
     pressure = models.IntegerField()
-    image = models.ImageField(upload_to='card_images/')
+    image = models.ImageField(upload_to='card_images/', null=True)
 
 class ReactionCard(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
@@ -40,4 +40,4 @@ class ReactionCard(models.Model):
         ('Intelligence', 'Intelligence')
     ]
     type = models.CharField(max_length=20, choices=type_choices)
-    image = models.ImageField(upload_to='card_images/')
+    image = models.ImageField(upload_to='card_images/', null=True)

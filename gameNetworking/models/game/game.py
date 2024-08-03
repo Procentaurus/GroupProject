@@ -51,6 +51,11 @@ class Game(models.Model):
     def backup(self, consumer):
         backup_impl(self, consumer)
 
+    @database_sync_to_async
+    def clear_backup_status(self):
+        self.is_backuped = False
+        self.save()
+
     def delete(self, *args, **kwargs):
         if self.teacher_player:
             self.teacher_player.delete()

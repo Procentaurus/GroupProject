@@ -1,7 +1,9 @@
-from gameMechanics.scripts.initial_shop import get_initial_shop_for_player
 from django.conf import settings
 
+from gameMechanics.scripts.initial_shop import get_initial_shop_for_player
+
 from ....models.queries import add_reaction_card_to_shop
+from ....scheduler.scheduler import check_game_user_state
 from .abstract import MoveHandler
 
 
@@ -13,24 +15,20 @@ class SurrenderMoveHandler(MoveHandler):
     async def _verify_move(self):
         return True
 
-    async def perform_move_mechanics(self):
+    async def _perform_move_mechanics(self, is_delayed):
         g_u = self._consumer.get_game_user()
         self._consumer.logger.info(
             f"{g_u.conflict_side} player has surrendered")
-        winner_side = self._get_winner_side(g_u)
-        self._consumer.set_winner(winner_side)
-        self._consumer.set_closure_from_user_side(False)
-        await self._send_game_end_info(winner_side)
-
-    async def _send_game_end_info(self, winner_side):
+        winner_side = await self._get_winner_side(g_u)
+        self._consumer.set_closed_after_disconnect(False)
         await self._consumer.send_message_to_group(
             {"winner" : winner_side, "after_surrender" : True},
             "game_end")
-        
+
     async def _get_winner_side(self, g_u):
         return "student" if g_u.is_teacher() else "teacher"
 
-    
+
 class ErrorSender:
 
     def __init__(self, consumer):
@@ -46,7 +44,6 @@ class ErrorSender:
             f"{side} player tried to use cards that do not exist",
             {"not_existing_cards" : data}
         )
-
 
     async def send_cards_not_in_shop_info(self, cards):
         side = self._consumer.get_game_user().conflict_side
@@ -66,8 +63,10 @@ class ErrorSender:
 
     async def send_improper_state_error(self, move_type):
         game_user = self._consumer.get_game_user()
+        game_id = self._consumer.get_game().id
+        state = check_game_user_state(str(game_id), str(game_user.id))
         await self._consumer.critical_error(
-            f"Improper state: {game_user.state} of {game_user.conflict_side}"
+            f"Improper state: {state} of {game_user.conflict_side}"
             + f" player in {move_type}.")
         
     async def send_not_enough_money_info(self):
@@ -85,15 +84,15 @@ class ErrorSender:
         await self._consumer.error(
             f"Wrong message type in the {self._consumer.get_game_stage()}"
             +" game stage.")
-        
+   
     async def send_invalid_token_info(self, conflict_side):
         await self.consumer.error("You have used invalid token",
             f"Invalid authentication token used by {conflict_side} player")
-        
+
     async def send_invalid_conflict_side_info(self, conflict_side):
         await self.consumer.error("You have chosen invalid conflict side",
             f"Invalid conflict side chosen by {conflict_side} player")
-        
+
     async def send_game_not_started_info(self, conflict_side):
         await self._consumer.error(
             f"{conflict_side} player made move before the game"
@@ -103,7 +102,7 @@ class ErrorSender:
         await self._consumer.critical_error("Updating game turn impossible.")
 
 
-class InfoSender:
+class InitInfoSender:
 
     def __init__(self, consumer):
         self._consumer = consumer
@@ -111,16 +110,15 @@ class InfoSender:
     async def _send_game_creation_info_to_opp(self, game_id, opp_id):
         await self._consumer.send_message_to_opponent(
             {"game_id": str(game_id),
-            "channel_name": self._consumer.channel_name,
             "opponent_id": str(opp_id)},
             "game_creation")
-        
+
     async def _send_game_start_info_to_opp(self, opp):
         await self._consumer.send_message_to_opponent(
             {"initial_money_amount" : opp.money,
             "initial_morale" : opp.morale},
             "game_start")
-        
+
     async def _send_game_start_info(self):   
         g_u = self._consumer.get_game_user()
         await self._consumer.game_start(
@@ -139,7 +137,7 @@ class InitShopCardsGetter:
         conflict_side = "teacher" if self._g_u.is_teacher() else "student"
         return (await get_initial_shop_for_player(
             self._num_a_cards, self._num_r_cards, conflict_side))[::-1]
-    
+
     async def get_opponent_cards(self):
         conflict_side = "student" if self._g_u.is_teacher() else "teacher"
         return (await get_initial_shop_for_player(

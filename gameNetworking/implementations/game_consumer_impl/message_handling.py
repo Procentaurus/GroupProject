@@ -1,5 +1,8 @@
 from autobahn.exception import Disconnected
+from django.conf import settings
 
+from ...scheduler.scheduler import update_game_user_state
+from ...enums import PlayerState
 from ...implementations.game_consumer_impl.main_game_loop.hub_stage import \
     ReadyMoveHandler
 from ...implementations.game_consumer_impl.main_game_loop.clash_stage import \
@@ -59,9 +62,9 @@ async def game_start_impl(consumer, data):
 
 async def clash_start_impl(consumer, data):
     game_user = consumer.get_game_user()
-    await game_user.set_state("in_clash")
+    game_id = str(consumer.get_game().id)
+    update_game_user_state(str(game_id), str(game_user.id), PlayerState.IN_CLASH)
     consumer.update_game_stage()
-
     await consumer.send_json({
         'type' : "clash_start",
         'next_move' : data.get("next_move_player"),
@@ -74,23 +77,44 @@ async def clash_end_impl(consumer):
         'type' : "clash_end",
     })
 
+async def game_reconnect_impl(consumer, data):
+    await consumer.refresh_opponent()
+    await consumer.send_json({
+        'type' : "game_reconnect",
+        **data
+    })
+
+async def time_info_impl(consumer, data):
+    await consumer.send_json({
+        "type": "time_info",
+        "time_remaining": data.get("time_remaining")
+    })
+
+async def opponent_rejoin_waiting_impl(consumer):
+    await consumer.send_json({
+        'type' : "opponent_rejoin_waiting",
+        'time_for_opponent_to_rejoin' : settings.REJOIN_TIMEOUT
+    })
+
 async def game_end_impl(consumer, data):  
     try:
         await consumer.send_json({
             'type' : "game_end",
             **data
         })
+        if data.get('after_surrender') == True:
+            consumer.set_closed_after_disconnect(False)
+            consumer.set_winner(data.get('winner'))
     except Disconnected:
         consumer.logger.warning("Tried to sent through closed socket.")
 
     await consumer.close()
 
 async def game_creation_impl(consumer, data):
-    consumer.set_game_id(data.get("game_id"))
-    consumer.set_opponent_channel_name(data.get("channel_name"))
-
-    opp = await get_game_user(data.get("opponent_id"))
-    consumer.set_opponent(opp)
+    game = await get_game(data.get("game_id"))
+    consumer.set_game(game)
+    opponent = await get_game_user(data.get("opponent_id"))
+    consumer.set_opponent(opponent)
 
 async def hub_stage_timeout_impl(consumer):
     consumer.logger.info("Hub stage timeout")
@@ -98,8 +122,7 @@ async def hub_stage_timeout_impl(consumer):
         'type': "timeout",
         'move': 'ready move'
     })
-    game = await get_game(consumer.get_game_id())
-    handler = ReadyMoveHandler(consumer, game)
+    handler = ReadyMoveHandler(consumer)
     await handler.perform_move(True)
 
 async def action_move_timeout_impl(consumer):
@@ -115,10 +138,8 @@ async def reaction_move_timeout_impl(consumer):
         'type': "timeout",
         'move': 'reaction move'
     })
-    game = await get_game(consumer.get_game_id())
     handler = ReactionMoveHandler(
         consumer,
-        game,
         {'reaction_cards': []}
     )
     await handler.perform_move(True)
@@ -151,5 +172,4 @@ async def critical_error_impl(consumer, log_message):
         'type' : "error",
         'info' : "SERVER ERROR OCCURED",
     })
-
     consumer.logger.error(log_message)

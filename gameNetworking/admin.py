@@ -32,7 +32,7 @@ class GameUserAdmin(admin.ModelAdmin):
     add_fieldsets = (
         ("Main", {"fields": ("id", "user")}),
         ("Game Data", {"fields": (
-            "state", "morale", "money", "conflict_side", "action_moves_left",
+            "morale", "money", "conflict_side", "action_moves_left",
             "reaction_moves_left", "opp_played_action_card_id")
         }),
         ("Cards", {"fields":(
