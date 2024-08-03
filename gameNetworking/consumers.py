@@ -174,70 +174,68 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     ############################ Message handlers ##############################
     async def opponent_move(self, data):
-        await opponent_move_impl(self, data)
+        pass
 
     async def opponent_disconnect(self, data=None):
-        await opponent_disconnect_impl(self)
+        pass
 
     async def purchase_result(self, data):
-        await purchase_result_impl(self, data)
+        pass
 
     async def clash_result(self, data):
-        await clash_result_impl(self, data)
+        pass
 
     async def card_package(self, data):
-        await card_package_impl(self, data)
+        pass
 
     async def game_start(self, data):
-        await game_start_impl(self, data)
+        pass
 
     async def clash_start(self, data):
-        await clash_start_impl(self, data)
+        pass
 
     async def clash_end(self, data=None):
-        await clash_end_impl(self)
+        pass
 
     async def game_reconnect(self, data):
-        await game_reconnect_impl(self, data)
+        pass
 
     async def time_info(self, data):
-        await time_info_impl(self, data)
+        pass
 
     async def opponent_rejoin_waiting(self, data=None):
-        await opponent_rejoin_waiting_impl(self)
+        pass
 
     async def game_end(self, data):
-        await game_end_impl(self, data)
+        pass
 
     async def game_creation(self, data):
-        await game_creation_impl(self, data)
+        pass
 
     async def hub_stage_timeout(self, data=None):
-        await hub_stage_timeout_impl(self)
-
+        pass
     async def action_move_timeout(self, data=None):
-        await action_move_timeout_impl(self)
+        pass
 
     async def reaction_move_timeout(self, data=None):
-        await reaction_move_timeout_impl(self)
+        pass
 
     # Used for player's mistakes during game flow
     # that do not require complex response
     # Performs: logging and sending info to player
     async def error(self, message, log_message = None):
-        await error_impl(self, message, log_message)
+        pass
 
     # Used for player's mistakes during game flow
     # that do require complex response
     # Performs: logging and sending info to player
     async def complex_error(self, message, log_message, data):
-        await complex_error_impl(self, message, log_message, data)
+        pass
 
     # Used for game flow errors
     # Performs: logging, sending info to player and closing connection
     async def critical_error(self, log_message):
-        await critical_error_impl(self, log_message)
-        await self.close()
+        pass
 
 
 GameConsumer.update_after_reconnect = update_after_reconnect
@@ -257,10 +255,30 @@ GameConsumer.decrease_reaction_moves = decrease_reaction_moves
 GameConsumer.refresh_game_user = refresh_game_user
 GameConsumer.refresh_game = refresh_game
 GameConsumer.refresh_opponent = refresh_opponent
-GameConsumer.decode_json = decode_json
 GameConsumer.init_table_for_new_clash = init_table_for_new_clash
+
 GameConsumer.send_message_to_group = send_message_to_group
 GameConsumer.send_message_to_opponent = send_message_to_opponent
 GameConsumer.connect = connect
 GameConsumer.disconnect = disconnect
 GameConsumer.receive_json = receive_json
+GameConsumer.decode_json = decode_json
+
+GameConsumer.critical_error = critical_error
+GameConsumer.complex_error = complex_error
+GameConsumer.error = error
+GameConsumer.reaction_move_timeout = reaction_move_timeout
+GameConsumer.action_move_timeout = action_move_timeout
+GameConsumer.hub_stage_timeout = hub_stage_timeout
+GameConsumer.game_creation = game_creation
+GameConsumer.game_end = game_end
+GameConsumer.opponent_rejoin_waiting = opponent_rejoin_waiting
+GameConsumer.time_info = time_info
+GameConsumer.clash_end = clash_end
+GameConsumer.clash_start = clash_start
+GameConsumer.game_start = game_start
+GameConsumer.card_package = card_package
+GameConsumer.clash_result = clash_result
+GameConsumer.purchase_result =purchase_result
+GameConsumer.opponent_disconnect = opponent_disconnect
+GameConsumer.opponent_move = opponent_move
