@@ -4,7 +4,6 @@ from django.conf import settings
 
 from .implementations.game_consumer_impl.methods import *
 from .implementations.game_consumer_impl.message_handling import *
-from .implementations.game_consumer_impl.message_sending import *
 
 class GameConsumer(AsyncJsonWebsocketConsumer):
 
