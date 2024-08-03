@@ -2,8 +2,10 @@ from django.conf import settings
 
 from customUser.models.queries import create_game_archive
 
-from ...models.queries import get_game, delete_game, delete_game_user
-from ...scheduler.scheduler import add_delayed_task, remove_delayed_task
+from ...models.queries import delete_game, delete_game_user
+from ...scheduler.scheduler import add_delayed_task
+from ...scheduler.scheduler import remove_delayed_task
+from ...scheduler.scheduler import delete_states_queue
 
 
 class Disconnector:
@@ -42,6 +44,7 @@ class Disconnector:
         await self._remove_player_from_group(game.id)
         await delete_game(game.id)
         self._remove_all_gameplay_tasks()
+        delete_states_queue(game.id)
 
     async def _remove_player_from_group(self, game_id):
         await self._consumer.channel_layer.group_discard(

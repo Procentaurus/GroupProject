@@ -3,7 +3,7 @@ from gameMechanics.queries import get_a_card_serialized
 
 from ....enums import MessageType, PlayerState
 from ....models.queries import add_reaction_card_to_owned, remove_reaction_card
-from ....scheduler.scheduler import remove_delayed_task
+from ....scheduler.scheduler import remove_delayed_task, update_game_user_state
 from .common import SurrenderMoveHandler, InitCardsManager
 from .abstract import MoveHandler, StageHandler
 from .checkers import *
@@ -63,7 +63,11 @@ class ActionMoveHandler(MoveHandler):
 
         self._consumer.decrease_action_moves()
         if self._consumer.get_action_moves_left() == 0:
-            await game_user.set_state(PlayerState.AWAIT_CLASH_END)
+            update_game_user_state(
+                str(self._game.id),
+                str(game_user.id),
+                PlayerState.AWAIT_CLASH_END
+            )
         if not is_delayed:
             remove_delayed_task(f'limit_action_time_{game_user.id}')
         self._consumer.limit_player_reaction_time()
@@ -106,7 +110,7 @@ class ReactionMoveHandler(MoveHandler):
         if not await c_v.verify_cards_for_clash(): return False
         if not await g_v.verify_turn_update_successful(): return False
         return True
-
+            
     async def _perform_move_mechanics(self, is_delayed):
         if not is_delayed:
             remove_delayed_task(f'limit_reaction_time_{self._g_u.id}')
@@ -137,7 +141,7 @@ class ReactionMoveHandler(MoveHandler):
  
         await self._consumer.send_message_to_opponent({}, "clash_end")
         await self._consumer.clash_end()
-        await self.set_user_states(opp)
+        self.set_players_states_in_hub(opp)
         self._consumer.set_action_card_id_played_by_opp(None)
 
         mng = InitCardsManager(self._consumer)
@@ -146,9 +150,17 @@ class ReactionMoveHandler(MoveHandler):
             remove_delayed_task(f'limit_reaction_time_{self._g_u.id}')
         self._consumer.limit_players_hub_time()
 
-    async def set_user_states(self, opp):
-        await self._g_u.set_state("in_hub")
-        await opp.set_state("in_hub")
+    def set_players_states_in_hub(self, opp):
+        update_game_user_state(
+            str(self._game.id),
+            str(self._g_u.id),
+            PlayerState.IN_HUB
+        )
+        update_game_user_state(
+            str(self._game.id),
+            str(opp.id),
+            PlayerState.IN_HUB
+        )
 
     async def _get_opponent_move_resp_body(self):
         resp_body = []

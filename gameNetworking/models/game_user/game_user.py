@@ -6,8 +6,9 @@ from django.conf import settings
 from customUser.models import MyUser
 from gameMechanics.models import ActionCard
 
+from ...scheduler.scheduler import update_game_user_state, check_game_user_state
 from ...enums import PlayerState
-from ..common import PLAYER_STATES, CONFLICT_SIDES
+from ..common import CONFLICT_SIDES
 from .methods_impl import *
     
 
@@ -18,8 +19,6 @@ class GameUser(models.Model):
     started_waiting = models.DateTimeField(auto_now_add=True)
     channel_name = models.CharField(null=False, max_length=100)
 
-    state = models.CharField(choices=PLAYER_STATES, default='in_hub',
-        max_length=100, null=False, blank=False)
     morale = models.PositiveSmallIntegerField(
         default=100, null=False, blank=False)
     money = models.PositiveSmallIntegerField(
@@ -66,11 +65,6 @@ class GameUser(models.Model):
         self.money -= amount
         self.save()
 
-    @database_sync_to_async
-    def set_state(self, state):
-        self.state = state
-        self.save(force_update=True)
-
     def can_afford_reroll(self):
         return self.money >= self.reroll_price
 
@@ -82,17 +76,21 @@ class GameUser(models.Model):
     async def buy_reroll(self):
         await self.subtract_money(self.reroll_price)
 
-    def is_in_hub(self):
-        return self.state == PlayerState.IN_HUB
+    def is_in_hub(self, game_id):
+        state = check_game_user_state(game_id, str(self.id))
+        return state == PlayerState.IN_HUB
 
-    def wait_for_clash_end(self):
-        return self.state == PlayerState.AWAIT_CLASH_END
+    def wait_for_clash_end(self, game_id):
+        state = check_game_user_state(game_id, str(self.id))
+        return state == PlayerState.AWAIT_CLASH_END
 
-    def is_in_clash(self):
-        return self.state == PlayerState.IN_CLASH
+    def is_in_clash(self, game_id):
+        state = check_game_user_state(game_id, str(self.id))
+        return state == PlayerState.IN_CLASH
 
-    def wait_for_clash_start(self):
-        return self.state == PlayerState.AWAIT_CLASH_START
+    def wait_for_clash_start(self, game_id):
+        state = check_game_user_state(game_id, str(self.id))
+        return state == PlayerState.AWAIT_CLASH_START
 
     def is_teacher(self):
         return self.conflict_side == "teacher"

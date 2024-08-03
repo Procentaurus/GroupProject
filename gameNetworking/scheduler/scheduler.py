@@ -12,16 +12,46 @@ redis_client = redis.StrictRedis(
     db=settings.REDIS_SCHEDULER_DB
 )
 
+def delete_states_queue(game_id):
+    queue_name = f'{game_id}_states'
+    result = redis_client.delete(queue_name)
+    if result == 1:
+        print(f"Queue '{queue_name}' was successfully deleted.")
+    else:
+        print(f"Queue '{queue_name}' did not exist.")
+
+def update_game_user_state(game_id, game_user_id, state):
+    with redis_client.pipeline() as pipe:
+        pipe.zrem(f'{game_id}_states', game_user_id)
+        pipe.zadd(f'{game_id}_states', {game_user_id: state})
+        pipe.execute()
+
+def check_game_user_state(game_id, game_user_id):
+    states = redis_client.zrange(f'{game_id}_states', 0, -1, withscores=True)
+    if states:
+        for id, state in states:
+            id = id.decode('utf-8')
+            if str(id) == str(game_user_id):
+                return str(state.decode('utf-8'))
+    return None
+
 def add_delayed_task(task_name, delay_in_sec, func_path):
     print(f"add_delayed_task, task_name={task_name}, delay={delay_in_sec}")
     task_time = datetime.now(timezone.utc) + timedelta(seconds=delay_in_sec)
-    redis_client.zadd('tasks', {task_name: task_time.timestamp()})
-    redis_client.hset('task_funcs', task_name, func_path)
+    if not redis_client.zscore('tasks', task_name):
+        with redis_client.pipeline() as pipe:
+            pipe.zadd('tasks', {task_name: task_time.timestamp()})
+            pipe.hset('task_funcs', task_name, func_path)
+            pipe.execute()
 
 def remove_delayed_task(task_name):
     print(f"remove_delayed_task, task_name={task_name}")
-    redis_client.zrem('tasks', task_name)
-    redis_client.hdel('task_funcs', task_name)
+    with redis_client.pipeline() as pipe:
+        pipe.zrem('tasks', task_name)
+        pipe.hdel('task_funcs', task_name)
+        pipe.execute()
+    if not redis_client.zscore('tasks', task_name):
+        print("task removed successfully")
 
 async def run_task(task_name):
 
@@ -39,7 +69,13 @@ async def run_task(task_name):
     if func_path:
         func = get_func()
         id = get_id(task_name)
-        await func(id)
+        print(f"run_task, task_name={task_name}")
+        try:
+            await func(id)
+            return True
+        except Exception as e:
+            print(f"Error executing task {task_name}: {e}")
+    return False
 
 async def check_tasks():
     while True:
@@ -47,16 +83,19 @@ async def check_tasks():
         tasks = redis_client.zrangebyscore('tasks', 0, now)
         if tasks:
             for task in tasks:
-                await run_task(task.decode('utf-8'))
-                remove_delayed_task(task.decode('utf-8'))
-                await asyncio.sleep(0.005)
-        await asyncio.sleep(0.1)
+                task_name = task.decode('utf-8')
+                if redis_client.zrem('tasks', task_name):
+                    success = await run_task(task_name)
+                    if success:
+                        remove_delayed_task(task_name)
+                    else:
+                        print(f"Task {task_name} failed")
+        else:
+            await asyncio.sleep(0.1)
 
 def get_all_game_tasks(first_player_id, second_player_id):
-    remaining_tasks = {}
-    tasks = redis_client.zrange('tasks', 0, -1, withscores=True)
 
-    def filter_tasks_by_players():
+    def filter_tasks_by_players(tasks):
         ids = [first_player_id, second_player_id]
         filtered_tasks = {}
         for task_name, task_time in tasks:
@@ -74,7 +113,9 @@ def get_all_game_tasks(first_player_id, second_player_id):
             task_time - datetime.now(timezone.utc) - timedelta(hours=2)
         ).total_seconds()
 
-    filtered_tasks = filter_tasks_by_players()
+    remaining_tasks = {}
+    tasks = redis_client.zrange('tasks', 0, -1, withscores=True)
+    filtered_tasks = filter_tasks_by_players(tasks)
     for task_name, task_time in filtered_tasks.items():
         task_time = reformat_timestamp(task_time)
         remaining_time = calculate_time_difference(task_time)

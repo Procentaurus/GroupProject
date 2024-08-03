@@ -3,6 +3,7 @@ from django.conf import settings
 from gameMechanics.scripts.initial_shop import get_initial_shop_for_player
 
 from ....models.queries import add_reaction_card_to_shop
+from ....scheduler.scheduler import check_game_user_state
 from .abstract import MoveHandler
 
 
@@ -62,8 +63,10 @@ class ErrorSender:
 
     async def send_improper_state_error(self, move_type):
         game_user = self._consumer.get_game_user()
+        game_id = self._consumer.get_game().id
+        state = check_game_user_state(str(game_id), str(game_user.id))
         await self._consumer.critical_error(
-            f"Improper state: {game_user.state} of {game_user.conflict_side}"
+            f"Improper state: {state} of {game_user.conflict_side}"
             + f" player in {move_type}.")
         
     async def send_not_enough_money_info(self):

@@ -1,6 +1,8 @@
 from autobahn.exception import Disconnected
 from django.conf import settings
 
+from ...scheduler.scheduler import update_game_user_state
+from ...enums import PlayerState
 from ...implementations.game_consumer_impl.main_game_loop.hub_stage import \
     ReadyMoveHandler
 from ...implementations.game_consumer_impl.main_game_loop.clash_stage import \
@@ -60,9 +62,9 @@ async def game_start_impl(consumer, data):
 
 async def clash_start_impl(consumer, data):
     game_user = consumer.get_game_user()
-    await game_user.set_state("in_clash")
+    game_id = str(consumer.get_game().id)
+    update_game_user_state(game_id, str(game_user.id), PlayerState.IN_CLASH)
     consumer.update_game_stage()
-
     await consumer.send_json({
         'type' : "clash_start",
         'next_move' : data.get("next_move_player"),

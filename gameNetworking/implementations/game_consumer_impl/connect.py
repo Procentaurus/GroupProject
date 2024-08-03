@@ -1,12 +1,12 @@
 from gameMechanics.serializers import *
 
-from ...scheduler.scheduler import remove_delayed_task, get_all_game_tasks
+from ...scheduler.scheduler import remove_delayed_task, update_game_user_state
 from ...scheduler.scheduler import add_delayed_task
 from ...scheduler.scheduler import verify_task_exists
 from ...models.queries import *
 from ...models.game.serializers import GameReconnectSerializer
 from ...models.game_user.serializers import GameUserReconnectSerializer
-from ...enums import GameStage
+from ...enums import GameStage, PlayerState
 from .main_game_loop.common import *
 
 
@@ -78,17 +78,21 @@ class Connector:
             game = await self._create_game(game_user, opponent)
             self._consumer.set_game(game)
             self._consumer.set_opponent(opponent)
-            print(f"connect_to_new_game, opp_id={opponent.id}, player_id={game_user.id}")
             # TODO ustawić in_game status -> await self._set_in_game_status()
             await self._add_players_channels_to_group(game)
             await self._send_initial_game_info_to_players(game, game_user)
             await self._init_shop_for_game()
             self._consumer.limit_players_hub_time()
+            self.init_queue_with_game_user_states(
+                game.id,
+                game_user.id,
+                opponent.id
+            )
 
     async def _create_game_user(self):
         game_user = await create_game_user(
             self._user,
-            self._side, 
+            self._side,
             self._consumer.channel_name
         )
         self._consumer.logger.info(
@@ -226,3 +230,8 @@ class Connector:
         await self._consumer.channel_layer.group_add(
             f"game_{game.id}", self._consumer.get_game_user().channel_name
         )
+
+    def init_queue_with_game_user_states(self, game_id, player_id, opponent_id):
+        queue_name = f'{game_id}_states'
+        update_game_user_state(queue_name, player_id, PlayerState.IN_HUB)
+        update_game_user_state(queue_name, opponent_id, PlayerState.IN_HUB)
