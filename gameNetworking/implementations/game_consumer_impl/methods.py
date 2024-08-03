@@ -1,9 +1,14 @@
 import json
+from channels.exceptions import StopConsumer
 from django.conf import settings
 
 from ...enums import GameStage
 from ...models.queries import get_game_user, get_game
 from ...scheduler.scheduler import add_delayed_task
+
+from .connect import Connector
+from .disconnect import Disconnector
+from .main_game_loop.main_game_loop import GameLoopHandler
 
 
 def is_winner(self):
@@ -114,3 +119,17 @@ async def decode_json(self, text_data):
         return json_data
     except json.JSONDecodeError:
         await self.error("Wrong format of sent json")
+
+async def connect(self):
+    connector = Connector(self)
+    await connector.connect()
+
+async def disconnect(self, *args):
+    disconnector = Disconnector(self)
+    await disconnector.disconnect()           
+    raise StopConsumer()
+
+async def receive_json(self, data):
+    loop_handler = GameLoopHandler(self, data)
+    await loop_handler.perform_game_loop()
+    self.set_valid_json_sent(False)

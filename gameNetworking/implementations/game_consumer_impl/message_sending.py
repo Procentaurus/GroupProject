@@ -1,4 +1,4 @@
-async def send_message_to_group_impl(consumer, data, event):
+async def send_message_to_group(consumer, data, event):
     await consumer.channel_layer.group_send(
         f"game_{consumer.get_game().id}",
         {
@@ -7,7 +7,7 @@ async def send_message_to_group_impl(consumer, data, event):
         }
     )
 
-async def send_message_to_opponent_impl(consumer, data, event):
+async def send_message_to_opponent(consumer, data, event):
     await consumer.channel_layer.send(
         consumer.get_opponent().channel_name,
         {

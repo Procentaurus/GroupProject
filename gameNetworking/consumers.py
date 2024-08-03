@@ -1,16 +1,10 @@
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
-from channels.exceptions import StopConsumer
 import logging
 from django.conf import settings
 
-from .implementations.game_consumer_impl.disconnect import Disconnector
 from .implementations.game_consumer_impl.methods import *
-from .implementations.game_consumer_impl.connect import Connector
 from .implementations.game_consumer_impl.message_handling import *
 from .implementations.game_consumer_impl.message_sending import *
-from .implementations.game_consumer_impl.main_game_loop.main_game_loop \
-    import GameLoopHandler
-
 
 class GameConsumer(AsyncJsonWebsocketConsumer):
 
@@ -161,28 +155,23 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     ############################ Basic consumer methods ########################
     async def connect(self):
-        connector = Connector(self)
-        await connector.connect()
+        pass
 
     async def disconnect(self, *args):
-        disconnector = Disconnector(self)
-        await disconnector.disconnect()           
-        raise StopConsumer()
+        pass
 
     async def receive_json(self, data):
-        loop_handler = GameLoopHandler(self, data)
-        await loop_handler.perform_game_loop()
-        self.set_valid_json_sent(False)
+        pass
 
     async def decode_json(self, text_data, **kwargs):
         pass
 
     # sends messages to both players' mailboxes
     async def send_message_to_group(self, data, event):
-        await send_message_to_group_impl(self, data, event)
+        pass
 
     async def send_message_to_opponent(self, data, event):
-        await send_message_to_opponent_impl(self, data, event)
+        pass
 
     ############################ Message handlers ##############################
     async def opponent_move(self, data):
@@ -251,6 +240,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         await critical_error_impl(self, log_message)
         await self.close()
 
+
 GameConsumer.update_after_reconnect = update_after_reconnect
 GameConsumer.is_winner = is_winner
 GameConsumer.reset_turns_to_inc = reset_turns_to_inc
@@ -270,3 +260,8 @@ GameConsumer.refresh_game = refresh_game
 GameConsumer.refresh_opponent = refresh_opponent
 GameConsumer.decode_json = decode_json
 GameConsumer.init_table_for_new_clash = init_table_for_new_clash
+GameConsumer.send_message_to_group = send_message_to_group
+GameConsumer.send_message_to_opponent = send_message_to_opponent
+GameConsumer.connect = connect
+GameConsumer.disconnect = disconnect
+GameConsumer.receive_json = receive_json
