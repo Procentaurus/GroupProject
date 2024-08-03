@@ -208,32 +208,34 @@ class PlayerVerifier:
 
     def __init__(self, consumer, player=None):
         self._consumer = consumer
+        self._game = consumer.get_game()
         self._player = consumer.get_game_user() if player is None else player
 
     async def verify_player_wait_for_clash(self):
-        if self._player.wait_for_clash_start():
+        if self._player.wait_for_clash_start(str(self._game.id)):
             e_s = ErrorSender(self._consumer)
             await e_s.send_improper_move_info("readyness already declared")
             return True
         return False
 
     async def verify_player_in_hub(self, move):
-        if not self._player.is_in_hub():
+        if not self._player.is_in_hub(str(self._game.id)):
             e_s = ErrorSender(self._consumer)
             await e_s.send_improper_state_error(move)
             return False
         return True
 
     async def verify_player_in_clash(self):
-        if not self._player.is_in_clash():
+        if not self._player.is_in_clash(str(self._game.id)):
             e_s = ErrorSender(self._consumer)
             await e_s.send_improper_state_error("action_move")
             return False
         return True
 
     async def verify_player_in_clash_or_wait_for_clash_end(self):
-        p = self._player
-        if not p.is_in_clash() and not p.wait_for_clash_end():
+        p_in_clash = self._player.is_in_clash(str(self._game.id))
+        p_wait_for_clash = self._player.wait_for_clash_end(str(self._game.id))
+        if not p_in_clash and not p_wait_for_clash:
             e_s = ErrorSender(self._consumer)
             await e_s.send_improper_state_error("reaction_move")
             return False
@@ -277,6 +279,8 @@ class GameVerifier:
 
     async def verify_next_move_performer(self):
         game_user = self._consumer.get_game_user()
+        print(self._game.next_move_player)
+        print(game_user.conflict_side)
         if self._game.next_move_player != game_user.conflict_side:
             e_s = ErrorSender(self._consumer)
             await e_s.send_improper_move_info("not your turn")

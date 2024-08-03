@@ -40,7 +40,7 @@ class ActionMoveHandler(MoveHandler):
     async def _verify_move(self):
         if not self._any_card_sent(): return False
 
-        g_v = GameVerifier(self._consumer, self._game)
+        g_v = GameVerifier(self._consumer)
         if not await g_v.verify_next_move_performer(): return False
         if not await g_v.verify_game_next_move_type("action"): return False
 
@@ -97,7 +97,7 @@ class ReactionMoveHandler(MoveHandler):
         self._money_opp_gained = None
 
     async def _verify_move(self):
-        g_v = GameVerifier(self._consumer, self._game)
+        g_v = GameVerifier(self._consumer)
         if not await g_v.verify_next_move_performer(): return False
         if not await g_v.verify_game_next_move_type("reaction"): return False
 
@@ -134,7 +134,7 @@ class ReactionMoveHandler(MoveHandler):
         if self._consumer.get_action_moves_left() > 0:
             return
 
-        if not opp.wait_for_clash_end():
+        if not opp.wait_for_clash_end(str(self._game.id)):
             e_s = ErrorSender(self._consumer)
             await e_s.send_improper_state_error("reaction_move")
             return

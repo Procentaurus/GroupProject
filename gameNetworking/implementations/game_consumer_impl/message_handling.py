@@ -63,7 +63,7 @@ async def game_start_impl(consumer, data):
 async def clash_start_impl(consumer, data):
     game_user = consumer.get_game_user()
     game_id = str(consumer.get_game().id)
-    update_game_user_state(game_id, str(game_user.id), PlayerState.IN_CLASH)
+    update_game_user_state(str(game_id), str(game_user.id), PlayerState.IN_CLASH)
     consumer.update_game_stage()
     await consumer.send_json({
         'type' : "clash_start",

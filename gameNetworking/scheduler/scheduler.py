@@ -21,19 +21,11 @@ def delete_states_queue(game_id):
         print(f"Queue '{queue_name}' did not exist.")
 
 def update_game_user_state(game_id, game_user_id, state):
-    with redis_client.pipeline() as pipe:
-        pipe.zrem(f'{game_id}_states', game_user_id)
-        pipe.zadd(f'{game_id}_states', {game_user_id: state})
-        pipe.execute()
+    redis_client.hset(f'{game_id}_states', game_user_id, state)
 
 def check_game_user_state(game_id, game_user_id):
-    states = redis_client.zrange(f'{game_id}_states', 0, -1, withscores=True)
-    if states:
-        for id, state in states:
-            id = id.decode('utf-8')
-            if str(id) == str(game_user_id):
-                return str(state.decode('utf-8'))
-    return None
+    state = redis_client.hget(f'{game_id}_states', game_user_id)
+    return state.decode('utf-8')
 
 def add_delayed_task(task_name, delay_in_sec, func_path):
     print(f"add_delayed_task, task_name={task_name}, delay={delay_in_sec}")

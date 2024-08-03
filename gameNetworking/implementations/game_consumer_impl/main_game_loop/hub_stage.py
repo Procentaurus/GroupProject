@@ -3,7 +3,10 @@ from gameMechanics.scripts.basic_mechanics import get_rerolled_cards
 from gameNetworking.enums import MessageType
 
 from ....models.queries import *
-from ....scheduler.scheduler import remove_delayed_task, check
+from ....enums import PlayerState
+from ....scheduler.scheduler import remove_delayed_task
+from ....scheduler.scheduler import check_game_user_state
+from ....scheduler.scheduler import update_game_user_state
 from .checkers import *
 from .common import SurrenderMoveHandler, ShopCardsAdder, CardSender
 from .abstract import MoveHandler, StageHandler
@@ -48,9 +51,13 @@ class ReadyMoveHandler(MoveHandler):
     async def _perform_move_mechanics(self, is_delayed):
         opp = self._consumer.get_opponent()
         opponent_state = check_game_user_state(str(self._game.id), str(opp.id))
-        if opp.is_in_hub():
-            await self._g_u.set_state("await_clash_start")
-        elif opp.wait_for_clash_start():
+        if opp.is_in_hub(str(self._game.id)):
+            update_game_user_state(
+                str(self._game.id),
+                str(self._g_u.id),
+                PlayerState.AWAIT_CLASH_START
+            )
+        elif opp.wait_for_clash_start(str(self._game.id)):
             await self._send_clash_start_info()
             self._consumer.limit_player_action_time(self._game.next_move_player)
         else:

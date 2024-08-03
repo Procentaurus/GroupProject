@@ -6,7 +6,7 @@ from django.conf import settings
 from customUser.models import MyUser
 from gameMechanics.models import ActionCard
 
-from ...scheduler.scheduler import update_game_user_state, check_game_user_state
+from ...scheduler.scheduler import check_game_user_state
 from ...enums import PlayerState
 from ..common import CONFLICT_SIDES
 from .methods_impl import *

@@ -84,9 +84,9 @@ class Connector:
             await self._init_shop_for_game()
             self._consumer.limit_players_hub_time()
             self.init_queue_with_game_user_states(
-                game.id,
-                game_user.id,
-                opponent.id
+                str(game.id),
+                str(game_user.id),
+                str(opponent.id)
             )
 
     async def _create_game_user(self):
@@ -232,6 +232,5 @@ class Connector:
         )
 
     def init_queue_with_game_user_states(self, game_id, player_id, opponent_id):
-        queue_name = f'{game_id}_states'
-        update_game_user_state(queue_name, player_id, PlayerState.IN_HUB)
-        update_game_user_state(queue_name, opponent_id, PlayerState.IN_HUB)
+        update_game_user_state(game_id, player_id, PlayerState.IN_HUB)
+        update_game_user_state(game_id, opponent_id, PlayerState.IN_HUB)
