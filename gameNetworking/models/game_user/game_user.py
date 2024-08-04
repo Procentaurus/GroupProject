@@ -9,8 +9,8 @@ from gameMechanics.models import ActionCard
 from ...scheduler.scheduler import check_game_user_state
 from ...enums import PlayerState
 from ..common import CONFLICT_SIDES
-from .methods_impl import *
-    
+from .methods import *
+
 
 class GameUser(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
@@ -38,43 +38,16 @@ class GameUser(models.Model):
     class Meta:
         ordering = ["started_waiting"]
 
+    #################################  Getters  ################################
     @database_sync_to_async
     def get_user(self):
         return self.user
 
-    @database_sync_to_async
-    def set_morale(self, morale):
-        self.morale = morale
-        self.save()
-
-    @database_sync_to_async
-    def update_channel_name(self, channel_name):
-        self.channel_name = channel_name
-        self.save()
-
     def has_lost(self):
         return (self.morale <= 0)
-
-    @database_sync_to_async
-    def add_money(self, amount):
-        self.money += amount
-        self.save()
-
-    @database_sync_to_async
-    def subtract_money(self, amount):
-        self.money -= amount
-        self.save()
-
+    
     def can_afford_reroll(self):
         return self.money >= self.reroll_price
-
-    @database_sync_to_async
-    def increase_reroll_price(self):
-        self.reroll_price += settings.REROLL_PRICE_INCREASE_VALUE
-        self.save()
-
-    async def buy_reroll(self):
-        await self.subtract_money(self.reroll_price)
 
     def is_in_hub(self, game_id):
         state = check_game_user_state(game_id, str(self.id))
@@ -108,34 +81,72 @@ class GameUser(models.Model):
 
     @database_sync_to_async
     def check_action_card_owned(self, action_card_id):
-        result = check_action_card_owned_impl(self, action_card_id)
-        return result
+        pass
 
     @database_sync_to_async
     def check_action_card_in_shop(self, action_card_id):
-        result = check_action_card_in_shop_impl(self, action_card_id)
-        return result
+        pass
+
+    #################################  Setters  ################################
+    @database_sync_to_async
+    def set_morale(self, morale):
+        self.morale = morale
+        self.save()
+
+    @database_sync_to_async
+    def add_money(self, amount):
+        self.money += amount
+        self.save()
+
+    @database_sync_to_async
+    def subtract_money(self, amount):
+        self.money -= amount
+        self.save()
+
+    @database_sync_to_async
+    def increase_reroll_price(self):
+        self.reroll_price += settings.REROLL_PRICE_INCREASE_VALUE
+        self.save()
+
+    @database_sync_to_async
+    def update_channel_name(self, channel_name):
+        self.channel_name = channel_name
+        self.save()
+
+    #######################  State changing functions  #########################
+    async def buy_reroll(self):
+        pass
 
     @database_sync_to_async
     def remove_action_card(self, action_card_id):
-        remove_action_card_impl(self, action_card_id)
+        pass
 
     @database_sync_to_async
     def remove_action_card_from_shop(self, action_card_id):
-        remove_action_card_from_shop_impl(self, action_card_id)
-    
+        pass
+
     @database_sync_to_async
     def add_action_card(self, action_card_id):
-        add_action_card_impl(self, action_card_id)
+        pass
 
     @database_sync_to_async
     def add_action_card_to_shop(self, action_card_id):
-        add_action_card_to_shop_impl(self, action_card_id)
+        pass
 
     @database_sync_to_async
     def remove_all_action_cards_from_shop(self):
-        remove_all_action_cards_from_shop_impl(self)
+        pass
 
     @database_sync_to_async
     def backup(self, consumer):
-        backup_impl(self, consumer)
+        pass
+
+GameUser.backup = backup
+GameUser.remove_all_action_cards_from_shop = remove_all_action_cards_from_shop
+GameUser.add_action_card_to_shop = add_action_card_to_shop
+GameUser.add_action_card = add_action_card
+GameUser.remove_action_card_from_shop = remove_action_card_from_shop
+GameUser.remove_action_card = remove_action_card
+GameUser.check_action_card_in_shop = check_action_card_in_shop
+GameUser.check_action_card_owned = check_action_card_owned
+GameUser.buy_reroll = buy_reroll
