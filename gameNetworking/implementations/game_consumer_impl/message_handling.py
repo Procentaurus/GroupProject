@@ -30,7 +30,7 @@ async def opponent_move(self, data):
             'reaction_cards' : data.get("reaction_cards"),
         })
 
-async def opponent_disconnect(self):
+async def opponent_disconnect(self, data=None):
     await self.send_json({
         "type" : "opponent_disconnect"
     })
@@ -70,7 +70,7 @@ async def clash_start(self, data):
         'next_move' : data.get("next_move_player"),
     })
 
-async def clash_end(self):
+async def clash_end(self, data=None):
     self.init_table_for_new_clash()
     self.update_game_stage()
     await self.send_json({
@@ -90,7 +90,7 @@ async def time_info(self, data):
         "time_remaining": data.get("time_remaining")
     })
 
-async def opponent_rejoin_waiting(self):
+async def opponent_rejoin_waiting(self, data=None):
     await self.send_json({
         'type' : "opponent_rejoin_waiting",
         'time_for_opponent_to_rejoin' : settings.REJOIN_TIMEOUT
@@ -116,40 +116,42 @@ async def game_creation(self, data):
     opponent = await get_game_user(data.get("opponent_id"))
     self.set_opponent(opponent)
 
-async def hub_stage_timeout(self):
+async def hub_stage_timeout(self, data=None):
     self.logger.info("Hub stage timeout")
     await self.send_json({
         'type': "timeout",
         'move': 'ready move'
     })
+    await self.refresh_game_user()
+    await self.refresh_game()
     handler = ReadyMoveHandler(self)
     await handler.perform_move(True)
 
-async def action_move_timeout(self):
+async def action_move_timeout(self, data=None):
     self.logger.info("Action move timeout")
     await self.send_json({
         'type': "timeout",
         'move': 'action move'
     })
+    await self.refresh_game_user()
+    await self.refresh_game()
 
-async def reaction_move_timeout(self):
+async def reaction_move_timeout(self, data=None):
     self.logger.info("Reaction move timeout")
     await self.send_json({
         'type': "timeout",
         'move': 'reaction move'
     })
-    handler = ReactionMoveHandler(
-        self,
-        {'reaction_cards': []}
-    )
+    await self.refresh_game_user()
+    await self.refresh_game()
+    handler = ReactionMoveHandler(self, {'reaction_cards': []})
     await handler.perform_move(True)
 
-async def error(self, message, log_message):    
+async def error(self, message, log_message=None):    
     await self.send_json({
         'type' : "error",
         'info' : message,
     })
-
     if log_message is None:
         self.logger.warning(message)
     else:

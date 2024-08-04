@@ -11,23 +11,14 @@ from .disconnect import Disconnector
 from .main_game_loop.main_game_loop import GameLoopHandler
 
 
-def is_winner(self):
-    return (self._winner is not None)
-
 def reset_turns_to_inc(self):
     self._turns_to_inc = (settings.TURNS_BETWEEN_NUM_MOVES_INC - 1)
 
 def decrement_turn_to_inc(self):
     self._turns_to_inc -= 1
 
-def is_time_for_moves_per_clash_inc(self):
-    return self._turns_to_inc == 0
-
 def increment_moves_per_clash(self):
     self._moves_per_clash += 1
-
-def is_moves_per_clash_maximal(self):
-    return self._moves_per_clash == (settings.MAX_MOVES_PER_CLASH - 1)
 
 def update_after_reconnect(self, game, player, opponent):
     self._opponent = opponent
@@ -134,18 +125,18 @@ async def receive_json(self, data):
     await loop_handler.perform_game_loop()
     self.set_valid_json_sent(False)
 
-async def send_message_to_group(consumer, data, event):
-    await consumer.channel_layer.group_send(
-        f"game_{consumer.get_game().id}",
+async def send_message_to_group(self, data, event):
+    await self.channel_layer.group_send(
+        f"game_{self._game.id}",
         {
             'type': event,
             **data,
         }
     )
 
-async def send_message_to_opponent(consumer, data, event):
-    await consumer.channel_layer.send(
-        consumer.get_opponent().channel_name,
+async def send_message_to_opponent(self, data, event):
+    await self.channel_layer.send(
+        self._opponent.channel_name,
         {
             'type': event,
             **data,

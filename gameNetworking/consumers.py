@@ -71,6 +71,15 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     def get_reaction_moves_left(self):
         return self._moves_table[1]
+    
+    def is_winner(self):
+        return (self._winner is not None)
+    
+    def is_time_for_moves_per_clash_inc(self):
+        return self._turns_to_inc == 0
+    
+    def is_moves_per_clash_maximal(self):
+        return self._moves_per_clash == (settings.MAX_MOVES_PER_CLASH - 1)
 
     ################################# Setters ##################################
     def set_closed_after_disconnect(self, closed_after_disconnect):
@@ -98,9 +107,6 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         self._game_user = game_user
 
     ########################### Params updating methods ########################
-    def is_winner(self):
-        pass
-
     def reset_turns_to_inc(self):
         pass
 
@@ -214,6 +220,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     async def hub_stage_timeout(self, data=None):
         pass
+
     async def action_move_timeout(self, data=None):
         pass
 
@@ -223,7 +230,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     # Used for player's mistakes during game flow
     # that do not require complex response
     # Performs: logging and sending info to player
-    async def error(self, message, log_message = None):
+    async def error(self, message, log_message=None):
         pass
 
     # Used for player's mistakes during game flow
@@ -239,12 +246,9 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
 
 GameConsumer.update_after_reconnect = update_after_reconnect
-GameConsumer.is_winner = is_winner
 GameConsumer.reset_turns_to_inc = reset_turns_to_inc
 GameConsumer.decrement_turn_to_inc = decrement_turn_to_inc
-GameConsumer.is_time_for_moves_per_clash_inc = is_time_for_moves_per_clash_inc
 GameConsumer.increment_moves_per_clash = increment_moves_per_clash
-GameConsumer.is_moves_per_clash_maximal = is_moves_per_clash_maximal
 GameConsumer.limit_players_hub_time = limit_players_hub_time
 GameConsumer.limit_player_reaction_time = limit_player_reaction_time
 GameConsumer.limit_player_action_time = limit_player_action_time
@@ -275,6 +279,7 @@ GameConsumer.game_end = game_end
 GameConsumer.opponent_rejoin_waiting = opponent_rejoin_waiting
 GameConsumer.time_info = time_info
 GameConsumer.clash_end = clash_end
+GameConsumer.game_reconnect = game_reconnect
 GameConsumer.clash_start = clash_start
 GameConsumer.game_start = game_start
 GameConsumer.card_package = card_package
