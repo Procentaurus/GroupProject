@@ -5,7 +5,7 @@ from channels.db import database_sync_to_async
 
 from ..common import CONFLICT_SIDES, MOVE_TYPES
 from ..game_user.game_user import GameUser
-from .methods_impl import *
+from .methods import *
 
 
 class Game(models.Model):
@@ -22,39 +22,40 @@ class Game(models.Model):
         choices=CONFLICT_SIDES, max_length=15, null=False)
     next_move_type = models.CharField(
         choices=MOVE_TYPES, max_length=15, null=False, default="action")
-    
+
     turns_to_inc = models.PositiveSmallIntegerField(default=0)
     moves_per_clash = models.PositiveSmallIntegerField(default=0)
     stage = models.BooleanField(default=False)
     is_backuped = models.BooleanField(default=False)
     delayed_tasks = models.JSONField(default=dict)
 
+    #################################  Getters  ################################
     @database_sync_to_async
     def get_teacher_player(self):
         return self.teacher_player
- 
+
     @database_sync_to_async
     def get_student_player(self):
         return self.student_player
 
-    @database_sync_to_async
-    def update_after_turn(self):
-        result = update_after_turn_impl(self)
-        return result
-
-    @database_sync_to_async
-    def get_opponent_player(self, game_user):
-        result = get_opponent_player_impl(self, game_user)
-        return result
-
-    @database_sync_to_async
-    def backup(self, consumer):
-        backup_impl(self, consumer)
-
+    #################################  Setters  ################################
     @database_sync_to_async
     def clear_backup_status(self):
         self.is_backuped = False
         self.save()
+
+    #######################  State changing functions  #########################
+    @database_sync_to_async
+    def update_after_turn(self):
+        pass
+
+    @database_sync_to_async
+    def get_opponent_player(self, game_user):
+        pass
+
+    @database_sync_to_async
+    def backup(self, consumer):
+        pass
 
     def delete(self, *args, **kwargs):
         if self.teacher_player:
@@ -62,3 +63,7 @@ class Game(models.Model):
         if self.student_player:
             self.student_player.delete()
         super().delete(*args, **kwargs)
+
+Game.backup = backup
+Game.update_after_turn = update_after_turn
+Game.get_opponent_player = get_opponent_player

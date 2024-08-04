@@ -13,6 +13,7 @@ class GameAuthenticationToken(models.Model):
     class Meta:
         ordering = ["-issued"]
 
+    #################################  Getters  ################################
     @database_sync_to_async
     def get_game_user(self):
         return self.user
