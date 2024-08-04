@@ -115,15 +115,17 @@ class InitInfoSender:
 
     async def _send_game_start_info_to_opp(self, opp):
         await self._consumer.send_message_to_opponent(
-            {"initial_money_amount" : opp.money,
-            "initial_morale" : opp.morale},
+            {"initial_money_amount": opp.money,
+            "initial_morale": opp.morale,
+            "initial_reroll_price": opp.reroll_price},
             "game_start")
 
     async def _send_game_start_info(self):   
         g_u = self._consumer.get_game_user()
         await self._consumer.game_start(
             {"initial_money_amount" : g_u.money,
-            "initial_morale" : g_u.morale})
+            "initial_morale" : g_u.morale,
+            "initial_reroll_price": g_u.reroll_price})
 
 
 class InitShopCardsGetter:
@@ -156,35 +158,39 @@ class ShopCardsAdder:
         await self._add_all_r_cards_to_shop()
 
     async def _add_all_a_cards_to_shop(self):
-        cards_ids = [card['id'] for card in self._a_cards]
-        for card_id in cards_ids:
-            await self._user.add_action_card_to_shop(card_id)
+        if self._a_cards != []:
+            cards_ids = [card['id'] for card in self._a_cards]
+            for card_id in cards_ids:
+                await self._user.add_action_card_to_shop(card_id)
 
     async def _add_all_r_cards_to_shop(self):
-        purchase_data = [
-            {"id": card_data["card"]["id"], "amount": card_data["amount"]}
-            for card_data in self._r_cards
-        ]
-        for data in purchase_data:
-            await add_reaction_card_to_shop(
-                self._user, data.get("id"), data.get("amount"))
+        if self._r_cards != []:
+            purchase_data = [
+                {"id": card_data["card"]["id"], "amount": card_data["amount"]}
+                for card_data in self._r_cards
+            ]
+            for data in purchase_data:
+                await add_reaction_card_to_shop(
+                    self._user, data.get("id"), data.get("amount"))
 
 
 class CardSender:
 
-    def __init__(self, consumer):
+    def __init__(self, consumer, a_cards, r_cards):
         self._consumer = consumer
+        self._a_cards = a_cards
+        self._r_cards = r_cards
 
-    async def send_cards_to_opponent(self, a_cards, r_cards):
+    async def send_cards_to_opponent(self):
         await self._consumer.send_message_to_opponent(
-            {"action_cards" : a_cards,
-            "reaction_cards" : r_cards},
+            {"action_cards": self._a_cards,
+            "reaction_cards": self._r_cards},
             "card_package")
 
-    async def send_cards_to_player(self, a_cards, r_cards):
+    async def send_cards_to_player(self):
         await self._consumer.card_package(
-            {"action_cards" : a_cards,
-            "reaction_cards" : r_cards})
+            {"action_cards": self._a_cards,
+            "reaction_cards": self._r_cards})
 
 
 class InitCardsManager:
@@ -226,8 +232,15 @@ class InitCardsManager:
         await s_c_a.add_all_cards_shop()
 
     async def _send_cards(self):
-        c_s = CardSender(self._consumer)
-        await c_s.send_cards_to_player(
-            self._player_a_cards, self._player_r_cards)
-        await c_s.send_cards_to_opponent(\
-            self._opp_a_cards, self._opp_r_cards)
+        c_s = CardSender(
+            self._consumer,
+            self._player_a_cards,
+            self._player_r_cards
+        )
+        await c_s.send_cards_to_player()
+        c_s = CardSender(
+            self._consumer,
+            self._opp_a_cards,
+            self._opp_r_cards
+        )
+        await c_s.send_cards_to_opponent()

@@ -92,9 +92,10 @@ class RerollMoveHandler(MoveHandler):
     async def _perform_move_mechanics(self, is_delayed):
         g_u = self._consumer.get_game_user()
         await g_u.buy_reroll()
-        g_u.increase_reroll_price()
+        await g_u.increase_reroll_price()
 
-        (new_a_cards, new_r_cards) = await get_rerolled_cards(g_u)
+        #  TODO (new_a_cards, new_r_cards) = await get_rerolled_cards(g_u)
+        (new_a_cards, new_r_cards) = (None, None)
 
         s_c_a = ShopCardsAdder(g_u, new_a_cards, new_r_cards)
         await s_c_a.add_all_cards_shop()
@@ -103,7 +104,11 @@ class RerollMoveHandler(MoveHandler):
         await remove_all_reaction_cards_from_shop(g_u)
 
         c_s = CardSender(self._consumer, new_a_cards, new_r_cards)
-        c_s.send_cards_to_player()
+        await c_s.send_cards_to_player()
+        await self._consumer.send_json({
+            'type' : "reroll_confirmation",
+            'new_reroll_price' : g_u.get_reroll_price()
+        })
 
 
 class PurchaseMoveHandler(MoveHandler):

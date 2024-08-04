@@ -20,12 +20,13 @@ class GameUser(models.Model):
     channel_name = models.CharField(null=False, max_length=100)
 
     morale = models.PositiveSmallIntegerField(
-        default=100, null=False, blank=False)
+        default=settings.MORALE_INITIAL_VALUE, null=False, blank=False)
     money = models.PositiveSmallIntegerField(
-        default=500, null=False, blank=False)
+        default=settings.MONEY_INITIAL_VALUE, null=False, blank=False)
     conflict_side = models.CharField(
         choices=CONFLICT_SIDES, null=False, max_length=15)
-    reroll_price = models.PositiveSmallIntegerField(default=30)
+    reroll_price = models.PositiveSmallIntegerField(
+        default=settings.REROLL_PRICE_INITIAL_VALUE)
     owned_action_cards = models.ManyToManyField(
         ActionCard, related_name="owned_action_cards")
     action_cards_in_shop = models.ManyToManyField(
@@ -46,6 +47,9 @@ class GameUser(models.Model):
     def has_lost(self):
         return (self.morale <= 0)
     
+    def get_reroll_price(self):
+        return self.reroll_price
+
     def can_afford_reroll(self):
         return self.money >= self.reroll_price
 
