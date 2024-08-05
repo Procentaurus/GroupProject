@@ -113,19 +113,24 @@ class InitInfoSender:
             "opponent_id": str(opp_id)},
             "game_creation")
 
-    async def _send_game_start_info_to_opp(self, opp):
+    async def _send_game_start_info_to_opp(self):
+        opp = self._consumer.get_opponent()
+        player = self._consumer.get_game_user()
         await self._consumer.send_message_to_opponent(
             {"initial_money_amount": opp.money,
             "initial_morale": opp.morale,
-            "initial_reroll_price": opp.reroll_price},
+            "initial_reroll_price": opp.reroll_price,
+            "opponent_id": str((await player.get_user()).id)},
             "game_start")
 
-    async def _send_game_start_info(self):   
+    async def _send_game_start_info(self):
+        opp = self._consumer.get_opponent()
         g_u = self._consumer.get_game_user()
         await self._consumer.game_start(
             {"initial_money_amount" : g_u.money,
             "initial_morale" : g_u.morale,
-            "initial_reroll_price": g_u.reroll_price})
+            "initial_reroll_price": g_u.reroll_price,
+            "opponent_id": str(( await opp.get_user()).id)})
 
 
 class InitShopCardsGetter:
