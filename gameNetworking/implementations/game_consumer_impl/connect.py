@@ -1,12 +1,12 @@
+from channels.db import database_sync_to_async
+
 from gameMechanics.serializers import *
 
-from ...scheduler.scheduler import remove_delayed_task, update_game_user_state
-from ...scheduler.scheduler import add_delayed_task
-from ...scheduler.scheduler import verify_task_exists
+from ...scheduler.scheduler import *
 from ...models.queries import *
 from ...models.game.serializers import GameReconnectSerializer
 from ...models.game_user.serializers import GameUserReconnectSerializer
-from ...enums import GameStage, PlayerState
+from ...enums import GameStage, PlayerState, GameState
 from .main_game_loop.common import *
 
 
@@ -78,11 +78,12 @@ class Connector:
             game = await self._create_game(game_user, opponent)
             self._consumer.set_game(game)
             self._consumer.set_opponent(opponent)
-            # TODO ustawić in_game status -> await self._set_in_game_status()
+            await self._set_in_game_status(game_user, opponent)
             await self._add_players_channels_to_group(game)
             await self._send_initial_game_info_to_players(game, game_user)
             await self._init_shop_for_game()
             self._consumer.limit_players_hub_time()
+            update_game_state(str(game.id), GameState.ONGOING)
             self.init_queue_with_game_user_states(
                 str(game.id),
                 str(game_user.id),
@@ -118,7 +119,7 @@ class Connector:
         i_i_s = InitInfoSender(self._consumer)
         await i_i_s._send_game_creation_info_to_opp(game.id, game_user.id)
         await i_i_s._send_game_start_info()
-        await i_i_s._send_game_start_info_to_opp(self._consumer.get_opponent())
+        await i_i_s._send_game_start_info_to_opp()
 
     async def _init_shop_for_game(self):
         mng = InitCardsManager(self._consumer)
@@ -131,17 +132,18 @@ class Connector:
             remove_delayed_task(f'limit_opponent_rejoin_time_{opponent.id}')
             remove_delayed_task(f'limit_game_data_lifetime_{game.id}')
             await self._consumer.refresh_opponent()
-            opponent = self._consumer.get_opponent()
+            opp = self._consumer.get_opponent()
             await self._add_players_channels_to_group(game)
             await self._consumer.game_reconnect(
-                await self._create_reconnect_message_body(player, game)
+                await self._create_reconnect_message_body(player, game, opp)
             )
             await self._consumer.send_message_to_opponent(
-                await self._create_reconnect_message_body(opponent, game),
+                await self._create_reconnect_message_body(opp, game, player),
                 'game_reconnect'
             )
             self._reactivate_all_game_tasks(game)
-            await self._inform_players_about_reactivated_tasks(game, opponent)
+            await self._inform_players_about_reactivated_tasks(game, opp)
+            await self._set_in_game_status(player, opp)
         else:
             remove_delayed_task(f'limit_game_data_lifetime_{game.id}')
             await self._consumer.opponent_rejoin_waiting()
@@ -150,9 +152,9 @@ class Connector:
                 settings.REJOIN_TIMEOUT,
                 settings.REJOIN_TIMEOUT_FUNC
             )
-            await game.clear_backup_status()
+            update_game_state(str(game.id), GameState.ONGOING)
 
-    async def _create_reconnect_message_body(self, player, game):
+    async def _create_reconnect_message_body(self, player, game, opp):
 
         async def get_serialized_owned_a_cards(player):
             action_cards_owned = []
@@ -188,6 +190,7 @@ class Connector:
             'type': 'game_reconnect',
             'game_data': GameReconnectSerializer(game).data,
             'player': GameUserReconnectSerializer(player).data,
+            'opponent_id': str((await opp.get_user()).id),
             'owned_action_cards': await get_serialized_owned_a_cards(player),
             'reaction_cards_owned': await get_serialized_owned_r_cards(player)
         }
@@ -220,8 +223,11 @@ class Connector:
                 settings.TIMEOUT_MODULE + '.' + str(task_func),
             )
 
-    async def _set_in_game_status(self, game_user):
-        (await game_user.get_user()).set_in_game()
+    async def _set_in_game_status(self, player, opponent):
+        player_user = await player.get_user()
+        opponent_user = await opponent.get_user()
+        await database_sync_to_async(player_user.set_in_game)()
+        await database_sync_to_async(opponent_user.set_in_game)()
 
     async def _add_players_channels_to_group(self, game):
         await self._consumer.channel_layer.group_add(

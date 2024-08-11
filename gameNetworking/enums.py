@@ -29,3 +29,9 @@ class PlayerState(str, Enum):
 
     # after player used all his action cards
     AWAIT_CLASH_END = "await_clash_end"
+
+
+class GameState(str, Enum):
+    DELETED = 'deleted'
+    BACKUPED = 'backuped'
+    ONGOING = 'ongoing'

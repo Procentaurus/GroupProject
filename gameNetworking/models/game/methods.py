@@ -1,7 +1,7 @@
 from channels.db import database_sync_to_async
 
-from ...scheduler.scheduler import get_all_game_tasks
-from ...enums import GameStage
+from ...scheduler.scheduler import get_all_game_tasks, update_game_state
+from ...enums import GameStage, GameState
 
 
 @database_sync_to_async
@@ -36,5 +36,5 @@ def backup(self, consumer):
     self.delayed_tasks = get_all_game_tasks(
         str(consumer.get_game_user().id), str(consumer.get_opponent().id)
     )
-    self.is_backuped = True
     self.save()
+    update_game_state(str(self.id), GameState.BACKUPED)

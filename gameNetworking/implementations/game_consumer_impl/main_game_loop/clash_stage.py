@@ -127,7 +127,9 @@ class ReactionMoveHandler(MoveHandler):
         await self._set_winner_if_exist(opp)
 
         if self._consumer.is_winner():
-            await self._announce_winner()
+            await self._consumer.send_message_to_group(
+                {"winner" : self._consumer.get_winner()},
+                "game_end")
             return
 
         self._consumer.decrease_reaction_moves()
@@ -243,12 +245,6 @@ class ReactionMoveHandler(MoveHandler):
             for r_card_data in r_cards_gained:
                 await add_reaction_card_to_owned(
                     game_user, r_card_data.get("id"), r_card_data.get("amount"))
-
-    async def _announce_winner(self):
-        self._consumer.set_closed_after_disconnect(False)
-        await self._consumer.send_message_to_group(
-            {"winner" : self._consumer.get_winner()},
-            "game_end")
 
     async def _add_all_action_cards(self, game_user, a_cards_gained):
         if a_cards_gained is not None:
