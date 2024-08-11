@@ -16,7 +16,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         self._game_user = None
         self._opponent = None
 
-        self._closed_after_disconnect = True
+        self._is_closed_after_game_end = False
         self._valid_json_sent = False
 
         self._game_stage = GameStage.HUB
@@ -63,8 +63,8 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     def get_game_stage(self):
         return self._game_stage
 
-    def closed_after_disconnect(self):
-        return self._closed_after_disconnect
+    def is_closed_after_game_end(self):
+        return self._is_closed_after_game_end
     
     def get_action_moves_left(self):
         return self._moves_table[0]
@@ -82,8 +82,8 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         return self._moves_per_clash == (settings.MAX_MOVES_PER_CLASH - 1)
 
     ################################# Setters ##################################
-    def set_closed_after_disconnect(self, closed_after_disconnect):
-        self._closed_after_disconnect = closed_after_disconnect
+    def close_after_game_end(self):
+        self._is_closed_after_game_end = True
 
     def set_game(self, game):
         self._game = game
