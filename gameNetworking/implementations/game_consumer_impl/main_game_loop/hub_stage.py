@@ -1,5 +1,3 @@
-from gameMechanics.scripts.basic_mechanics import get_rerolled_cards
-
 from gameNetworking.enums import MessageType
 
 from ....models.queries import *
