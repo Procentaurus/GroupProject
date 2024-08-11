@@ -92,6 +92,10 @@ REDIS_SCHEDULER_HOST = '127.0.0.1'
 REDIS_SCHEDULER_PORT = 6379
 REDIS_SCHEDULER_DB = 1
 
+REDIS_MESSAGING_HOST = '127.0.0.1'
+REDIS_MESSAGING_PORT = 6379
+REDIS_MESSAGING_DB = 2
+
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
@@ -103,12 +107,14 @@ CHANNEL_LAYERS = {
 
 
 #############################    GAME SETTINGS    ##############################
+
+######### Timeouts Settings #########
 ACTION_MOVE_TIMEOUT = 30
 REACTION_MOVE_TIMEOUT = 60
 HUB_STAGE_TIMEOUT = 60
 DELETE_GAME_STATE_TIMEOUT = 10
 DELETE_GAME_TIMEOUT = 100
-REJOIN_TIMEOUT = 30       # Must be smaller value than DELETE_GAME_TIMEOUT !!!
+REJOIN_TIMEOUT = 30           # !!! Must be smaller than DELETE_GAME_TIMEOUT !!!
 
 TIMEOUT_MODULE = 'gameNetworking.scheduler.tasks'
 
@@ -126,6 +132,7 @@ DELETE_GAME_STATE_TIMEOUT_FUNC = TIMEOUT_MODULE + '.' + DELETE_GAME_STATE_FUNC_N
 DELETE_GAME_TIMEOUT_FUNC = TIMEOUT_MODULE + '.' + DELETE_GAME_FUNC_NAME
 REJOIN_TIMEOUT_FUNC = TIMEOUT_MODULE + '.' + REJOIN_FUNC_NAME
 
+######### Gameplay Settings #########
 INIT_MOVES_PER_CLASH = 1
 MAX_MOVES_PER_CLASH = 3
 TURNS_BETWEEN_NUM_MOVES_INC = 5
@@ -136,6 +143,7 @@ REROLL_PRICE_INITIAL_VALUE = 30
 REROLL_PRICE_INCREASE_VALUE = 10
 MORALE_INITIAL_VALUE = 100
 MONEY_INITIAL_VALUE = 500
+
 ################################################################################
 
 
