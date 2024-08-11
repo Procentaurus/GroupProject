@@ -35,16 +35,12 @@ class Disconnector:
                     )
         else:
             winner = self._consumer.get_winner()
-            await self._consumer.send_message_to_opponent(
-                {"winner" : winner},
-                "game_end"
-            )
+            await self._remove_player_from_group(game.id)
             if game:
                 self._remove_all_gameplay_tasks()
                 delete_states_queue(game.id)
                 await database_sync_to_async(create_game_archive)(game, winner)
-            await delete_game(game.id)
-            await self._remove_player_from_group(game.id)
+                await delete_game(game.id)
 
     async def _remove_player_from_group(self, game_id):
         await self._consumer.channel_layer.group_discard(
