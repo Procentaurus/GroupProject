@@ -3,10 +3,9 @@ from channels.db import database_sync_to_async
 
 from customUser.models.queries import create_game_archive
 
-from ...models.queries import delete_game, delete_game_user
-from ...scheduler.scheduler import add_delayed_task
-from ...scheduler.scheduler import remove_delayed_task
-from ...scheduler.scheduler import delete_states_queue
+from ...enums import GameState
+from ...models.queries import delete_game
+from ...scheduler.scheduler import *
 
 
 class Disconnector:
@@ -22,7 +21,7 @@ class Disconnector:
         if self._consumer.closed_after_disconnect():
             if game:
                 await player.backup(self._consumer)
-                if not game.is_backuped:
+                if check_game_state(str(game.id)) != GameState.BACKUPED:
                     await self._consumer.send_message_to_opponent(
                         {}, "opponent_disconnect"
                     )
@@ -36,11 +35,17 @@ class Disconnector:
         else:
             winner = self._consumer.get_winner()
             await self._remove_player_from_group(game.id)
-            if game:
-                self._remove_all_gameplay_tasks()
-                delete_states_queue(game.id)
+            if check_game_state(str(game.id)) != GameState.DELETED:
+                update_game_state(str(game.id), GameState.DELETED)
                 await database_sync_to_async(create_game_archive)(game, winner)
                 await delete_game(game.id)
+                self._remove_all_gameplay_tasks()
+                delete_player_states_queue(game.id)
+                add_delayed_task(
+                    f'limit_game_state_lifetime_{game.id}',
+                    settings.DELETE_GAME_STATE_TIMEOUT,
+                    settings.DELETE_GAME_STATE_TIMEOUT_FUNC
+                )
 
     async def _remove_player_from_group(self, game_id):
         await self._consumer.channel_layer.group_discard(

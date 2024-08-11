@@ -2,13 +2,11 @@ from channels.db import database_sync_to_async
 
 from gameMechanics.serializers import *
 
-from ...scheduler.scheduler import remove_delayed_task, update_game_user_state
-from ...scheduler.scheduler import add_delayed_task
-from ...scheduler.scheduler import verify_task_exists
+from ...scheduler.scheduler import *
 from ...models.queries import *
 from ...models.game.serializers import GameReconnectSerializer
 from ...models.game_user.serializers import GameUserReconnectSerializer
-from ...enums import GameStage, PlayerState
+from ...enums import GameStage, PlayerState, GameState
 from .main_game_loop.common import *
 
 
@@ -85,6 +83,7 @@ class Connector:
             await self._send_initial_game_info_to_players(game, game_user)
             await self._init_shop_for_game()
             self._consumer.limit_players_hub_time()
+            update_game_state(str(game.id), GameState.ONGOING)
             self.init_queue_with_game_user_states(
                 str(game.id),
                 str(game_user.id),
@@ -153,7 +152,7 @@ class Connector:
                 settings.REJOIN_TIMEOUT,
                 settings.REJOIN_TIMEOUT_FUNC
             )
-            await game.clear_backup_status()
+            update_game_state(str(game.id), GameState.ONGOING)
 
     async def _create_reconnect_message_body(self, player, game, opp):
 

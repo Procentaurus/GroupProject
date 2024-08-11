@@ -26,7 +26,6 @@ class Game(models.Model):
     turns_to_inc = models.PositiveSmallIntegerField(default=0)
     moves_per_clash = models.PositiveSmallIntegerField(default=0)
     stage = models.BooleanField(default=False)
-    is_backuped = models.BooleanField(default=False)
     delayed_tasks = models.JSONField(default=dict)
 
     #################################  Getters  ################################
@@ -37,12 +36,6 @@ class Game(models.Model):
     @database_sync_to_async
     def get_student_player(self):
         return self.student_player
-
-    #################################  Setters  ################################
-    @database_sync_to_async
-    def clear_backup_status(self):
-        self.is_backuped = False
-        self.save()
 
     #######################  State changing functions  #########################
     @database_sync_to_async

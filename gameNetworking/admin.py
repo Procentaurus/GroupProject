@@ -20,7 +20,7 @@ class GameAdmin(admin.ModelAdmin):
     readonly_fields = ('id',)
     add_fieldsets = (
         ("Main section", {"fields": (
-            "teacher_player",'student_player', "stage", "is_backuped"
+            "teacher_player",'student_player', "stage"
             "next_move_player", "next_move_type", "delayed_tasks")
         }),
     )

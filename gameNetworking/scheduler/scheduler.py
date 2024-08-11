@@ -12,8 +12,10 @@ redis_client = redis.StrictRedis(
     db=settings.REDIS_SCHEDULER_DB
 )
 
-def delete_states_queue(game_id):
-    queue_name = f'{game_id}_states'
+
+########################### Players' states queues #############################
+def delete_player_states_queue(game_id):
+    queue_name = f'{game_id}_player_states'
     result = redis_client.delete(queue_name)
     if result == 1:
         print(f"Queue '{queue_name}' was successfully deleted.")
@@ -21,11 +23,24 @@ def delete_states_queue(game_id):
         print(f"Queue '{queue_name}' did not exist.")
 
 def update_game_user_state(game_id, game_user_id, state):
-    redis_client.hset(f'{game_id}_states', game_user_id, state)
+    redis_client.hset(f'{game_id}_player_states', game_user_id, state)
 
 def check_game_user_state(game_id, game_user_id):
-    state = redis_client.hget(f'{game_id}_states', game_user_id)
+    state = redis_client.hget(f'{game_id}_player_states', game_user_id)
     return state.decode('utf-8')
+
+
+############################ Games' states queues ##############################
+def update_game_state(game_id, state):
+    redis_client.hset(f'games_states', game_id, state)
+
+def check_game_state(game_id):
+    state = redis_client.hget(f'games_states', game_id)
+    return state.decode('utf-8')
+
+def remove_game_state(game_id):
+    redis_client.hdel('games_states', game_id)
+
 
 def add_delayed_task(task_name, delay_in_sec, func_path):
     print(f"add_delayed_task, task_name={task_name}, delay={delay_in_sec}")
