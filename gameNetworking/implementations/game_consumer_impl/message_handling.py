@@ -102,7 +102,7 @@ async def game_end(self, data):
             'type' : "game_end",
             **data
         })
-        self.set_closed_after_disconnect(False)
+        self.close_after_game_end()
         self.set_winner(data.get('winner'))
     except Disconnected:
         self.logger.warning("Tried to sent through closed socket.")

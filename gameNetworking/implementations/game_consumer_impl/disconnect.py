@@ -18,33 +18,39 @@ class Disconnector:
         game = self._consumer.get_game()
         player = self._consumer.get_game_user()
         await self._clear_in_game_status(player)
-        if self._consumer.closed_after_disconnect():
-            if game:
-                await player.backup(self._consumer)
-                if check_game_state(str(game.id)) != GameState.BACKUPED:
-                    await self._consumer.send_message_to_opponent(
-                        {}, "opponent_disconnect"
-                    )
-                    await game.backup(self._consumer)
-                    self._remove_all_gameplay_tasks()
-                    add_delayed_task(
-                        f'limit_game_data_lifetime_{game.id}',
-                        settings.DELETE_GAME_TIMEOUT,
-                        settings.DELETE_GAME_TIMEOUT_FUNC
-                    )
+        if self._consumer.is_closed_after_game_end():
+            await self._disconnect_after_game_end(game)
         else:
-            winner = self._consumer.get_winner()
-            await self._remove_player_from_group(game.id)
-            if check_game_state(str(game.id)) != GameState.DELETED:
-                update_game_state(str(game.id), GameState.DELETED)
-                await database_sync_to_async(create_game_archive)(game, winner)
-                await delete_game(game.id)
+            await self._disconnect_without_game_end(game, player)
+
+    async def _disconnect_after_game_end(self, game):
+        winner = self._consumer.get_winner()
+        await self._remove_player_from_group(game.id)
+        if check_game_state(str(game.id)) != GameState.DELETED:
+            update_game_state(str(game.id), GameState.DELETED)
+            await database_sync_to_async(create_game_archive)(game, winner)
+            await delete_game(game.id)
+            self._remove_all_gameplay_tasks()
+            delete_player_states_queue(game.id)
+            add_delayed_task(
+                f'limit_game_state_lifetime_{game.id}',
+                settings.DELETE_GAME_STATE_TIMEOUT,
+                settings.DELETE_GAME_STATE_TIMEOUT_FUNC
+            )
+
+    async def _disconnect_without_game_end(self, game, player):
+        if game:
+            await player.backup(self._consumer)
+            if check_game_state(str(game.id)) != GameState.BACKUPED:
+                await self._consumer.send_message_to_opponent(
+                    {}, "opponent_disconnect"
+                )
+                await game.backup(self._consumer)
                 self._remove_all_gameplay_tasks()
-                delete_player_states_queue(game.id)
                 add_delayed_task(
-                    f'limit_game_state_lifetime_{game.id}',
-                    settings.DELETE_GAME_STATE_TIMEOUT,
-                    settings.DELETE_GAME_STATE_TIMEOUT_FUNC
+                    f'limit_game_data_lifetime_{game.id}',
+                    settings.DELETE_GAME_TIMEOUT,
+                    settings.DELETE_GAME_TIMEOUT_FUNC
                 )
 
     async def _remove_player_from_group(self, game_id):
