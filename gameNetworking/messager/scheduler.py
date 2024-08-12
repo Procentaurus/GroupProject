@@ -1,10 +1,10 @@
 import redis
-import threading
 import asyncio
 from datetime import timedelta, datetime
 from django.utils import timezone
 from django.conf import settings
 from importlib import import_module
+
 
 redis_client = redis.StrictRedis(
     host=settings.REDIS_SCHEDULER_HOST,
@@ -32,32 +32,41 @@ def check_game_user_state(game_id, game_user_id):
 
 ############################ Games' states queues ##############################
 def update_game_state(game_id, state):
-    redis_client.hset(f'games_states', game_id, state)
+    redis_client.hset(settings.GAMES_STATES_QUEUE_NAME, game_id, state)
 
 def check_game_state(game_id):
-    state = redis_client.hget(f'games_states', game_id)
+    state = redis_client.hget(settings.GAMES_STATES_QUEUE_NAME, game_id)
     return state.decode('utf-8')
 
 def remove_game_state(game_id):
-    redis_client.hdel('games_states', game_id)
+    redis_client.hdel(settings.GAMES_STATES_QUEUE_NAME, game_id)
 
 
 def add_delayed_task(task_name, delay_in_sec, func_path):
     print(f"add_delayed_task, task_name={task_name}, delay={delay_in_sec}")
     task_time = datetime.now(timezone.utc) + timedelta(seconds=delay_in_sec)
-    if not redis_client.zscore('tasks', task_name):
+    if not redis_client.zscore(
+        settings.DELAYED_GAME_TASKS_SORTED_SET_NAME, task_name):
         with redis_client.pipeline() as pipe:
-            pipe.zadd('tasks', {task_name: task_time.timestamp()})
-            pipe.hset('task_funcs', task_name, func_path)
+            pipe.zadd(
+                settings.DELAYED_GAME_TASKS_SORTED_SET_NAME,
+                {task_name: task_time.timestamp()}
+            )
+            pipe.hset(
+                settings.TASK_CALLBACK_FUNCTIONS_QUEUE_NAME,
+                task_name,
+                func_path
+            )
             pipe.execute()
 
 def remove_delayed_task(task_name):
     print(f"remove_delayed_task, task_name={task_name}")
     with redis_client.pipeline() as pipe:
-        pipe.zrem('tasks', task_name)
-        pipe.hdel('task_funcs', task_name)
+        pipe.zrem(settings.DELAYED_GAME_TASKS_SORTED_SET_NAME, task_name)
+        pipe.hdel(settings.TASK_CALLBACK_FUNCTIONS_QUEUE_NAME, task_name)
         pipe.execute()
-    if not redis_client.zscore('tasks', task_name):
+    if not redis_client.zscore(
+        settings.DELAYED_GAME_TASKS_SORTED_SET_NAME, task_name):
         print("task removed successfully")
 
 async def run_task(task_name):
@@ -72,7 +81,10 @@ async def run_task(task_name):
         _, user_id = task_name.rsplit('_', 1)
         return user_id
 
-    func_path = redis_client.hget('task_funcs', task_name)
+    func_path = redis_client.hget(
+        settings.TASK_CALLBACK_FUNCTIONS_QUEUE_NAME,
+        task_name
+        )
     if func_path:
         func = get_func()
         id = get_id(task_name)
@@ -87,11 +99,14 @@ async def run_task(task_name):
 async def check_tasks():
     while True:
         now = datetime.now(timezone.utc).timestamp()
-        tasks = redis_client.zrangebyscore('tasks', 0, now)
+        tasks = redis_client.zrangebyscore(
+            settings.DELAYED_GAME_TASKS_SORTED_SET_NAME, 0, now
+        )
         if tasks:
             for task in tasks:
                 task_name = task.decode('utf-8')
-                if redis_client.zrem('tasks', task_name):
+                if redis_client.zrem(
+                    settings.DELAYED_GAME_TASKS_SORTED_SET_NAME, task_name):
                     success = await run_task(task_name)
                     if success:
                         remove_delayed_task(task_name)
@@ -121,7 +136,9 @@ def get_all_game_tasks(first_player_id, second_player_id):
         ).total_seconds()
 
     remaining_tasks = {}
-    tasks = redis_client.zrange('tasks', 0, -1, withscores=True)
+    tasks = redis_client.zrange(
+        settings.DELAYED_GAME_TASKS_SORTED_SET_NAME,
+        0, -1, withscores=True)
     filtered_tasks = filter_tasks_by_players(tasks)
     for task_name, task_time in filtered_tasks.items():
         task_time = reformat_timestamp(task_time)
@@ -131,11 +148,12 @@ def get_all_game_tasks(first_player_id, second_player_id):
     return remaining_tasks
 
 def verify_task_exists(task_name):
-    return redis_client.hexists('task_funcs', task_name)
+    return redis_client.hexists(
+        settings.TASK_CALLBACK_FUNCTIONS_QUEUE_NAME,
+        task_name
+    )
 
 def start_task_checker():
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     loop.run_until_complete(check_tasks())
-
-threading.Thread(target=start_task_checker, daemon=True).start()

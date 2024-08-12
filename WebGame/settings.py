@@ -116,7 +116,7 @@ DELETE_GAME_STATE_TIMEOUT = 10
 DELETE_GAME_TIMEOUT = 100
 REJOIN_TIMEOUT = 30           # !!! Must be smaller than DELETE_GAME_TIMEOUT !!!
 
-TIMEOUT_MODULE = 'gameNetworking.scheduler.tasks'
+TIMEOUT_MODULE = 'gameNetworking.messager.tasks'
 
 ACTION_MOVE_FUNC_NAME = 'limit_action_time'
 REACTION_MOVE_FUNC_NAME = 'limit_reaction_time'
@@ -143,6 +143,13 @@ REROLL_PRICE_INITIAL_VALUE = 30
 REROLL_PRICE_INCREASE_VALUE = 10
 MORALE_INITIAL_VALUE = 100
 MONEY_INITIAL_VALUE = 500
+
+######### Channels names Settings #########
+DELAYED_GAME_TASKS_SORTED_SET_NAME = 'tasks'
+GAMES_STATES_QUEUE_NAME = 'games_states'
+TASK_CALLBACK_FUNCTIONS_QUEUE_NAME = 'task_funcs'
+IN_GAME_STATUS_MESSAGING_CHANNEL_NAME = 'in_game_status_messaging_channel'
+ARCHIVE_CREATION_MESSAGING_CHANNEL_NAME = 'archive_creation_messaging_channel'
 
 ################################################################################
 

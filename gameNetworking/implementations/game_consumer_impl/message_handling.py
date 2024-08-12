@@ -1,7 +1,7 @@
 from autobahn.exception import Disconnected
 from django.conf import settings
 
-from ...scheduler.scheduler import update_game_user_state
+from ...messager.scheduler import update_game_user_state
 from ...enums import PlayerState
 from ...implementations.game_consumer_impl.main_game_loop.hub_stage import \
     ReadyMoveHandler

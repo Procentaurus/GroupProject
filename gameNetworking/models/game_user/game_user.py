@@ -5,7 +5,7 @@ from django.conf import settings
 
 from gameMechanics.models import ActionCard
 
-from ...scheduler.scheduler import check_game_user_state
+from ...messager.scheduler import check_game_user_state
 from ...enums import PlayerState
 from ..common import CONFLICT_SIDES
 from .methods import *
@@ -13,8 +13,7 @@ from .methods import *
 
 class GameUser(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-    user_id = models.UUIDField(
-        primary_key=True, default=uuid4, editable=False, unique=True)
+    user_id = models.UUIDField(unique=True)
 
     started_waiting = models.DateTimeField(auto_now_add=True)
     channel_name = models.CharField(null=False, max_length=100)
@@ -40,11 +39,6 @@ class GameUser(models.Model):
         ordering = ["started_waiting"]
 
     #################################  Getters  ################################
-    @database_sync_to_async
-    def get_user_data(self):
-        user = None # TODO Get user
-        return user
-
     def has_lost(self):
         return (self.morale <= 0)
     

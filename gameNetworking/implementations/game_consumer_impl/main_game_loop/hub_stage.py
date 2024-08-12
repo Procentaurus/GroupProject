@@ -2,9 +2,9 @@ from gameNetworking.enums import MessageType
 
 from ....models.queries import *
 from ....enums import PlayerState
-from ....scheduler.scheduler import remove_delayed_task
-from ....scheduler.scheduler import check_game_user_state
-from ....scheduler.scheduler import update_game_user_state
+from ....messager.scheduler import remove_delayed_task
+from ....messager.scheduler import check_game_user_state
+from ....messager.scheduler import update_game_user_state
 from .checkers import *
 from .common import SurrenderMoveHandler, ShopCardsAdder, CardSender
 from .abstract import MoveHandler, StageHandler
@@ -57,7 +57,8 @@ class ReadyMoveHandler(MoveHandler):
             )
         elif opp.wait_for_clash_start(str(self._game.id)):
             await self._send_clash_start_info()
-            self._consumer.limit_player_action_time(self._game.next_move_player)
+            player_to_move = self.get_next_player_to_move(opp)
+            self._consumer.limit_player_action_time(player_to_move)
         else:
             if not is_delayed:
                 await self._consumer.critical_error(
@@ -73,6 +74,10 @@ class ReadyMoveHandler(MoveHandler):
         await self._consumer.send_message_to_group(
             {"next_move_player" : self._game.next_move_player},
             "clash_start")
+
+    def get_next_player_to_move(self, opp):
+        if self._game.next_move_player == opp.conflict_side: return opp
+        else: return  self._g_u
 
 
 class RerollMoveHandler(MoveHandler):

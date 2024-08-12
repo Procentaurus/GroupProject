@@ -4,7 +4,7 @@ from django.conf import settings
 
 from ...enums import GameStage
 from ...models.queries import get_game_user, get_game
-from ...scheduler.scheduler import add_delayed_task
+from ...messager.scheduler import add_delayed_task
 
 from .connect import Connector
 from .disconnect import Disconnector
@@ -46,12 +46,9 @@ def update_game_stage(self):
     else:
         self.set_game_stage(GameStage.HUB)
 
-def limit_player_action_time(self, player_side):
-    opp = self.get_opponent()
-    g_u = self.get_game_user()
-    id = opp.id if player_side == opp.conflict_side else g_u.id
+def limit_player_action_time(self, player):
     add_delayed_task(
-        f'limit_action_time_{id}',
+        f'limit_action_time_{player.id}',
         settings.ACTION_MOVE_TIMEOUT,
         settings.ACTION_MOVE_TIMEOUT_FUNC
     )

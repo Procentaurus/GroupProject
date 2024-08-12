@@ -1,9 +1,9 @@
 from django.conf import settings
-from channels.db import database_sync_to_async
 
 from ...enums import GameState
-from ...models.queries import delete_game
-from ...scheduler.scheduler import *
+from ...models.queries import delete_game, delete_game_user
+from ...messager.scheduler import *
+from ...messager.publisher import create_archive, clear_in_game_status
 
 
 class Disconnector:
@@ -12,22 +12,24 @@ class Disconnector:
         self._consumer = consumer
 
     async def disconnect(self):
-        await self._consumer.refresh_game()
-        game = self._consumer.get_game()
         player = self._consumer.get_game_user()
-        await self._clear_in_game_status(player)
-        if self._consumer.is_closed_after_game_end():
-            await self._disconnect_after_game_end(game)
+        if not self._is_game_initialised():
+            await delete_game_user(player.id)
         else:
-            await self._disconnect_without_game_end(game, player)
+            await self._consumer.refresh_game()
+            game = self._consumer.get_game()
+            await self._clear_in_game_status(player)
+            if self._consumer.is_closed_after_game_end():
+                await self._disconnect_after_game_end(game)
+            else:
+                await self._disconnect_without_game_end(game, player)
 
     async def _disconnect_after_game_end(self, game):
-        winner = self._consumer.get_winner()
         await self._remove_player_from_group(game.id)
         if check_game_state(str(game.id)) != GameState.DELETED:
             update_game_state(str(game.id), GameState.DELETED)
-            # await database_sync_to_async(create_game_archive)(game, winner)
-            # TODO call creating archive
+            winner = self._consumer.get_winner()
+            await create_archive(game, winner)
             await delete_game(game.id)
             self._remove_all_gameplay_tasks()
             delete_player_states_queue(game.id)
@@ -66,7 +68,11 @@ class Disconnector:
         remove_delayed_task(f'limit_hub_time_{g_u_id}')
         remove_delayed_task(f'limit_hub_time_{opp_id}')
         remove_delayed_task(f'limit_opponent_rejoin_time_{g_u_id}')
+        remove_delayed_task(f'limit_opponent_rejoin_time_{opp_id}')
 
     async def _clear_in_game_status(self, player):
-        player_user = await player.get_user()
-        await database_sync_to_async(player_user.clear_in_game)()
+        clear_in_game_status(str(player.user_id))
+
+    def _is_game_initialised(self):
+        game = self._consumer.get_game()
+        return True if game is not None else False

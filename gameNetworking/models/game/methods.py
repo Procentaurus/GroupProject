@@ -1,6 +1,6 @@
 from channels.db import database_sync_to_async
 
-from ...scheduler.scheduler import get_all_game_tasks, update_game_state
+from ...messager.scheduler import get_all_game_tasks, update_game_state
 from ...enums import GameStage, GameState
 
 

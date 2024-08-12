@@ -3,7 +3,7 @@ from gameMechanics.queries import get_a_card_serialized
 
 from ....enums import MessageType, PlayerState
 from ....models.queries import add_reaction_card_to_owned, remove_reaction_card
-from ....scheduler.scheduler import remove_delayed_task, update_game_user_state
+from ....messager.scheduler import remove_delayed_task, update_game_user_state
 from .common import SurrenderMoveHandler, InitCardsManager
 from .abstract import MoveHandler, StageHandler
 from .checkers import *
@@ -134,13 +134,14 @@ class ReactionMoveHandler(MoveHandler):
 
         self._consumer.decrease_reaction_moves()
         if self._consumer.get_action_moves_left() > 0:
+            self._consumer.limit_player_action_time(self._g_u)
             return
 
         if not opp.wait_for_clash_end(str(self._game.id)):
             e_s = ErrorSender(self._consumer)
             await e_s.send_improper_state_error("reaction_move")
             return
- 
+
         await self._consumer.send_message_to_opponent({}, "clash_end")
         await self._consumer.clash_end()
         self.set_players_states_in_hub(opp)
