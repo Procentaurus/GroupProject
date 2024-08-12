@@ -12,7 +12,8 @@ class GameAuthenticationTokenMiddleware:
 
         token = await get_game_token(token_string)
         if token is not None:
-            user = await token.get_game_user()
+            user_id = await token.get_user_id()
+            user = None # TODO Get user
             scope['user'] = user
             scope['token'] = token
   

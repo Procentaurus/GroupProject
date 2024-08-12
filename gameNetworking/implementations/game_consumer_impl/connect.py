@@ -190,7 +190,7 @@ class Connector:
             'type': 'game_reconnect',
             'game_data': GameReconnectSerializer(game).data,
             'player': GameUserReconnectSerializer(player).data,
-            'opponent_id': str((await opp.get_user()).id),
+            'opponent_id': str(opp.user_id),
             'owned_action_cards': await get_serialized_owned_a_cards(player),
             'reaction_cards_owned': await get_serialized_owned_r_cards(player)
         }

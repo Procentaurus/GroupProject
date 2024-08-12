@@ -1,8 +1,6 @@
 from django.conf import settings
 from channels.db import database_sync_to_async
 
-from customUser.models.queries import create_game_archive
-
 from ...enums import GameState
 from ...models.queries import delete_game
 from ...scheduler.scheduler import *
@@ -28,7 +26,8 @@ class Disconnector:
         await self._remove_player_from_group(game.id)
         if check_game_state(str(game.id)) != GameState.DELETED:
             update_game_state(str(game.id), GameState.DELETED)
-            await database_sync_to_async(create_game_archive)(game, winner)
+            # await database_sync_to_async(create_game_archive)(game, winner)
+            # TODO call creating archive
             await delete_game(game.id)
             self._remove_all_gameplay_tasks()
             delete_player_states_queue(game.id)

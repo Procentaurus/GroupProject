@@ -3,7 +3,6 @@ from django.db import models
 from channels.db import database_sync_to_async
 from django.conf import settings
 
-from customUser.models import MyUser
 from gameMechanics.models import ActionCard
 
 from ...scheduler.scheduler import check_game_user_state
@@ -14,7 +13,8 @@ from .methods import *
 
 class GameUser(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-    user = models.OneToOneField(MyUser, on_delete=models.CASCADE, null=False)
+    user_id = models.UUIDField(
+        primary_key=True, default=uuid4, editable=False, unique=True)
 
     started_waiting = models.DateTimeField(auto_now_add=True)
     channel_name = models.CharField(null=False, max_length=100)
@@ -41,8 +41,9 @@ class GameUser(models.Model):
 
     #################################  Getters  ################################
     @database_sync_to_async
-    def get_user(self):
-        return self.user
+    def get_user_data(self):
+        user = None # TODO Get user
+        return user
 
     def has_lost(self):
         return (self.morale <= 0)
