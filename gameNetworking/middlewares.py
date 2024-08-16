@@ -1,4 +1,4 @@
-from .models.queries import *
+from .models.queries import get_game_token
 
 
 # Implementation of getting data about player's single-use token
@@ -12,10 +12,8 @@ class GameAuthenticationTokenMiddleware:
 
         token = await get_game_token(token_string)
         if token is not None:
-            user = await token.get_game_user()
-            scope['user'] = user
+            scope['user_id'] = token.get_user_id()
             scope['token'] = token
-  
             return await self.inner(scope, receive, send)
         else:
             return

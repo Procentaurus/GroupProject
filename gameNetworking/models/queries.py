@@ -25,9 +25,9 @@ def get_game_user(game_user_id):
         return None
 
 @database_sync_to_async
-def get_game_user_with_user(user):
+def get_game_user_with_user(user_id):
     try:
-        return GameUser.objects.get(user=user)
+        return GameUser.objects.get(user_id=user_id)
     except GameUser.DoesNotExist:
         return None
 
@@ -43,8 +43,10 @@ def get_number_of_waiting_players(conflict_side):
     return GameUser.objects.filter(conflict_side=conflict_side).count()
 
 @database_sync_to_async
-def create_game_user(user, conflict_side, channel_name):
-    game_user = GameUser.objects.create(user=user, conflict_side=conflict_side,
+def create_game_user(user_id, conflict_side, channel_name):
+    game_user = GameUser.objects.create(
+        user_id=user_id,
+        conflict_side=conflict_side,
         channel_name=channel_name)
     return game_user
 

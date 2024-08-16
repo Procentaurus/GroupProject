@@ -16,7 +16,7 @@ from .models.reaction_card_in_shop.reaction_card_in_shop \
 
 @admin.register(Game)
 class GameAdmin(admin.ModelAdmin):
-    list_display = ('id', 'teacher_player', 'student_player')
+    list_display = ('id', 'teacher_player', 'student_player', "stage")
     readonly_fields = ('id',)
     add_fieldsets = (
         ("Main section", {"fields": (
@@ -27,10 +27,10 @@ class GameAdmin(admin.ModelAdmin):
 
 @admin.register(GameUser)
 class GameUserAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'conflict_side')
-    readonly_fields = ('id', 'user')
+    list_display = ('id', 'user_id', 'conflict_side')
+    readonly_fields = ('id',)
     add_fieldsets = (
-        ("Main", {"fields": ("id", "user")}),
+        ("Main", {"fields": ("id", "user_id")}),
         ("Game Data", {"fields": (
             "morale", "money", "conflict_side", "action_moves_left",
             "reaction_moves_left", "opp_played_action_card_id")
@@ -43,13 +43,10 @@ class GameUserAdmin(admin.ModelAdmin):
 
 @admin.register(GameAuthenticationToken)
 class GameAuthenticationTokenAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'issued')
-    readonly_fields = ('id','issued')
+    list_display = ('id', 'user_id', 'issued')
+    readonly_fields = ('id', 'issued')
     ordering = ("-issued",)
-    add_fieldsets = (
-        ("Main section", {"fields": ("user",)}),
-    )
-
+    fields = ('user_id', 'issued')
 
 @admin.register(OwnedReactionCard)
 class OwnedReactionCardAdmin(admin.ModelAdmin):

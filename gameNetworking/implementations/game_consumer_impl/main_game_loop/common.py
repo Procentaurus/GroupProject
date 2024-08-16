@@ -3,7 +3,7 @@ from django.conf import settings
 from gameMechanics.scripts.initial_shop import get_initial_shop_for_player
 
 from ....models.queries import add_reaction_card_to_shop
-from ....scheduler.scheduler import check_game_user_state
+from ....messager.scheduler import check_game_user_state
 from .abstract import MoveHandler
 
 
@@ -119,7 +119,7 @@ class InitInfoSender:
             {"initial_money_amount": opp.money,
             "initial_morale": opp.morale,
             "initial_reroll_price": opp.reroll_price,
-            "opponent_id": str((await player.get_user()).id)},
+            "opponent_id": str(player.user_id)},
             "game_start")
 
     async def _send_game_start_info(self):
@@ -129,7 +129,7 @@ class InitInfoSender:
             {"initial_money_amount" : g_u.money,
             "initial_morale" : g_u.morale,
             "initial_reroll_price": g_u.reroll_price,
-            "opponent_id": str(( await opp.get_user()).id)})
+            "opponent_id": str(opp.user_id)})
 
 
 class InitShopCardsGetter:
