@@ -2,10 +2,11 @@ import json
 from channels.exceptions import StopConsumer
 from django.conf import settings
 
+from WebGame.loggers import get_game_logger
+
 from ...enums import GameStage
 from ...models.queries import get_game_user, get_game
 from ...messager.scheduler import add_delayed_task
-
 from .connect import Connector
 from .disconnect import Disconnector
 from .main_game_loop.main_game_loop import GameLoopHandler
@@ -99,6 +100,9 @@ async def refresh_opponent(self):
     opp_id = self.get_opponent().id
     refreshed_opp = await get_game_user(opp_id)
     self.set_opponent(refreshed_opp)
+
+def activate_logger(self):
+    self.logger = get_game_logger(str(self._game.id))
 
 async def decode_json(self, text_data):
     try:

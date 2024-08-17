@@ -114,6 +114,7 @@ async def game_creation(self, data):
     self.set_game(game)
     opponent = await get_game_user(data.get("opponent_id"))
     self.set_opponent(opponent)
+    self.activate_logger()
 
 async def hub_stage_timeout(self, data=None):
     self.logger.info("Hub stage timeout")

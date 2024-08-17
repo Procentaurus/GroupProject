@@ -1,5 +1,4 @@
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
-import logging
 from django.conf import settings
 
 from .implementations.game_consumer_impl.methods import *
@@ -9,7 +8,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.logger = logging.getLogger(__name__)
+        self.logger = None
 
         self._game = None
         self._winner = None
@@ -158,6 +157,9 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     def decrease_reaction_moves(self):
         pass
 
+    def activate_logger(self):
+        pass
+
     ############################ Basic consumer methods ########################
     async def connect(self):
         pass
@@ -260,6 +262,7 @@ GameConsumer.refresh_game_user = refresh_game_user
 GameConsumer.refresh_game = refresh_game
 GameConsumer.refresh_opponent = refresh_opponent
 GameConsumer.init_table_for_new_clash = init_table_for_new_clash
+GameConsumer.activate_logger = activate_logger
 
 GameConsumer.send_message_to_group = send_message_to_group
 GameConsumer.send_message_to_opponent = send_message_to_opponent
