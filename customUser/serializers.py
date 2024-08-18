@@ -108,6 +108,5 @@ class GameArchiveGetAllSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = GameArchive
-        fields = ['start_date', 'start_time', 'lenght_in_sec', 'winner',
-                  'student_player', 'teacher_player'
-                ]
+        fields = ['start_date', 'start_time', 'length_in_sec', 'winner',
+                  'student_player', 'teacher_player']

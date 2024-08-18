@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 import bleach
 
 from WebGame.permissions import *
+from WebGame.paginators import *
 
 from .archive_filter import *
 from .serializers import *
@@ -16,13 +17,6 @@ from .models.game_archive.game_archive import GameArchive
 class CustomTokenObtainPairView(TokenObtainPairView):
 
     def post(self, request, *args, **kwargs):
-        # decryptor = AESDecryptor(
-        #     settings.AES_SECRET_KEY,
-        #     settings.AES_IV
-        # )
-        # decrypted_msg = decryptor.decrypt(request.data)
-        # email, password = self._retrieve_login_data(decrypted_msg)
-
         email = bleach.clean(request.data.get('email'))
         password = request.data.get('password')
 
@@ -36,7 +30,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         return super().post(request, *args, **kwargs)
         
     def _retrieve_login_data(self, data):
-        # Email and password are divided with '+' sign
+        # Email and password are divided with '+'
         plus_index = data.find('+')
         if plus_index != -1:
             return bleach.clean(data[:plus_index]), data[(plus_index + 1):]
@@ -45,6 +39,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
 class MyUserList(generics.ListCreateAPIView):
     
+    pagination_class = MyUserPaginator
     permission_classes = (
         IsAuthenticated | ChosePostMethod,
     )
@@ -73,9 +68,15 @@ class MyUserList(generics.ListCreateAPIView):
         return objects
     
     def get(self, request, *args, **kwargs):
-        users = self.get_queryset()
-        dto = self.get_output_serializer_class()(users, many=True)
-        return Response(dto.data, status=status.HTTP_200_OK)
+        queryset = self.get_queryset()
+        
+        # Apply pagination
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_output_serializer_class()(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = self.get_output_serializer_class()(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -173,6 +174,7 @@ class MyUserDetail(generics.RetrieveUpdateDestroyAPIView):
 
 class GameArchiveList(generics.ListCreateAPIView):
 
+    pagination_class = GameArchivePaginator
     permission_classes = (IsAuthenticated,)
 
     def get_serializer_class(self):

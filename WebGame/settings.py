@@ -151,6 +151,10 @@ TASK_CALLBACK_FUNCTIONS_QUEUE_NAME = 'task_funcs'
 IN_GAME_STATUS_MESSAGING_CHANNEL_NAME = 'in_game_status_messaging_channel'
 ARCHIVE_CREATION_MESSAGING_CHANNEL_NAME = 'archive_creation_messaging_channel'
 
+######### Pagination sizes Settings #########
+ARCHIVE_LIST_ENDPOINT_PAGE_SIZE = 150
+MYUSER_LIST_ENDPOINT_PAGE_SIZE = 50
+
 ################################################################################
 
 
