@@ -259,7 +259,7 @@ class GameVerifier:
         if self._game is None:
             game_user = self._consumer.get_game_user()
             e_s = ErrorSender(self._consumer)
-            await e_s.send_game_not_started_info(game_user.conflict_side)
+            await e_s.send_game_not_started_info(game_user)
             return False
         return True
 
@@ -279,8 +279,6 @@ class GameVerifier:
 
     async def verify_next_move_performer(self):
         game_user = self._consumer.get_game_user()
-        print(self._game.next_move_player)
-        print(game_user.conflict_side)
         if self._game.next_move_player != game_user.conflict_side:
             e_s = ErrorSender(self._consumer)
             await e_s.send_improper_move_info("not your turn")

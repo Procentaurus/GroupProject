@@ -1,5 +1,4 @@
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
-import logging
 from django.conf import settings
 
 from .implementations.game_consumer_impl.methods import *
@@ -9,7 +8,7 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.logger = logging.getLogger(__name__)
+        self.logger = None
 
         self._game = None
         self._winner = None
@@ -122,13 +121,13 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     def is_moves_per_clash_maximal(self):
         pass
 
-    def limit_players_hub_time(self):
+    def limit_player_hub_time(self):
         pass
 
     def limit_player_action_time(self, player):
         pass
 
-    def limit_player_reaction_time(self):
+    def limit_opponent_reaction_time(self):
         pass
 
     def update_after_reconnect(self, game, player, opponent):
@@ -156,6 +155,9 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
         pass
 
     def decrease_reaction_moves(self):
+        pass
+
+    def activate_logger(self):
         pass
 
     ############################ Basic consumer methods ########################
@@ -249,8 +251,8 @@ GameConsumer.update_after_reconnect = update_after_reconnect
 GameConsumer.reset_turns_to_inc = reset_turns_to_inc
 GameConsumer.decrement_turn_to_inc = decrement_turn_to_inc
 GameConsumer.increment_moves_per_clash = increment_moves_per_clash
-GameConsumer.limit_players_hub_time = limit_players_hub_time
-GameConsumer.limit_player_reaction_time = limit_player_reaction_time
+GameConsumer.limit_player_hub_time = limit_player_hub_time
+GameConsumer.limit_opponent_reaction_time = limit_opponent_reaction_time
 GameConsumer.limit_player_action_time = limit_player_action_time
 GameConsumer.update_game_stage = update_game_stage
 GameConsumer._update_moves_per_clash = update_moves_per_clash
@@ -260,6 +262,7 @@ GameConsumer.refresh_game_user = refresh_game_user
 GameConsumer.refresh_game = refresh_game
 GameConsumer.refresh_opponent = refresh_opponent
 GameConsumer.init_table_for_new_clash = init_table_for_new_clash
+GameConsumer.activate_logger = activate_logger
 
 GameConsumer.send_message_to_group = send_message_to_group
 GameConsumer.send_message_to_opponent = send_message_to_opponent

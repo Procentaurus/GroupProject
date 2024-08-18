@@ -57,6 +57,7 @@ def backup(self, consumer):
     if played_a_card is not None:
         self.opp_played_action_card_id = played_a_card
     self.save()
+    consumer.logger.info(f"User({self.user_id})'s data has been backuped")
 
 async def buy_reroll(self):
     await self.subtract_money(self.reroll_price)

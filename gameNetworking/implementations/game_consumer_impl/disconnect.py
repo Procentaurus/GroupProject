@@ -10,11 +10,12 @@ class Disconnector:
 
     def __init__(self, consumer):
         self._consumer = consumer
+        self.logger = consumer.logger
 
     async def disconnect(self):
         player = self._consumer.get_game_user()
         if not self._is_game_initialised():
-            await delete_game_user(player.id)
+            await self._disconnect_before_game_initialised(player)
         else:
             await self._consumer.refresh_game()
             game = self._consumer.get_game()
@@ -23,6 +24,11 @@ class Disconnector:
                 await self._disconnect_after_game_end(game)
             else:
                 await self._disconnect_without_game_end(game, player)
+
+    async def _disconnect_before_game_initialised(self, player):
+        await delete_game_user(player.id)
+        self.logger.info(f"User({player.id}) disconnected from game before its"
+                         " initialisation")
 
     async def _disconnect_after_game_end(self, game):
         await self._remove_player_from_group(game.id)
@@ -38,6 +44,8 @@ class Disconnector:
                 settings.DELETE_GAME_STATE_TIMEOUT,
                 settings.DELETE_GAME_STATE_TIMEOUT_FUNC
             )
+        self.logger.info(f"User({self._consumer.get_game_user().id}) "
+                         "disconnected from game after its end")
 
     async def _disconnect_without_game_end(self, game, player):
         if game:
@@ -53,6 +61,8 @@ class Disconnector:
                     settings.DELETE_GAME_TIMEOUT,
                     settings.DELETE_GAME_TIMEOUT_FUNC
                 )
+        self.logger.info(f"User({player.id}) disconnected from game before its"
+                         " end")
 
     async def _remove_player_from_group(self, game_id):
         await self._consumer.channel_layer.group_discard(
@@ -69,6 +79,7 @@ class Disconnector:
         remove_delayed_task(f'limit_hub_time_{opp_id}')
         remove_delayed_task(f'limit_opponent_rejoin_time_{g_u_id}')
         remove_delayed_task(f'limit_opponent_rejoin_time_{opp_id}')
+        self.logger.info(f"All game tasks removed by User({g_u_id})")
 
     async def _clear_in_game_status(self, player):
         clear_in_game_status(str(player.user_id))

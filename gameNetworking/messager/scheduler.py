@@ -5,6 +5,8 @@ from django.utils import timezone
 from django.conf import settings
 from importlib import import_module
 
+from WebGame.loggers import get_server_logger, get_game_logger
+
 
 redis_client = redis.StrictRedis(
     host=settings.REDIS_SCHEDULER_HOST,
@@ -17,13 +19,18 @@ redis_client = redis.StrictRedis(
 def delete_player_states_queue(game_id):
     queue_name = f'{game_id}_player_states'
     result = redis_client.delete(queue_name)
+    logger = get_game_logger(game_id)
     if result == 1:
-        print(f"Queue '{queue_name}' was successfully deleted.")
+        logger.info(f"Player states queue '{queue_name}' has been"
+                    " successfully deleted.")
     else:
-        print(f"Queue '{queue_name}' did not exist.")
+        logger.warning(f"Player states queue '{queue_name}' has not been"
+                    " deleted as it does not exist")
 
 def update_game_user_state(game_id, game_user_id, state):
     redis_client.hset(f'{game_id}_player_states', game_user_id, state)
+    logger = get_game_logger(game_id)
+    logger.info(f"User({game_user_id})'s state has been updated: {state}")
 
 def check_game_user_state(game_id, game_user_id):
     state = redis_client.hget(f'{game_id}_player_states', game_user_id)
@@ -33,6 +40,8 @@ def check_game_user_state(game_id, game_user_id):
 ############################ Games' states queues ##############################
 def update_game_state(game_id, state):
     redis_client.hset(settings.GAMES_STATES_QUEUE_NAME, game_id, state)
+    logger = get_game_logger(game_id)
+    logger.info(f"Game's state has been updated: {state}")
 
 def check_game_state(game_id):
     state = redis_client.hget(settings.GAMES_STATES_QUEUE_NAME, game_id)
@@ -42,8 +51,10 @@ def remove_game_state(game_id):
     redis_client.hdel(settings.GAMES_STATES_QUEUE_NAME, game_id)
 
 
+logger = get_server_logger()
+
+
 def add_delayed_task(task_name, delay_in_sec, func_path):
-    print(f"add_delayed_task, task_name={task_name}, delay={delay_in_sec}")
     task_time = datetime.now(timezone.utc) + timedelta(seconds=delay_in_sec)
     if not redis_client.zscore(
         settings.DELAYED_GAME_TASKS_SORTED_SET_NAME, task_name):
@@ -58,16 +69,16 @@ def add_delayed_task(task_name, delay_in_sec, func_path):
                 func_path
             )
             pipe.execute()
+    logger.info(f"Added delayed task({task_name})({delay_in_sec})")
 
 def remove_delayed_task(task_name):
-    print(f"remove_delayed_task, task_name={task_name}")
     with redis_client.pipeline() as pipe:
         pipe.zrem(settings.DELAYED_GAME_TASKS_SORTED_SET_NAME, task_name)
         pipe.hdel(settings.TASK_CALLBACK_FUNCTIONS_QUEUE_NAME, task_name)
         pipe.execute()
     if not redis_client.zscore(
         settings.DELAYED_GAME_TASKS_SORTED_SET_NAME, task_name):
-        print("task removed successfully")
+        logger.info(f"Successfully removed delayed task({task_name})")
 
 async def run_task(task_name):
 
@@ -84,16 +95,17 @@ async def run_task(task_name):
     func_path = redis_client.hget(
         settings.TASK_CALLBACK_FUNCTIONS_QUEUE_NAME,
         task_name
-        )
+    )
     if func_path:
         func = get_func()
         id = get_id(task_name)
-        print(f"run_task, task_name={task_name}")
         try:
             await func(id)
+            logger.info(f"Delayed task({task_name}) has been performed")
             return True
         except Exception as e:
-            print(f"Error executing task {task_name}: {e}")
+            logger.error(f"Error executing task {task_name}: {e}")
+    logger.error(f"Not found funcion to perform delayed task {task_name}")
     return False
 
 async def check_tasks():
@@ -110,8 +122,6 @@ async def check_tasks():
                     success = await run_task(task_name)
                     if success:
                         remove_delayed_task(task_name)
-                    else:
-                        print(f"Task {task_name} failed")
         else:
             await asyncio.sleep(0.1)
 

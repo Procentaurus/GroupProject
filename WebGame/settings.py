@@ -189,41 +189,6 @@ SIMPLE_JWT = {
     "JTI_CLAIM": "jti"
 }
 
-
-LOGGING = {
-    'version': 1,
-    "disable_existing_loggers": False,
-    'formatters': {
-        'main': {
-            'format': '{asctime} {module} {levelname} {message}',
-            'style': '{',
-            'datefmt':'%H:%M:%S',
-        }
-    },
-    'handlers': {
-        'views': {
-            'class': 'logging.FileHandler',
-            'filename': 'logs/networking/views.log',  # Specified path
-            'formatter' : 'main'
-        },
-        'consumers': {
-            'class': 'logging.FileHandler',
-            'filename': 'logs/networking/consumers.log',  # Specified path
-            'formatter' : 'main',
-        },
-    },
-    'loggers': {
-        'gameNetworking.views': {  # Specified logger for module
-            'handlers': ['views'],
-            'level': 'DEBUG',
-        },
-        'gameNetworking.consumers': {  # Specified logger for module
-            'handlers': ['consumers'],
-            'level': 'DEBUG',
-        },
-    },
-}
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',

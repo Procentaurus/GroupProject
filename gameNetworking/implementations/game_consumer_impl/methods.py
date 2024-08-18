@@ -2,10 +2,11 @@ import json
 from channels.exceptions import StopConsumer
 from django.conf import settings
 
+from WebGame.loggers import get_game_logger
+
 from ...enums import GameStage
 from ...models.queries import get_game_user, get_game
 from ...messager.scheduler import add_delayed_task
-
 from .connect import Connector
 from .disconnect import Disconnector
 from .main_game_loop.main_game_loop import GameLoopHandler
@@ -13,12 +14,18 @@ from .main_game_loop.main_game_loop import GameLoopHandler
 
 def reset_turns_to_inc(self):
     self._turns_to_inc = (settings.TURNS_BETWEEN_NUM_MOVES_INC - 1)
+    self.logger.info(f"User({self._game_user.user_id}) has turns to next "
+                     f" incrementation number reset: {self._turns_to_inc}")
 
 def decrement_turn_to_inc(self):
     self._turns_to_inc -= 1
+    self.logger.info(f"User({self._game_user.user_id}) has turns to next "
+                     f" incrementation number decreased: {self._turns_to_inc}")
 
 def increment_moves_per_clash(self):
     self._moves_per_clash += 1
+    self.logger.info(f"User({self._game_user.user_id}) has turns to next "
+                     f" incrementation number increased: {self._turns_to_inc}")
 
 def update_after_reconnect(self, game, player, opponent):
     self._opponent = opponent
@@ -39,12 +46,16 @@ def update_moves_per_clash(self):
         self.reset_turns_to_inc()
         if not self.is_moves_per_clash_maximal():
             self.increment_moves_per_clash()
+    self.logger.info(f"The number of moves per clash has been updated for "
+                    f"User({self._opponent.user_id}): {self._moves_per_clash}")
 
 def update_game_stage(self):
     if self.get_game_stage() == GameStage.HUB:
         self.set_game_stage(GameStage.CLASH)
     else:
         self.set_game_stage(GameStage.HUB)
+    self.logger.info(f"The game stage has been updated for "
+                     f"User({self._opponent.user_id}): {self._game_stage}")
 
 def limit_player_action_time(self, player):
     add_delayed_task(
@@ -52,38 +63,43 @@ def limit_player_action_time(self, player):
         settings.ACTION_MOVE_TIMEOUT,
         settings.ACTION_MOVE_TIMEOUT_FUNC
     )
+    self.logger.info(f"The delayed action move has been added for "
+                f"User({player.user_id})")
 
-def limit_player_reaction_time(self):
+def limit_opponent_reaction_time(self):
     add_delayed_task(
-        f'limit_reaction_time_{self.get_opponent().id}',
+        f'limit_reaction_time_{self._opponent.id}',
         settings.REACTION_MOVE_TIMEOUT,
         settings.REACTION_MOVE_TIMEOUT_FUNC
     )
+    self.logger.info(f"The delayed reaction move has been added for "
+                    f"User({self._opponent.user_id})")
 
-def limit_players_hub_time(self):
-    print(f"limit_players_hub_time, player_id={self.get_game_user().id}")
-    print(f"limit_players_hub_time, opp_id={self.get_opponent().id}")
+def limit_player_hub_time(self, player):
     add_delayed_task(
-        f'limit_hub_time_{self.get_game_user().id}',
+        f'limit_hub_time_{player.id}',
         settings.HUB_STAGE_TIMEOUT,
         settings.HUB_STAGE_TIMEOUT_FUNC
     )
-    add_delayed_task(
-        f'limit_hub_time_{self.get_opponent().id}',
-        settings.HUB_STAGE_TIMEOUT,
-        settings.HUB_STAGE_TIMEOUT_FUNC
-    )
+    self.logger.info(f"The delayed ready move has been added for "
+                      f"User({self._game_user.user_id})")
 
 def decrease_action_moves(self):
     self._moves_table[0] -= 1
+    self.logger.info(f"User({self._game_user.user_id}) has action move number "
+                     f"decreased: {self._moves_table[0]}")
 
 def decrease_reaction_moves(self):
     self._moves_table[1] -= 1
+    self.logger.info(f"User({self._game_user.user_id}) has reaction move number "
+                     f"increased: {self._moves_table[1]}")
 
 def init_table_for_new_clash(self):
     self._update_moves_per_clash()
     for i in range(2):
         self._moves_table[i] = self._moves_per_clash
+    self.logger.info(f"User({self._game_user.user_id}) has move table updated: "
+                     f"{self._moves_table}")
 
 async def refresh_game_user(self):
     game_user_id = self.get_game_user().id
@@ -99,6 +115,9 @@ async def refresh_opponent(self):
     opp_id = self.get_opponent().id
     refreshed_opp = await get_game_user(opp_id)
     self.set_opponent(refreshed_opp)
+
+def activate_logger(self):
+    self.logger = get_game_logger(str(self._game.id))
 
 async def decode_json(self, text_data):
     try:

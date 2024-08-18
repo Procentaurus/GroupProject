@@ -38,3 +38,4 @@ def backup(self, consumer):
     )
     self.save()
     update_game_state(str(self.id), GameState.BACKUPED)
+    consumer.logger.info(f"Game's data has been backuped")

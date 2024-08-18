@@ -114,9 +114,9 @@ async def game_creation(self, data):
     self.set_game(game)
     opponent = await get_game_user(data.get("opponent_id"))
     self.set_opponent(opponent)
+    self.activate_logger()
 
 async def hub_stage_timeout(self, data=None):
-    self.logger.info("Hub stage timeout")
     await self.send_json({
         'type': "timeout",
         'move': 'ready move'
@@ -125,18 +125,18 @@ async def hub_stage_timeout(self, data=None):
     await self.refresh_game()
     handler = ReadyMoveHandler(self)
     await handler.perform_move(True)
+    self.logger.info(f"Ready move timeout for User({self._game_user.user_id})")
 
 async def action_move_timeout(self, data=None):
-    self.logger.info("Action move timeout")
     await self.send_json({
         'type': "timeout",
         'move': 'action move'
     })
     await self.refresh_game_user()
     await self.refresh_game()
+    self.logger.info(f"Action move timeout for User({self._game_user.user_id})")
 
 async def reaction_move_timeout(self, data=None):
-    self.logger.info("Reaction move timeout")
     await self.send_json({
         'type': "timeout",
         'move': 'reaction move'
@@ -145,6 +145,7 @@ async def reaction_move_timeout(self, data=None):
     await self.refresh_game()
     handler = ReactionMoveHandler(self, {'reaction_cards': []})
     await handler.perform_move(True)
+    self.logger.info(f"Rection move timeout for User({self._game_user.user_id})")
 
 async def error(self, message, log_message=None):    
     await self.send_json({

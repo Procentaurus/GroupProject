@@ -1,5 +1,3 @@
-from channels.db import database_sync_to_async
-
 from gameMechanics.serializers import *
 
 from ...messager.scheduler import *
@@ -79,27 +77,28 @@ class Connector:
             game = await self._create_game(game_user, opponent)
             self._consumer.set_game(game)
             self._consumer.set_opponent(opponent)
+            self._activate_logging()
             set_in_game_status(str(game_user.user_id))
             set_in_game_status(str(opponent.user_id))
             await self._add_players_channels_to_group(game)
             await self._send_initial_game_info_to_players(game, game_user)
             await self._init_shop_for_game()
-            self._consumer.limit_players_hub_time()
+            self._consumer.limit_player_hub_time(game_user)
+            self._consumer.limit_player_hub_time(opponent)
             update_game_state(str(game.id), GameState.ONGOING)
             self.init_queue_with_game_user_states(
                 str(game.id),
                 str(game_user.id),
                 str(opponent.id)
             )
+            self.logger.info(f"User({game_user.user_id}) has connected to the "
+                             f" new game with opponent {opponent.user_id}")
 
     async def _create_game_user(self):
         game_user = await create_game_user(
             self._user_id,
             self._side,
             self._consumer.channel_name
-        )
-        self._consumer.logger.info(
-            f"The game_user for user {self._user_id} has been created."
         )
         return game_user
 
@@ -111,11 +110,9 @@ class Connector:
 
     async def _create_game(self, game_user, opponent):
         if self._side == "teacher":
-            game = await create_game(game_user, opponent)
+            return await create_game(game_user, opponent)
         else:
-            game = await create_game(opponent, game_user)
-        self._consumer.logger.info("The game has been created.")
-        return game
+            return await create_game(opponent, game_user)
 
     async def _send_initial_game_info_to_players(self, game, game_user):
         i_i_s = InitInfoSender(self._consumer)
@@ -131,6 +128,9 @@ class Connector:
         await player.update_channel_name(self._consumer.channel_name)
         self._consumer.update_after_reconnect(game, player, opponent)
         set_in_game_status(str(player.user_id))
+        self._activate_logging()
+        self.logger.info(f"User({player.user_id}) started connecting to "
+            "the saved game")
         if verify_task_exists(f'limit_opponent_rejoin_time_{opponent.id}'):
             remove_delayed_task(f'limit_opponent_rejoin_time_{opponent.id}')
             remove_delayed_task(f'limit_game_data_lifetime_{game.id}')
@@ -147,6 +147,8 @@ class Connector:
             self._reactivate_all_game_tasks(game)
             await self._inform_players_about_reactivated_tasks(game, opp)
             update_game_state(str(game.id), GameState.ONGOING)
+            self.logger.info(f"User({player.user_id}) has reconnected to the "
+                    f"game with opponent {opponent.user_id} as second")
         else:
             remove_delayed_task(f'limit_game_data_lifetime_{game.id}')
             await self._consumer.opponent_rejoin_waiting()
@@ -155,6 +157,8 @@ class Connector:
                 settings.REJOIN_TIMEOUT,
                 settings.REJOIN_TIMEOUT_FUNC
             )
+            self.logger.info(f"User({player.user_id}) has reconnected to the "
+                    f" game with opponent {opponent.user_id} as first")
 
     async def _create_reconnect_message_body(self, player, game, opp):
 
@@ -236,3 +240,7 @@ class Connector:
     def init_queue_with_game_user_states(self, game_id, player_id, opponent_id):
         update_game_user_state(game_id, player_id, PlayerState.IN_HUB)
         update_game_user_state(game_id, opponent_id, PlayerState.IN_HUB)
+
+    def _activate_logging(self):
+        self._consumer.activate_logger()
+        self.logger = self._consumer.logger

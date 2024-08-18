@@ -44,6 +44,8 @@ class ReadyMoveHandler(MoveHandler):
         p_v = PlayerVerifier(self._consumer)
         if await p_v.verify_player_wait_for_clash(): return False
         if not await p_v.verify_player_in_hub("purchase move"): return False
+        self.logger.info(f"User({self._g_u.user_id})'s ready move passed"
+                         " verification")
         return True
 
     async def _perform_move_mechanics(self, is_delayed):
@@ -69,6 +71,7 @@ class ReadyMoveHandler(MoveHandler):
         await remove_all_reaction_cards_from_shop(self._g_u)
         if not is_delayed:
             remove_delayed_task(f'limit_hub_time_{str(self._g_u.id)}')
+        self.logger.info(f"User({self._g_u.user_id}) performed ready move")
 
     async def _send_clash_start_info(self):
         await self._consumer.send_message_to_group(
@@ -90,6 +93,8 @@ class RerollMoveHandler(MoveHandler):
         if await p_v.verify_player_wait_for_clash(): return False
         if not await p_v.verify_player_in_hub("reroll move"): return False
         if not await p_v.verify_player_can_reroll(): return False
+        self.logger.info(f"User({self._consumer.get_game_user().user_id})'s"
+                    " reroll move passed verification")
         return True
 
     async def _perform_move_mechanics(self, is_delayed):
@@ -112,6 +117,8 @@ class RerollMoveHandler(MoveHandler):
             'type' : "reroll_confirmation",
             'new_reroll_price' : g_u.get_reroll_price()
         })
+        self.logger.info(f"User({self._consumer.get_game_user().user_id})"
+                         " performed reroll move")
 
 
 class PurchaseMoveHandler(MoveHandler):
@@ -137,6 +144,8 @@ class PurchaseMoveHandler(MoveHandler):
         c_c_v = CardCostVerifier(self._consumer, self._a_cards, self._r_cards)
         if not await c_c_v.verify_player_can_afford_cards(): return False
 
+        self.logger.info(f"User({self._consumer.get_game_user().user_id})'s"
+            " purchase move passed verification")
         return True
     
     async def _perform_move_mechanics(self, is_delayed):
@@ -152,8 +161,9 @@ class PurchaseMoveHandler(MoveHandler):
                 amount = r_card_data.get("amount")
                 await self._purchase_reaction_card(id, amount)
             
-        await self._consumer.purchase_result(
-            {"new_money_amount" : g_u.money})
+        await self._consumer.purchase_result({"new_money_amount" : g_u.money})
+        self.logger.info(f"User({self._consumer.get_game_user().user_id})"
+                         " performed purchase move")
         
     def _any_action_cards_sent(self):
         return False if (self._a_cards is None or self._a_cards == []) else True

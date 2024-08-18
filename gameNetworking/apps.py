@@ -1,5 +1,10 @@
-from django.apps import AppConfig
+from WebGame.loggers import get_server_logger
+
 import threading
+from django.apps import AppConfig
+
+
+logger = get_server_logger()
 
 
 class GamenetworkingConfig(AppConfig):
@@ -10,3 +15,4 @@ class GamenetworkingConfig(AppConfig):
         from .messager.scheduler import start_task_checker
 
         threading.Thread(target=start_task_checker, daemon=True).start()
+        logger.info("Thread handling game tasks has started")

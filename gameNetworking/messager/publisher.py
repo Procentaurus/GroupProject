@@ -3,6 +3,8 @@ import json
 from django.utils import timezone
 from django.conf import settings
 
+from WebGame.loggers import get_server_logger
+
 
 redis_client = redis.StrictRedis(
     host=settings.REDIS_MESSAGING_HOST,
@@ -10,9 +12,10 @@ redis_client = redis.StrictRedis(
     db=settings.REDIS_MESSAGING_DB
 )
 
+logger = get_server_logger()
+
 
 def clear_in_game_status(user_id):
-    print("Published user in game status clear request")
     redis_client.publish(
         settings.IN_GAME_STATUS_MESSAGING_CHANNEL_NAME,
         json.dumps({
@@ -20,9 +23,9 @@ def clear_in_game_status(user_id):
             'new_status': False
         })
     )
+    logger.info(f"User({user_id}) published 'in game' status clear request")
 
 def set_in_game_status(user_id):
-    print("Published user in game status set request")
     redis_client.publish(
         settings.IN_GAME_STATUS_MESSAGING_CHANNEL_NAME,
         json.dumps({
@@ -30,11 +33,11 @@ def set_in_game_status(user_id):
             'new_status': True
         })
     )
+    logger.info(f"User({user_id}) published 'in game' status set request")
 
 async def create_archive(game, winner):
     teacher = await game.get_teacher_player()
     student = await game.get_student_player()
-    print("Published game archive creation request")
     redis_client.publish(
         settings.ARCHIVE_CREATION_MESSAGING_CHANNEL_NAME,
         json.dumps({
@@ -45,3 +48,4 @@ async def create_archive(game, winner):
             'start_datetime': game.start_datetime.isoformat(),
         })
     )
+    logger.info(f"Game({game.id})'s 'arcvhive creation' request published")
