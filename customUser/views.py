@@ -1,11 +1,13 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.permissions import IsAuthenticated
 import bleach
 
 from WebGame.permissions import *
 from WebGame.paginators import *
+from WebGame.throttlers import *
 
 from .archive_filter import *
 from .serializers import *
@@ -16,6 +18,9 @@ from .models.game_archive.game_archive import GameArchive
 
 class CustomTokenObtainPairView(TokenObtainPairView):
 
+    throttle_classes = [
+        CustomTokenCreateHourRate, CustomTokenCreateAnonHourRate]
+
     def post(self, request, *args, **kwargs):
         email = bleach.clean(request.data.get('email'))
         password = request.data.get('password')
@@ -25,7 +30,6 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 {'detail': 'Lacking required credentials: email or password.'},
                 status=status.HTTP_400_BAD_REQUEST)
 
-        #TODO Logging
         email = email.lower()
         return super().post(request, *args, **kwargs)
         
@@ -37,47 +41,19 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         else:
             return None, None
 
-class MyUserList(generics.ListCreateAPIView):
-    
-    pagination_class = MyUserPaginator
-    permission_classes = (
-        IsAuthenticated | ChosePostMethod,
-    )
 
+class MyUserCreateView(generics.CreateAPIView):
+
+    throttle_classes = [MyUserCreateThrottleDayRate]
+
+    def get_output_serializer_class(self):
+        return MyUserGetDetailPrivateSerializer
+    
     # Choose dto for incoming data
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return MyUserCreateUpdateSerializer
-
-    def get_output_serializer_class(self):
-        if self.request.method == 'POST':
-            return MyUserGetDetailPrivateSerializer
-        else:
-            return MyUserGetAllSerializer
-
-    def get_queryset(self):
-        objects = MyUser.objects.all()
-        username = self.request.query_params.get('username', None)
-        in_game = self.request.query_params.get('in_game', None)
         
-        if username is not None:
-            objects = objects.filter(username__icontains=username)
-        if in_game is not None:
-            objects = objects.filter(in_game=in_game)
-
-        return objects
-    
-    def get(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        
-        # Apply pagination
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_output_serializer_class()(page, many=True)
-            return self.get_paginated_response(serializer.data)
-        serializer = self.get_output_serializer_class()(queryset, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
 
@@ -108,22 +84,45 @@ class MyUserList(generics.ListCreateAPIView):
         user.save()
         return user
 
+class MyUserListView(generics.ListAPIView):
 
-class MyUserDetail(generics.RetrieveUpdateDestroyAPIView):
+    pagination_class = MyUserPaginator
+    permission_classes = [IsAuthenticated,]
+    throttle_classes = [MyUserListThrottleDayRate,
+                        MyUserListThrottleMinRate]
 
-    permission_classes = (
-        IsAuthenticated &
-        (
-            ((ChoseDeleteMethod | ChosePutMethod) & (AccessHisData | IsAdmin))
-            | ChoseGetMethod
-        ),
-    )
-    queryset = MyUser.objects.all()
+    def get_output_serializer_class(self):
+        return MyUserGetAllSerializer
+
+    def get_queryset(self):
+        objects = MyUser.objects.all()
+        username = self.request.query_params.get('username', None)
+        in_game = self.request.query_params.get('in_game', None)
+        
+        if username is not None:
+            objects = objects.filter(username__icontains=username)
+        if in_game is not None:
+            objects = objects.filter(in_game=in_game)
+        return objects
+    
+    def get(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_output_serializer_class()(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = self.get_output_serializer_class()(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class MyUserRetrieveView(generics.RetrieveAPIView):
+
+    permission_classes = [IsAuthenticated & ChoseGetMethod,]
+    throttle_classes = [MyUserGetThrottleDayRate(),
+                        MyUserGetThrottleMinRate()]
     lookup_field = 'id'
-
-    def get_serializer_class(self):
-        if self.request.method == "PUT":
-            return MyUserCreateUpdateSerializer
+    queryset = MyUser.objects.all()
 
     def get_output_serializer_class(self):
         if self.request.user.id == self.get_object().id:
@@ -132,6 +131,46 @@ class MyUserDetail(generics.RetrieveUpdateDestroyAPIView):
             return MyUserAdminSerializer
         else:
             return MyUserGetDetailSerializer
+        
+    def get_output_serializer_class(self):
+        if self.request.user.id == self.get_object().id:
+            return MyUserGetDetailPrivateSerializer
+        elif self.request.user.is_admin:
+            return MyUserAdminSerializer
+        else:
+            return MyUserGetDetailSerializer
+
+    def serialize_resp_body(self, user):
+        serializer_class = self.get_output_serializer_class()
+        dto = serializer_class(user).data
+        return dto
+
+    def get(self, request, *args, **kwargs):
+        user = self.get_object()
+        dto = self.serialize_resp_body(user)
+        return Response(dto, status=status.HTTP_200_OK)
+
+
+class MyUserUpdateView(generics.UpdateAPIView):
+
+    permission_classes = [IsAuthenticated & (AccessHisData | IsAdmin),]
+    throttle_classes = [MyUserUpdateThrottleDayRate]
+    lookup_field = 'id'
+    queryset = MyUser.objects.all()
+
+    def get_serializer_class(self):
+        return MyUserCreateUpdateSerializer
+    
+    def get_output_serializer_class(self):
+        if self.request.user.is_admin:
+            return MyUserAdminSerializer
+        else:
+            return MyUserGetDetailPrivateSerializer
+
+    def serialize_resp_body(self, user):
+        serializer_class = self.get_output_serializer_class()
+        dto = serializer_class(user).data
+        return dto
 
     def perform_update(self, serializer):
         user = self.get_object()
@@ -146,14 +185,6 @@ class MyUserDetail(generics.RetrieveUpdateDestroyAPIView):
         user.save()
         return user
 
-    def get(self, request, *args, **kwargs):
-        user = self.get_object()
-        dto = self.serialize_resp_body(user)
-        return Response(dto, status=status.HTTP_200_OK)
-    
-    def delete(self, request, *args, **kwargs):
-        return super().delete(request, *args, **kwargs)
-
     def put(self, request, *args, **kwargs):
         user = self.get_object()
         serializer = self.get_serializer(user, data=request.data, partial=True)
@@ -166,16 +197,24 @@ class MyUserDetail(generics.RetrieveUpdateDestroyAPIView):
         dto = self.serialize_resp_body(user)
         return Response(dto, status=status.HTTP_201_CREATED)
 
-    def serialize_resp_body(self, user):
-        serializer_class = self.get_output_serializer_class()
-        dto = serializer_class(user).data
-        return dto
+
+class MyUserDeleteView(generics.DestroyAPIView):
+
+    permission_classes = [IsAuthenticated & (AccessHisData | IsAdmin),]
+    throttle_classes = [MyUserDeleteThrottleDayRate]
+    lookup_field = 'id'
+    queryset = MyUser.objects.all()
+
+    def delete(self, request, *args, **kwargs):
+        return super().delete(request, *args, **kwargs)
 
 
-class GameArchiveList(generics.ListCreateAPIView):
+class GameArchiveList(generics.ListAPIView):
 
     pagination_class = GameArchivePaginator
-    permission_classes = (IsAuthenticated,)
+    permission_classes = [IsAuthenticated,]
+    throttle_classes = [
+        ArchiveListThrottleMinRate, ArchiveListThrottleDayRate]
 
     def get_serializer_class(self):
         return GameArchiveGetAllSerializer
@@ -194,3 +233,35 @@ class GameArchiveList(generics.ListCreateAPIView):
 
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
+
+
+class MyUserView(APIView):
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.method == 'GET':
+            view = MyUserListView.as_view()
+        elif request.method == 'POST':
+            view = MyUserCreateView.as_view()
+        else:
+            return Response(
+                {'detail': 'Method not allowed'}, 
+                status=status.HTTP_405_METHOD_NOT_ALLOWED
+            )
+        return view(request, *args, **kwargs)
+
+
+class MyUserDetailView(APIView):
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.method == 'GET':
+            view = MyUserRetrieveView.as_view()
+        elif request.method == 'PUT':
+            view = MyUserUpdateView.as_view()
+        elif request.method == 'DELETE':
+            view = MyUserDeleteView.as_view()
+        else:
+            return Response(
+                {'detail': 'Method not allowed'}, 
+                status=status.HTTP_405_METHOD_NOT_ALLOWED
+            )
+        return view(request, *args, **kwargs)

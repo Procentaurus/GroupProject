@@ -155,22 +155,21 @@ ARCHIVE_CREATION_MESSAGING_CHANNEL_NAME = 'archive_creation_messaging_channel'
 ARCHIVE_LIST_ENDPOINT_PAGE_SIZE = 150
 MYUSER_LIST_ENDPOINT_PAGE_SIZE = 50
 
+######### Throttle rates Settings #########
+MYUSER_LIST_THROTTLE_MIN_RATE = '15/min'
+MYUSER_GET_THROTTLE_MIN_RATE = '15/min'
+ARCHIVE_LIST_THROTTLE_MIN_RATE = '20/min'
+ARCHIVE_LIST_THROTTLE_DAY_RATE = '200/day'
+MYUSER_LIST_THROTTLE_DAY_RATE = '100/day'
+MYUSER_GET_THROTTLE_DAY_RATE = '400/day'
+MYUSER_CREATE_THROTTLE_DAY_RATE = '5/day'
+MYUSER_UPDATE_THROTTLE_DAY_RATE = '15/day'
+MYUSER_DELETE_THROTTLE_DAY_RATE = '1/day'
+CUSTOMTOKEN_CREATE_THROTTLE_ANON_HOUR_RATE = '10/hour'
+CUSTOMTOKEN_CREATE_THROTTLE_HOUR_RATE = '5/hour'
+GAMETOKEN_CREATE_THROTTLE_HOUR_RATE = '60/hour'
+
 ################################################################################
-
-
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ],
-    'DEFAULT_THROTTLE_RATES':{
-        # 'login':'3/min',
-        # 'publication':'10/hour',
-        # 'publicationAll': '1000/day',
-        # 'comment': '30/hour',
-        # 'text': '5/hour',
-        # 'project':'10/day',
-    }
-}
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
@@ -201,6 +200,26 @@ DATABASES = {
         'PASSWORD': 'postgres',
         'HOST': 'localhost',  # Use 'db' if using Docker Compose
         'PORT': '5431',
+    }
+}
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+         'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'myuser_list_throttle_min_rate': MYUSER_LIST_THROTTLE_MIN_RATE,
+        'myuser_get_throttle_min_rate': MYUSER_GET_THROTTLE_MIN_RATE,
+        'archive_list_throttle_min_rate': ARCHIVE_LIST_THROTTLE_MIN_RATE,
+        'archive_list_throttle_day_rate': ARCHIVE_LIST_THROTTLE_DAY_RATE,
+        'myuser_list_throttle_day_rate': MYUSER_LIST_THROTTLE_DAY_RATE,
+        'myuser_get_throttle_day_rate': MYUSER_GET_THROTTLE_DAY_RATE,
+        'myuser_create_throttle_day_rate': MYUSER_CREATE_THROTTLE_DAY_RATE,
+        'myuser_update_throttle_day_rate': MYUSER_UPDATE_THROTTLE_DAY_RATE,
+        'myuser_delete_throttle_day_rate': MYUSER_DELETE_THROTTLE_DAY_RATE,
+        'customtoken_create_throttle_anon_hour_rate': CUSTOMTOKEN_CREATE_THROTTLE_ANON_HOUR_RATE,
+        'customtoken_create_throttle_hour_rate': CUSTOMTOKEN_CREATE_THROTTLE_HOUR_RATE,
+        'gametoken_create_throttle_hour_rate': GAMETOKEN_CREATE_THROTTLE_HOUR_RATE
     }
 }
 
