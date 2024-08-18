@@ -34,5 +34,4 @@ class ChoseDeleteMethod(permissions.BasePermission):
 class IsAdmin(permissions.BasePermission):
 
     def has_permission(self, request, view):
-        print(request.user.is_admin)
         return True if request.user.is_admin else False

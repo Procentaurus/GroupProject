@@ -17,13 +17,13 @@ class SurrenderMoveHandler(MoveHandler):
 
     async def _perform_move_mechanics(self, is_delayed):
         g_u = self._consumer.get_game_user()
-        self._consumer.logger.info(
-            f"{g_u.conflict_side} player has surrendered")
         winner_side = await self._get_winner_side(g_u)
         await self._consumer.send_message_to_group(
             {"winner" : winner_side, "after_surrender" : True},
             "game_end")
-
+        self.logger.info(f"User({g_u.user_id})({g_u.conflict_side})"
+                    " has surrendered")
+    
     async def _get_winner_side(self, g_u):
         return "student" if g_u.is_teacher() else "teacher"
 
@@ -37,26 +37,28 @@ class ErrorSender:
         await self._consumer.error("Invalid format of sent data")
 
     async def send_cards_not_exist_info(self, data):
-        side = self._consumer.get_game_user().conflict_side
+        g_u = self._consumer.get_game_user()
         await self._consumer.complex_error(
             f"Some of chosen cards do not exist",
-            f"{side} player tried to use cards that do not exist",
+            f"User({g_u.user_id})({g_u.side}) tried to use cards that do"
+            " not exist",
             {"not_existing_cards" : data}
         )
 
     async def send_cards_not_in_shop_info(self, cards):
-        side = self._consumer.get_game_user().conflict_side
+        g_u = self._consumer.get_game_user()
         await self._consumer.complex_error(
             f"Some of chosen cards are not in shop",
-            f"{side} player tried to buy cards that are not in shop",
+            f"User({g_u.user_id})({g_u.side}) tried to buy cards that are not"
+            " in shop",
             {"cards_not_in_shop": cards}
         )
 
     async def send_card_not_owned_info(self, cards):
-        side = self._consumer.get_game_user().conflict_side
+        g_u = self._consumer.get_game_user()
         await self._consumer.complex_error(
             f"Some of chosen cards are not owned",
-            f"{side} player tried to use cards that he doesnt own",
+            f"User({g_u.user_id})({g_u.side}) tried to use cards he doesn't own",
             {"cards_not_owned": cards}
         )
 
@@ -65,24 +67,25 @@ class ErrorSender:
         game_id = self._consumer.get_game().id
         state = check_game_user_state(str(game_id), str(game_user.id))
         await self._consumer.critical_error(
-            f"Improper state: {state} of {game_user.conflict_side}"
-            + f" player in {move_type}.")
-        
+            f"Improper state: {state} of User({game_user.user_id})"
+            f"({game_user.conflict_side}) in {move_type}")
+
     async def send_not_enough_money_info(self):
-        side = self._consumer.get_game_user().conflict_side
+        g_u = self._consumer.get_game_user()
         await self._consumer.error(
             "Do not have enough money to buy chosen cards",
-            f"Not enough money to buy cards by {side} player")
+            f"User({g_u.user_id})({g_u.side}) don't have enough money to buy"
+            " chosen cards")
 
     async def send_improper_move_info(self, add_msg):
-        side = self._consumer.get_game_user().conflict_side
+        g_u = self._consumer.get_game_user()
         await self._consumer.error(f"Improper move made - {add_msg}",
-            f"Improper move made by {side} player")
-        
+            f"User({g_u.user_id})({g_u.side}) made the improper move")
+
     async def send_wrong_message_type_info(self):
         await self._consumer.error(
             f"Wrong message type in the {self._consumer.get_game_stage()}"
-            +" game stage.")
+            " game stage.")
    
     async def send_invalid_token_info(self, conflict_side):
         await self.consumer.error("You have used invalid token",
@@ -92,10 +95,10 @@ class ErrorSender:
         await self.consumer.error("You have chosen invalid conflict side",
             f"Invalid conflict side chosen by {conflict_side} player")
 
-    async def send_game_not_started_info(self, conflict_side):
+    async def send_game_not_started_info(self, game_user):
         await self._consumer.error(
-            f"{conflict_side} player made move before the game"
-            +" has started")
+            f"User({game_user.user_id})({game_user.side}) made move before the "
+            +" game has started")
 
     async def send_turn_update_fail_error(self):
         await self._consumer.critical_error("Updating game turn impossible.")

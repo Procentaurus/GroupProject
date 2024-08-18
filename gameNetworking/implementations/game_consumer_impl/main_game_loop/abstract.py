@@ -17,6 +17,7 @@ class MoveHandler(ABC):
 
     def __init__(self, consumer):
         self._consumer = consumer
+        self.logger = consumer.logger
 
     @abstractmethod
     async def _verify_move(self):

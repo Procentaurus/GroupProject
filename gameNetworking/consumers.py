@@ -121,13 +121,13 @@ class GameConsumer(AsyncJsonWebsocketConsumer):
     def is_moves_per_clash_maximal(self):
         pass
 
-    def limit_players_hub_time(self):
+    def limit_player_hub_time(self):
         pass
 
     def limit_player_action_time(self, player):
         pass
 
-    def limit_player_reaction_time(self):
+    def limit_opponent_reaction_time(self):
         pass
 
     def update_after_reconnect(self, game, player, opponent):
@@ -251,8 +251,8 @@ GameConsumer.update_after_reconnect = update_after_reconnect
 GameConsumer.reset_turns_to_inc = reset_turns_to_inc
 GameConsumer.decrement_turn_to_inc = decrement_turn_to_inc
 GameConsumer.increment_moves_per_clash = increment_moves_per_clash
-GameConsumer.limit_players_hub_time = limit_players_hub_time
-GameConsumer.limit_player_reaction_time = limit_player_reaction_time
+GameConsumer.limit_player_hub_time = limit_player_hub_time
+GameConsumer.limit_opponent_reaction_time = limit_opponent_reaction_time
 GameConsumer.limit_player_action_time = limit_player_action_time
 GameConsumer.update_game_stage = update_game_stage
 GameConsumer._update_moves_per_clash = update_moves_per_clash

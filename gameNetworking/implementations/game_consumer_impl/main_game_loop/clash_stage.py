@@ -51,6 +51,8 @@ class ActionMoveHandler(MoveHandler):
         c_v = CardVerifier(self._consumer, a_c_c)
         if not await c_v.verify_cards_for_clash(): return False
         if not await g_v.verify_turn_update_successful(): return False
+        self.logger.info(f"User({self._consumer.get_game_user().user_id})'s "
+                         " action move passed verification")
         return True
 
     async def _perform_move_mechanics(self, is_delayed):
@@ -70,7 +72,8 @@ class ActionMoveHandler(MoveHandler):
             )
         if not is_delayed:
             remove_delayed_task(f'limit_action_time_{game_user.id}')
-        self._consumer.limit_player_reaction_time()
+        self._consumer.limit_opponent_reaction_time()
+        self.logger.info(f"User({game_user.user_id}) performed action move")
 
     def _any_card_sent(self):
         return False if (self._a_card is None or self._a_card == []) else True
@@ -109,8 +112,10 @@ class ReactionMoveHandler(MoveHandler):
         c_v = CardVerifier(self._consumer, r_c_c)
         if not await c_v.verify_cards_for_clash(): return False
         if not await g_v.verify_turn_update_successful(): return False
+        self.logger.info(f"User({self._consumer.get_game_user().user_id})'s "
+                    " reaction move passed verification")
         return True
-            
+
     async def _perform_move_mechanics(self, is_delayed):
         if not is_delayed:
             remove_delayed_task(f'limit_reaction_time_{self._g_u.id}')
@@ -127,14 +132,18 @@ class ReactionMoveHandler(MoveHandler):
         await self._set_winner_if_exist(opp)
 
         if self._consumer.is_winner():
+            winner = self._consumer.get_winner()
             await self._consumer.send_message_to_group(
-                {"winner" : self._consumer.get_winner()},
+                {"winner" : winner},
                 "game_end")
+            self.logger.info(f"User({self._g_u.user_id}) performed reaction move")
+            self.logger.info(f"The game has been won by {winner}")
             return
 
         self._consumer.decrease_reaction_moves()
         if self._consumer.get_action_moves_left() > 0:
             self._consumer.limit_player_action_time(self._g_u)
+            self.logger.info(f"User({self._g_u.user_id}) performed reaction move")
             return
 
         if not opp.wait_for_clash_end(str(self._game.id)):
@@ -151,7 +160,10 @@ class ReactionMoveHandler(MoveHandler):
         await mng.manage_cards()
         if not is_delayed:
             remove_delayed_task(f'limit_reaction_time_{self._g_u.id}')
-        self._consumer.limit_players_hub_time()
+        self._consumer.limit_player_hub_time(self._g_u)
+        self._consumer.limit_player_hub_time(opp)
+        self.logger.info(f"User({self._g_u.user_id}) performed reaction move")
+        self.logger.info(f"The clash has ended")
 
     def set_players_states_in_hub(self, opp):
         update_game_user_state(
