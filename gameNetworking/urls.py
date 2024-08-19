@@ -1,9 +1,9 @@
 from django.urls import path
 
-from .views import *
+from .views import GameAuthenticationTokenView
 
 
 urlpatterns = [
-    path('game_token/', GameAuthenticationTokenList.as_view(),
+    path('game_token/', GameAuthenticationTokenView.as_view(),
         name='game_token_obtain'),
 ]

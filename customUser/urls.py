@@ -11,10 +11,10 @@ urlpatterns = [
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
     # Default endpoint with users' list
-    path('', MyUserList.as_view(), name='user_list'),
+    path('', MyUserView.as_view(), name='user_list'),
 
     # Enpoint with data of single user
-    path('<str:id>/', MyUserDetail.as_view(), name='user'),
+    path('<str:id>/', MyUserDetailView.as_view(), name='user'),
 
     # Endpoint with already finished games
     path('api/archives/', GameArchiveList.as_view(), name='archive_list'),
