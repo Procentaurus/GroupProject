@@ -183,7 +183,7 @@ class MyUserListView(generics.ListAPIView):
 
 class MyUserRetrieveView(generics.RetrieveAPIView):
 
-    permission_classes = [IsAuthenticated & ChoseGetMethod,]
+    permission_classes = [IsAuthenticated,]
     throttle_classes = [MyUserGetThrottleDayRate(),
                         MyUserGetThrottleMinRate()]
     lookup_field = 'id'
