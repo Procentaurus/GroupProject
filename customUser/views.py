@@ -32,7 +32,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
         email = email.lower()
         return super().post(request, *args, **kwargs)
-        
+
     def _retrieve_login_data(self, data):
         # Email and password are divided with '+'
         plus_index = data.find('+')
@@ -48,12 +48,12 @@ class MyUserCreateView(generics.CreateAPIView):
 
     def get_output_serializer_class(self):
         return MyUserGetDetailPrivateSerializer
-    
+
     # Choose dto for incoming data
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return MyUserCreateUpdateSerializer
-        
+
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
 
@@ -69,7 +69,7 @@ class MyUserCreateView(generics.CreateAPIView):
         serializer_class = self.get_output_serializer_class()
         dto = serializer_class(user).data
         return dto
-        
+
     def perform_create(self, serializer):
         data = serializer.validated_data
         user = MyUser.objects.create_user(
@@ -98,13 +98,13 @@ class MyUserListView(generics.ListAPIView):
         objects = MyUser.objects.all()
         username = self.request.query_params.get('username', None)
         in_game = self.request.query_params.get('in_game', None)
-        
+
         if username is not None:
             objects = objects.filter(username__icontains=username)
         if in_game is not None:
             objects = objects.filter(in_game=in_game)
         return objects
-    
+
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset()
 
@@ -131,7 +131,7 @@ class MyUserRetrieveView(generics.RetrieveAPIView):
             return MyUserAdminSerializer
         else:
             return MyUserGetDetailSerializer
-        
+
     def get_output_serializer_class(self):
         if self.request.user.id == self.get_object().id:
             return MyUserGetDetailPrivateSerializer
@@ -160,7 +160,7 @@ class MyUserUpdateView(generics.UpdateAPIView):
 
     def get_serializer_class(self):
         return MyUserCreateUpdateSerializer
-    
+
     def get_output_serializer_class(self):
         if self.request.user.is_admin:
             return MyUserAdminSerializer
