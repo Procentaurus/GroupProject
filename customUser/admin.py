@@ -4,9 +4,10 @@ from django.contrib.auth.models import Group
 
 from .models.my_user.my_user import MyUser
 from .models.game_archive.game_archive import GameArchive
+from .models.active_token.active_token import ActiveToken
 
 
-class MyUserAdmin(UserAdmin): # used in django admin, enables more data for admin's view
+class MyUserAdmin(UserAdmin):
     model = MyUser
     list_display = ("id", "email", "username", "phone_number")
     list_filter = ("email", "username")
@@ -49,6 +50,10 @@ class GameArchiveAdmin(admin.ModelAdmin):
         ),
     )
 
+
+@admin.register(ActiveToken)
+class GameActiveTokenAdmin(admin.ModelAdmin):
+    list_display = ('user', 'created_at')
 
 admin.site.register(MyUser, MyUserAdmin)
 admin.site.unregister(Group)

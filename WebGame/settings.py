@@ -166,15 +166,18 @@ MYUSER_CREATE_THROTTLE_DAY_RATE = '5/day'
 MYUSER_UPDATE_THROTTLE_DAY_RATE = '15/day'
 MYUSER_DELETE_THROTTLE_DAY_RATE = '1/day'
 CUSTOMTOKEN_CREATE_THROTTLE_ANON_HOUR_RATE = '10/hour'
-CUSTOMTOKEN_CREATE_THROTTLE_HOUR_RATE = '5/hour'
+CUSTOMTOKEN_CREATE_THROTTLE_HOUR_RATE = '2/hour'
+CUSTOMTOKEN_ROTATE_THROTTLE_HOUR_RATE = '5/hour'
+CUSTOMTOKEN_ROTATE_THROTTLE_DAY_RATE = '40/day'
 GAMETOKEN_CREATE_THROTTLE_HOUR_RATE = '60/hour'
 
 ################################################################################
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
-    "REFRESH_TOKEN_LIFETIME": timedelta(minutes=90),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=10),
+    "REFRESH_TOKEN_LIFETIME": timedelta(minutes=120),
     "UPDATE_LAST_LOGIN": True,
+    'ROTATE_REFRESH_TOKENS': True,
 
     "ALGORITHM": "HS256",                             # JWT-specific config
     "SIGNING_KEY": settings.SECRET_KEY,
@@ -219,6 +222,8 @@ REST_FRAMEWORK = {
         'myuser_delete_throttle_day_rate': MYUSER_DELETE_THROTTLE_DAY_RATE,
         'customtoken_create_throttle_anon_hour_rate': CUSTOMTOKEN_CREATE_THROTTLE_ANON_HOUR_RATE,
         'customtoken_create_throttle_hour_rate': CUSTOMTOKEN_CREATE_THROTTLE_HOUR_RATE,
+        'customtoken_rotate_throttle_hour_rate': CUSTOMTOKEN_ROTATE_THROTTLE_HOUR_RATE,
+        'customtoken_rotate_throttle_day_rate': CUSTOMTOKEN_ROTATE_THROTTLE_DAY_RATE,
         'gametoken_create_throttle_hour_rate': GAMETOKEN_CREATE_THROTTLE_HOUR_RATE
     }
 }
