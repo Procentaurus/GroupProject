@@ -46,5 +46,13 @@ class CustomTokenCreateHourRate(UserRateThrottle):
     scope = 'customtoken_create_throttle_hour_rate'
 
 
+class CustomTokenRotateHourRate(UserRateThrottle):
+    scope = 'customtoken_rotate_throttle_hour_rate'
+
+
+class CustomTokenRotateDayRate(UserRateThrottle):
+    scope = 'customtoken_rotate_throttle_day_rate'
+
+
 class GameAuthenticationTokenCreateHourRate(UserRateThrottle):
     scope = 'gametoken_create_throttle_hour_rate'

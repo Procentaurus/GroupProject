@@ -1,7 +1,7 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework.permissions import IsAuthenticated
 import bleach
 
@@ -14,6 +14,47 @@ from .serializers import *
 from .user_update import *
 from .models.my_user.my_user import MyUser
 from .models.game_archive.game_archive import GameArchive
+from .models.active_token.active_token import ActiveToken
+
+
+class CustomTokenRefreshView(TokenRefreshView):
+
+    throttle_classes = [
+        CustomTokenRotateDayRate, CustomTokenRotateHourRate]
+
+    def post(self, request, *args, **kwargs):
+        self._refresh_token = request.data.get('refresh')
+
+        resp = self._verify_token_is_send()
+        if resp is None:
+            resp = self._verify_is_token_valid()
+
+        if resp is not None:
+            return resp
+
+        response = super().post(request, *args, **kwargs)
+
+        if response.status_code == status.HTTP_200_OK:
+            active_token = ActiveToken.objects.get(token=self._refresh_token)
+            active_token.delete()
+            new_refresh_token = response.data.get('refresh')
+            ActiveToken.objects.create(user=active_token.user,
+                                       token=new_refresh_token)
+        return response
+
+    def _verify_token_is_send(self):
+        if not self._refresh_token:
+            return Response({'detail': 'Refresh token not provided'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        else: return None
+    
+    def _verify_is_token_valid(self):
+        try:
+            _ = ActiveToken.objects.get(token=self._refresh_token)
+            return None
+        except:
+            return Response({'detail': 'Invalid or expired refresh token'},
+                            status=status.HTTP_401_UNAUTHORIZED)
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -30,8 +71,19 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 {'detail': 'Lacking required credentials: email or password.'},
                 status=status.HTTP_400_BAD_REQUEST)
 
-        email = email.lower()
-        return super().post(request, *args, **kwargs)
+        resp = self._verify_user_credentials(email.lower(), password)
+        if resp: return resp
+
+        user = MyUser.objects.get(email=email)
+        active_token = ActiveToken.objects.get(user=user)
+        if active_token is not None:
+            active_token.delete()
+
+        response = super().post(request, *args, **kwargs)
+        if response.status_code == status.HTTP_200_OK:
+            refresh_token = response.data.get('refresh')
+            ActiveToken.objects.create(user=user, token=refresh_token)
+        return response
 
     def _retrieve_login_data(self, data):
         # Email and password are divided with '+'
@@ -40,6 +92,19 @@ class CustomTokenObtainPairView(TokenObtainPairView):
             return bleach.clean(data[:plus_index]), data[(plus_index + 1):]
         else:
             return None, None
+
+    def _verify_user_credentials(self, email, password):
+        try:
+            user = MyUser.objects.get(email=email)
+            if user is not None:
+                if user.check_password(password):
+                    return None
+            raise MyUser.DoesNotExist
+        except MyUser.DoesNotExist:
+            return Response(
+                {'detail': 'Invalid email or password'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
 
 
 class MyUserCreateView(generics.CreateAPIView):
