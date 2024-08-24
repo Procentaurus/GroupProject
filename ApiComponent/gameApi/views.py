@@ -74,9 +74,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         if resp: return resp
 
         user = MyUser.objects.get(email=email)
-        active_token = ActiveToken.objects.get(user=user)
-        if active_token is not None:
-            active_token.delete()
+        self._remove_old_token(user)
 
         response = super().post(request, *args, **kwargs)
         if response.status_code == status.HTTP_200_OK:
@@ -104,6 +102,13 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 {'detail': 'Invalid email or password'},
                 status=status.HTTP_401_UNAUTHORIZED
             )
+        
+    def _remove_old_token(self, user):
+        try:
+            active_token = ActiveToken.objects.get(user=user)
+            active_token.delete()
+        except ActiveToken.DoesNotExist:
+            pass
 
 
 class MyUserCreateView(generics.CreateAPIView):
@@ -183,8 +188,8 @@ class MyUserListView(generics.ListAPIView):
 class MyUserRetrieveView(generics.RetrieveAPIView):
 
     permission_classes = [IsAuthenticated,]
-    throttle_classes = [MyUserGetThrottleDayRate(),
-                        MyUserGetThrottleMinRate()]
+    throttle_classes = [MyUserGetThrottleDayRate,
+                        MyUserGetThrottleMinRate]
     lookup_field = 'id'
     queryset = MyUser.objects.all()
 
