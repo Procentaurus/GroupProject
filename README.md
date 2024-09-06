@@ -11,20 +11,16 @@ The repository contains source code of game's backend including all tests and ad
 ## Installation
 - ensure you have python and docker installed on your host system
 - clone the repo
-- create new python virtual environment -> python -m venv venv
-- activate your venv -> venv\Scripts\activate
-- install all needed dependencies -> pip install -r requirements
-- run docker-copmose file that creates container with websocket layer - redis and db container  - postgresql -> docker-compose up
-- create tables in the database -> python manage.py makemigrations and python manage.py migrate
-- activate server -> python manage.py runserver
+- create new python virtual environment for both components inside of their folders -> python -m venv venv
+- install all needed dependencies for both venvs -> pip install -r requirements.txt
+- run docker-compose file that creates containers with postgresql databases and container with redis -> docker-compose up
+- create tables in the database for both components -> python manage.py makemigrations and python manage.py migrate
+- run start scripts from main repo folder -> ./api ./socket ./api_thread ./socket_thread
 
-  <br><br>Congratulations, you have successfully installed the best online game
+<br><br>Congratulations, you have successfully installed the best online game
   
 
-## What is inside
-- WebGame : main module that contains all configuration
-- customUser : module contains implementation of all mechanics connected with user, his creation and actions
+## Functional modules
 - gameApi : module implements and shares a RESTful api responsible for communicating with frontend about all issues except the game itself
 - gameMechanics : stores implementation of game mechanics and mechanisms used during the play
 - gameNewtorking : contains of implementation of websocket responsible for the connecting players and later the game
-

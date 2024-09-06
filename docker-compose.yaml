@@ -1,22 +1,36 @@
 version: '3'
 
 services:
-  db:
-    container_name: postgres
+  db_api:
+    container_name: postgres_backend_api
     image: postgres:16
     ports:
-      - "5431:5432"
+      - "5499:5432"
     environment:
-      POSTGRES_DB: "GameDataBase"
-      POSTGRES_USER: "postgres"
-      POSTGRES_PASSWORD: "postgres"
+      POSTGRES_DB: "ApiDataBase"
+      POSTGRES_USER: "postgres_api"
+      POSTGRES_PASSWORD: "postgres_api"
     volumes:
-      - pg_data:/var/lib/postgresql/data
+      - api_data:/var/lib/postgresql/data
+
+  db_socket:
+    container_name: postgres_backend_socket
+    image: postgres:16
+    ports:
+      - "5498:5432"
+    environment:
+      POSTGRES_DB: "SocketDataBase"
+      POSTGRES_USER: "postgres_socket"
+      POSTGRES_PASSWORD: "postgres_socket"
+    volumes:
+      - socket_data:/var/lib/postgresql/data
 
   redis:
+    container_name: redis_backend
     image: redis:7
     ports:
-      - "6379:6379"
+      - "6378:6379"
 
 volumes:
-  pg_data:
+  api_data:
+  socket_data:
