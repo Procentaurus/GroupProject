@@ -82,7 +82,7 @@ def limit_player_hub_time(self, player):
         settings.HUB_STAGE_TIMEOUT_FUNC
     )
     self.logger.info(f"The delayed ready move has been added for "
-                      f"User({self._game_user.user_id})")
+                      f"User({player.user_id})")
 
 def decrease_action_moves(self):
     self._moves_table[0] -= 1

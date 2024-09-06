@@ -16,30 +16,27 @@ logger = logging.getLogger(__name__)
 class GameAuthenticationTokenCreateView(generics.CreateAPIView):
 
     throttle_classes = [GameAuthenticationTokenCreateHourRate]
-    permission_classes = [IsAuthenticated,]
     queryset = GameAuthenticationToken.objects.all()
 
-    def get_output_serializer_class(self):
-        if self.request.user.is_admin:
+    def get_output_serializer_class(self, is_admin):
+        if is_admin:
             return GameAuthenticationTokenAdminSerializer
         else:
             return GameAuthenticationTokenPublicSerializer
 
     def create(self, request, *args, **kwargs):
-        user = request.user
-        potential_tokens = GameAuthenticationToken.objects.filter(
-            user_id=user.id)
-        number_of_found_tokens = len(potential_tokens)
-
-        if number_of_found_tokens == 0:
-            token = GameAuthenticationToken.objects.create(user_id=user.id)
-            serializer_class = self.get_output_serializer_class()
+        user_id, is_admin = request.user
+        num_tokens = GameAuthenticationToken.objects \
+            .filter(user_id=user_id).count()
+        if num_tokens == 0:
+            token = GameAuthenticationToken.objects.create(user_id=user_id)
+            serializer_class = self.get_output_serializer_class(is_admin)
             dto = serializer_class(token).data
             return Response(dto, status=status.HTTP_201_CREATED)
-        elif number_of_found_tokens > 1:
+        elif num_tokens > 1:
             logger.error(
-                "Multiple game tokens connected to player %s",
-                user.username)
+                "Multiple game tokens connected to user %s",
+                user_id)
             return Response(None, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
             return Response("You have already requested game token.",
@@ -48,7 +45,7 @@ class GameAuthenticationTokenCreateView(generics.CreateAPIView):
 
 class GameAuthenticationTokenListView(generics.ListCreateAPIView):
 
-    permission_classes = (IsAuthenticated & IsAdmin,)
+    permission_classes = [IsAdmin,]
     queryset = GameAuthenticationToken.objects.all()
 
     def get(self, request, *args, **kwargs):
@@ -58,6 +55,7 @@ class GameAuthenticationTokenListView(generics.ListCreateAPIView):
 class GameAuthenticationTokenView(APIView):
 
     def dispatch(self, request, *args, **kwargs):
+        view = None
         if request.method == 'GET':
             view = GameAuthenticationTokenListView.as_view()
         elif request.method == 'POST':

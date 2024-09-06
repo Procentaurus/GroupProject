@@ -3,6 +3,8 @@ import bleach
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.contrib.auth.password_validation import validate_password
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 
 from .models.my_user.my_user import MyUser
 from .models.game_archive.game_archive import GameArchive
@@ -20,10 +22,12 @@ class MyUserAdminSerializer(serializers.ModelSerializer):
                   'games_played', 'games_won'
                 ]
 
+
 class MyUserGetAllSerializer(serializers.ModelSerializer):
     class Meta:
         model = MyUser
         fields = ('id', 'username', 'games_played', 'games_won')   
+
 
 class MyUserGetDetailSerializer(serializers.ModelSerializer):
     class Meta:
@@ -32,12 +36,14 @@ class MyUserGetDetailSerializer(serializers.ModelSerializer):
                   'hide_contact_data', 'bio', 'games_played', 'games_won'
                 ]
 
+
 class MyUserGetDetailPrivateSerializer(serializers.ModelSerializer):
     class Meta:
         model = MyUser
         fields = ['id', 'email', 'username', 'phone_number', 'creation_date',
                   'hide_contact_data', 'bio', 'games_played', 'games_won'
                 ]   
+
 
 class MyUserCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -110,3 +116,21 @@ class GameArchiveGetAllSerializer(serializers.ModelSerializer):
         model = GameArchive
         fields = ['start_date', 'start_time', 'length_in_sec', 'winner',
                   'student_player', 'teacher_player']
+
+
+class EnhancedTokenObtainPairSerializer(TokenObtainPairSerializer):
+
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        token['is_admin'] = user.is_admin
+        return token
+
+
+class EnhancedTokenRefreshSerializer(TokenRefreshSerializer):
+
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        token['is_admin'] = user.is_admin
+        return token

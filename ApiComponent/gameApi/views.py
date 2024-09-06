@@ -18,6 +18,7 @@ from .models.active_token.active_token import ActiveToken
 
 class CustomTokenRefreshView(TokenRefreshView):
 
+    serializer_class = EnhancedTokenRefreshSerializer
     throttle_classes = [
         CustomTokenRotateDayRate, CustomTokenRotateHourRate]
 
@@ -58,6 +59,7 @@ class CustomTokenRefreshView(TokenRefreshView):
 
 class CustomTokenObtainPairView(TokenObtainPairView):
 
+    serializer_class = EnhancedTokenObtainPairSerializer
     throttle_classes = [
         CustomTokenCreateHourRate, CustomTokenCreateAnonHourRate]
 
@@ -322,6 +324,7 @@ class MyUserView(APIView):
 class MyUserDetailView(APIView):
 
     def dispatch(self, request, *args, **kwargs):
+        view = None
         if request.method == 'GET':
             view = MyUserRetrieveView.as_view()
         elif request.method == 'PUT':

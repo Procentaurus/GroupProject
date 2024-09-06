@@ -1,5 +1,8 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.models import Group
 
+from .models.my_user.my_user import MyUser
 from .models.game_user.game_user import GameUser
 from .models.game.game import Game
 from .models.owned_reaction_card.owned_reaction_card import OwnedReactionCard
@@ -14,6 +17,21 @@ from .models.reaction_card_in_shop.reaction_card_in_shop \
 # with specified values for display and search
 #
 
+@admin.register(MyUser)
+class MyUserAdmin(UserAdmin):
+    list_display = ('id', 'email', 'username')
+    list_filter = ("email", "username")
+    filter_horizontal = ()
+    search_fields = ("email",)
+    readonly_fields = ('id',)
+    ordering = ("email",)
+    add_fieldsets = (
+        ("Main section", {"fields": (
+            "email", 'username')
+        }),
+    )
+
+
 @admin.register(Game)
 class GameAdmin(admin.ModelAdmin):
     list_display = ('id', 'teacher_player', 'student_player', "stage")
@@ -24,6 +42,7 @@ class GameAdmin(admin.ModelAdmin):
             "next_move_player", "next_move_type", "delayed_tasks")
         }),
     )
+
 
 @admin.register(GameUser)
 class GameUserAdmin(admin.ModelAdmin):
@@ -48,6 +67,7 @@ class GameAuthenticationTokenAdmin(admin.ModelAdmin):
     ordering = ("-issued",)
     fields = ('user_id', 'issued')
 
+
 @admin.register(OwnedReactionCard)
 class OwnedReactionCardAdmin(admin.ModelAdmin):
     list_display = ('id', 'reaction_card', 'game_user', 'amount')
@@ -56,3 +76,6 @@ class OwnedReactionCardAdmin(admin.ModelAdmin):
 @admin.register(ReactionCardInShop)
 class ReactionCardInShopAdmin(admin.ModelAdmin):
     list_display = ('id', 'reaction_card', 'game_user', 'amount')
+
+
+admin.site.unregister(Group)

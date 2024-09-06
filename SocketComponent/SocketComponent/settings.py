@@ -22,11 +22,12 @@ CORS_ORIGIN_WHITELIST = (
   'http://localhost:8080',   # adress of frontend application
 )
 
+AUTH_USER_MODEL = "gameNetworking.MyUser"
+
 INSTALLED_APPS = [
 
     'daphne', # used for running asgi server       
     'corsheaders', # used to enable communication between frontend and backend
-
     'rest_framework',
     'channels',  
 
@@ -148,6 +149,29 @@ ARCHIVE_CREATION_MESSAGING_CHANNEL_NAME = 'archive_creation_messaging_channel'
 GAMETOKEN_CREATE_THROTTLE_HOUR_RATE = '60/hour'
 
 ################################################################################
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+       'gameNetworking.authentication.NonUserJWTAuthentication',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'gametoken_create_throttle_hour_rate': GAMETOKEN_CREATE_THROTTLE_HOUR_RATE,
+    }
+}
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=10),
+    "REFRESH_TOKEN_LIFETIME": timedelta(minutes=120),
+    "UPDATE_LAST_LOGIN": True,
+    'ROTATE_REFRESH_TOKENS': True,
+
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": settings.SECRET_KEY,
+    "ISSUER": "ProcentaurusSystems",
+
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
+}
 
 DATABASES = {
     'default': {

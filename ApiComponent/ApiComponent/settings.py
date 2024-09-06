@@ -5,12 +5,12 @@ from django.conf import settings
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = '78NwJjMS1M8Bg55/dV59eS/CK6dNm3KRl9WhLtW7pOyoSNfHQ4h+DEaDRjEEJgF' \
-    + '9x6PtqphjTDlzLUJ1WetCF4uMk1K1qI4ePuQ0K+ydvM4oyZ7G9Lwjuqqgf5KMhRHpBvv8c' \
-    + '7JCQdGEz+IENLf5V/VC43MPOjG72ju9rS+klWubXyY8CznZJk8Aupk6Q8/oRSp6zJY2iBo' \
-    + 'T7yW7trv1j7F/jjrBiDmyM7Y+pa8IhvvSRsb8V3iUQURpv3KRmSmd8GVlwXubQdIna/GKA' \
-    + 'rqyEz71/lkQQmRJDPNn1YzOY7+QyoDSOGftw78CpjxPaKvRRzGZb+7l4gL+vZNdT0gJ+k5' \
-    + 'Wn0AVhaJ3J4X+qoJjX3A='
+SECRET_KEY = '78NwJjMS1M8Bg55/dV59ll/CK6dNm3KRl9WhLtW7pOyoSNfHQ4h+DEaDRjEEJgF' \
+    + '9x6PtqphjTDlzLUJ1WetCF0uMk1K1qI4ePuQ0K+ydvM4oyZ7G9Lwjuqqgf5KMhRHpBvv8c' \
+    + '8JCQdGEz+IENLf5V/VC43MPOjG72ju9rS+klWubXyY8CznZJk8Aupk6Q8/oRSp6zJY2iBo' \
+    + 'T7yW7trv1j7F/jjrBiDmyM7Y+pa8IhvvSRoo8V3iUQURpv3KRmSmd8GVlwXubQdIna/GKA' \
+    + 'rqyEz71/lkQQmRJDPNn1YzOY7+QyoDSOGftw78CpjxPaIvRRzGZb+7l4gL+vZNdT0gJ+k5' \
+    + 'Wn0AVhaJ3JpX+qoJjX3A='
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -21,8 +21,6 @@ CORS_ORIGIN_ALLOW_ALL = False
 CORS_ORIGIN_WHITELIST = (
   'http://localhost:8080',   # adress of frontend application
 )
-
-AUTH_USER_MODEL = "gameApi.MyUser"
 
 INSTALLED_APPS = [
  
@@ -38,6 +36,8 @@ INSTALLED_APPS = [
 
     'gameApi.apps.GameapiConfig'
 ]
+
+AUTH_USER_MODEL = "gameApi.MyUser"
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -112,11 +112,11 @@ SIMPLE_JWT = {
     "UPDATE_LAST_LOGIN": True,
     'ROTATE_REFRESH_TOKENS': True,
 
-    "ALGORITHM": "HS256",                             # JWT-specific config
+    "ALGORITHM": "HS256",
     "SIGNING_KEY": settings.SECRET_KEY,
     "ISSUER": "ProcentaurusSystems",
 
-    "AUTH_HEADER_TYPES": ("Bearer",),                 # default SimpleJWTConfig
+    "AUTH_HEADER_TYPES": ("Bearer",),
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
     "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "user_id",

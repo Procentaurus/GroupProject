@@ -21,8 +21,6 @@ class GameAuthenticationTokenPublicSerializer(serializers.ModelSerializer):
 
 class GameAuthenticationTokenAdminSerializer(serializers.ModelSerializer):
 
-    user = serializers.PrimaryKeyRelatedField(read_only=True)
-
     class Meta:
         model = GameAuthenticationToken
-        fields = ['id', "user", 'issued']
+        fields = ['id', "user_id", 'issued']
