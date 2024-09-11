@@ -127,7 +127,7 @@ async def check_tasks():
 
 def get_all_game_tasks(first_player_id, second_player_id):
 
-    def filter_tasks_by_players(tasks):
+    def filter_tasks_by_players(tasks, first_player_id, second_player_id):
         ids = [first_player_id, second_player_id]
         filtered_tasks = {}
         for task_name, task_time in tasks:
@@ -141,15 +141,15 @@ def get_all_game_tasks(first_player_id, second_player_id):
         return timezone.make_aware(task_time, timezone=timezone.utc)
 
     def calculate_time_difference(task_time):
-        return (
-            task_time - datetime.now(timezone.utc) - timedelta(hours=2)
-        ).total_seconds()
+        return (task_time - datetime.now(timezone.utc)).total_seconds()
 
     remaining_tasks = {}
     tasks = redis_client.zrange(
         settings.DELAYED_GAME_TASKS_SORTED_SET_NAME,
         0, -1, withscores=True)
-    filtered_tasks = filter_tasks_by_players(tasks)
+    filtered_tasks = filter_tasks_by_players(tasks,
+                                             first_player_id,
+                                             second_player_id)
     for task_name, task_time in filtered_tasks.items():
         task_time = reformat_timestamp(task_time)
         remaining_time = calculate_time_difference(task_time)

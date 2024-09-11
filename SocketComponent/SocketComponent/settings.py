@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from datetime import timedelta
 
@@ -13,7 +14,7 @@ SECRET_KEY = '78NwJjMS1M8Bg55/dV59ll/CK6dNm3KRl9WhLtW7pOyoSNfHQ4h+DEaDRjEEJgF' \
     + 'Wn0AVhaJ3JpX+qoJjX3A='
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 # Networking config
 ALLOWED_HOSTS = ["*"]
@@ -77,16 +78,16 @@ ASGI_APPLICATION = "SocketComponent.asgi.application"
 
 
 ##############################    REDIS SETTINGS    ############################
-REDIS_LAYER_HOST = '127.0.0.1'
-REDIS_LAYER_PORT = 6378
+REDIS_LAYER_HOST = 'redis'
+REDIS_LAYER_PORT = 6379
 REDIS_LAYER_DB = 0
 
-REDIS_SCHEDULER_HOST = '127.0.0.1'
-REDIS_SCHEDULER_PORT = 6378
+REDIS_SCHEDULER_HOST = 'redis'
+REDIS_SCHEDULER_PORT = 6379
 REDIS_SCHEDULER_DB = 1
 
-REDIS_MESSAGING_HOST = '127.0.0.1'
-REDIS_MESSAGING_PORT = 6378
+REDIS_MESSAGING_HOST = 'redis'
+REDIS_MESSAGING_PORT = 6379
 REDIS_MESSAGING_DB = 2
 
 CHANNEL_LAYERS = {
@@ -103,12 +104,12 @@ CHANNEL_LAYERS = {
 #############################    GAME SETTINGS    ##############################
 
 ######### Timeouts Settings #########
-ACTION_MOVE_TIMEOUT = 30
-REACTION_MOVE_TIMEOUT = 60
-HUB_STAGE_TIMEOUT = 60
-DELETE_GAME_STATE_TIMEOUT = 10
-DELETE_GAME_TIMEOUT = 100
-REJOIN_TIMEOUT = 30           # !!! Must be smaller than DELETE_GAME_TIMEOUT !!!
+ACTION_MOVE_TIMEOUT = int(os.getenv('ACTION_MOVE_TIMEOUT', 30))
+REACTION_MOVE_TIMEOUT = int(os.getenv('REACTION_MOVE_TIMEOUT', 60))
+HUB_STAGE_TIMEOUT = int(os.getenv('HUB_STAGE_TIMEOUT', 60))
+DELETE_GAME_STATE_TIMEOUT = int(os.getenv('DELETE_GAME_STATE_TIMEOUT', 10))
+DELETE_GAME_TIMEOUT = int(os.getenv('DELETE_GAME_TIMEOUT', 100))
+REJOIN_TIMEOUT = int(os.getenv('REJOIN_TIMEOUT', 30))
 
 TIMEOUT_MODULE = 'gameNetworking.messager.tasks'
 
@@ -127,16 +128,16 @@ DELETE_GAME_TIMEOUT_FUNC = TIMEOUT_MODULE + '.' + DELETE_GAME_FUNC_NAME
 REJOIN_TIMEOUT_FUNC = TIMEOUT_MODULE + '.' + REJOIN_FUNC_NAME
 
 ######### Gameplay Settings #########
-INIT_MOVES_PER_CLASH = 1
-MAX_MOVES_PER_CLASH = 3
-TURNS_BETWEEN_NUM_MOVES_INC = 5
+INIT_MOVES_PER_CLASH = int(os.getenv('INIT_MOVES_PER_CLASH', 1))
+MAX_MOVES_PER_CLASH = int(os.getenv('MAX_MOVES_PER_CLASH', 3))
+TURNS_BETWEEN_NUM_MOVES_INC = int(os.getenv('TURNS_BETWEEN_NUM_MOVES_INC', 5))
 
-INIT_A_CARDS_NUMBER = 2
-INIT_R_CARDS_NUMBER = 5
-REROLL_PRICE_INITIAL_VALUE = 30
-REROLL_PRICE_INCREASE_VALUE = 10
-MORALE_INITIAL_VALUE = 100
-MONEY_INITIAL_VALUE = 500
+INIT_A_CARDS_NUMBER = int(os.getenv('INIT_A_CARDS_NUMBER', 2))
+INIT_R_CARDS_NUMBER = int(os.getenv('INIT_R_CARDS_NUMBER', 5))
+REROLL_PRICE_INITIAL_VALUE = int(os.getenv('REROLL_PRICE_INITIAL_VALUE', 30))
+REROLL_PRICE_INCREASE_VALUE = int(os.getenv('REROLL_PRICE_INCREASE_VALUE', 10))
+MORALE_INITIAL_VALUE = int(os.getenv('MORALE_INITIAL_VALUE', 100))
+MONEY_INITIAL_VALUE = int(os.getenv('MONEY_INITIAL_VALUE', 500))
 
 ######### Channels names Settings #########
 DELAYED_GAME_TASKS_SORTED_SET_NAME = 'tasks'
@@ -146,7 +147,8 @@ IN_GAME_STATUS_MESSAGING_CHANNEL_NAME = 'in_game_status_messaging_channel'
 ARCHIVE_CREATION_MESSAGING_CHANNEL_NAME = 'archive_creation_messaging_channel'
 
 ######### Throttle rates Settings #########
-GAMETOKEN_CREATE_THROTTLE_HOUR_RATE = '60/hour'
+GAMETOKEN_CREATE_THROTTLE_HOUR_RATE = os.getenv(
+    'GAMETOKEN_CREATE_THROTTLE_HOUR_RATE', str(60)) + '/hour'
 
 ################################################################################
 
@@ -160,8 +162,10 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=10),
-    "REFRESH_TOKEN_LIFETIME": timedelta(minutes=120),
+    "ACCESS_TOKEN_LIFETIME": timedelta(
+        minutes=int(os.getenv('ACCESS_TOKEN_LIFETIME', 10))),
+    "REFRESH_TOKEN_LIFETIME": timedelta(
+        minutes=int(os.getenv('REFRESH_TOKEN_LIFETIME', 120))),
     "UPDATE_LAST_LOGIN": True,
     'ROTATE_REFRESH_TOKENS': True,
 
@@ -179,8 +183,8 @@ DATABASES = {
         'NAME': 'SocketDataBase',
         'USER': 'postgres_socket',
         'PASSWORD': 'postgres_socket',
-        'HOST': 'localhost',
-        'PORT': '5498',
+        'HOST': 'db_socket',
+        'PORT': '5432',
     }
 }
 
@@ -211,7 +215,7 @@ USE_I18N = True
 
 USE_TZ = True
 
-
-STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATIC_URL = '/static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
