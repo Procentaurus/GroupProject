@@ -2,7 +2,7 @@ version: '3'
 
 services:
   db_api:
-    container_name: postgres_backend_api
+    container_name: backend_postgres_api
     image: postgres:16
     ports:
       - "5499:5432"
@@ -12,24 +12,34 @@ services:
       POSTGRES_PASSWORD: "postgres_api"
     volumes:
       - api_data:/var/lib/postgresql/data
+    restart: always
 
   db_socket:
-    container_name: postgres_backend_socket
+    container_name: backend_postgres_socket
     image: postgres:16
-    ports:
-      - "5498:5432"
     environment:
       POSTGRES_DB: "SocketDataBase"
       POSTGRES_USER: "postgres_socket"
       POSTGRES_PASSWORD: "postgres_socket"
     volumes:
       - socket_data:/var/lib/postgresql/data
+    restart: always
 
   redis:
-    container_name: redis_backend
+    container_name: backend_redis
     image: redis:7
     ports:
       - "6378:6379"
+    restart: always
+
+  app_socket:
+    container_name: backend_app_socket
+    build: ./SocketComponent
+    ports:
+      - "8001:8000"
+    depends_on:
+      - redis
+    restart: always
 
 volumes:
   api_data:
