@@ -1,0 +1,13 @@
+venv/
+gameNetworking/migrations/
+gameMechanics/migrations/
+
+__pycache__/
+*.pyc
+*.pyo
+
+*.git
+*.gitignore
+*.md
+Dockerfile
+docker-compose.yml
