@@ -180,9 +180,9 @@ SIMPLE_JWT = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'SocketDataBase',
-        'USER': 'postgres_socket',
-        'PASSWORD': 'postgres_socket',
+        'NAME': os.getenv('POSTRESQL_DB_NAME', 'SocketDataBase'),
+        'USER': os.getenv('POSTRESQL_USER', 'admin'),
+        'PASSWORD':os.getenv('POSTRESQL_PASSWORD', 'admin'),
         'HOST': 'db_socket',
         'PORT': '5432',
     }

@@ -39,8 +39,22 @@ services:
       - "8001:8000"
     depends_on:
       - redis
+      - db_socket
+    restart: always
+
+  nginx:
+    container_name: backend_nginx
+    ports:
+      - "8000:8000"
+    volumes:
+      - socket_static_data:/var/www/app_socket/static
+      - socket_media_data:/var/www/app_socket/media
+    depends_on:
+      - app_socket
     restart: always
 
 volumes:
   api_data:
   socket_data:
+  socket_static_data:
+  socket_media_data:

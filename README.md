@@ -11,14 +11,14 @@ The repository contains source code of game's backend including all tests and ad
 ## Installation
 - ensure you have python and docker installed on your host system
 - clone the repo
-- create new python virtual environment for ApiComponent inside its folder -> python -m venv venv
-- install all needed dependencies for the venv -> pip install -r requirements.txt
-- run docker-compose file -> docker-compose up. It creates:
+- create new python virtual environment for ApiComponent inside its folder -> `python -m venv venv`
+- install all needed dependencies for the venv -> `pip install -r requirements.txt`
+- run docker-compose file -> `docker-compose up` It creates:
   - Redis container
   - SocketComponent container
   - 2 PostreSQL containers, 1 for each backend component
-- create tables in the database for ApiComponent -> python manage.py makemigrations and python manage.py migrate
-- run scripts that start ApiComponent from main repo folder -> ./api ./api_thread
+- create tables in the database for ApiComponent -> `python manage.py makemigrations` and `python manage.py migrate`
+- run scripts that start ApiComponent from main repo folder -> `./api` `./api_thread`
 
 <br>Congratulations, you have successfully installed the best online game
   
