@@ -29,6 +29,9 @@ python manage.py migrate
 echo "Uploading cards to the database"
 python manage.py loaddata gameMechanics/fixtures/cards.json
 
+echo "Collecting all static data"
+python manage.py collectstatic
+
 echo "Create admin user account"
 python manage.py create_admin
 

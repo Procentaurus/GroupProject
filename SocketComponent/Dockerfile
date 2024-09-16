@@ -1,5 +1,5 @@
 ### Stage 1: Build environment ###
-FROM python:3.9-slim AS builder
+FROM python:3.9-slim AS dependencies
 
 RUN apt-get update && apt-get install -y \
     gcc \
@@ -16,18 +16,28 @@ COPY requirements.txt /app/
 # Install Python dependencies (building wheels in this stage)
 RUN pip wheel --no-cache-dir --no-deps -r requirements.txt -w /wheels
 
-### Stage 2: Final runtime environment ###
-FROM python:3.9-slim
-
-RUN groupadd -r appuser && useradd -r -g appuser appuser
-
-COPY --from=builder /wheels /wheels
-
-RUN pip install --no-cache /wheels/*
+### Stage 2: Copy files ###
+FROM alpine:3.20.3 AS files
 
 COPY . /app/
 
+RUN rm -r ./app/static
+
+COPY ./static /static/
+
+### Stage 3: Final runtime environment ###
+FROM python:3.9-slim
+
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+RUN mkdir -p /var/www/socket/static/ /var/www/socket/media/
+
+COPY --from=dependencies /wheels /wheels
+COPY --from=files /static /var/www/socket/media
+COPY --from=files /app /app
+
+RUN pip install --no-cache /wheels/*
 RUN chown -R appuser:appuser /app
+RUN chown -R appuser:appuser /var/www/socket/static/ /var/www/socket/media/
 
 WORKDIR /app
 
