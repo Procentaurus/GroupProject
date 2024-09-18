@@ -9,3 +9,5 @@ Ground The student,Deal 20 damage,3,teacher,0,card_images/example.png
 Biology Exam,Deal 20 damage,3,teacher,0,card_images/example.png
 Math Homework,Deal 20 damage,3,teacher,0,card_images/example.png
 Cancel A Break,Deal 20 damage,3,teacher,0,card_images/example.png
+Insult the teacher,Deal 20 damage,4,teacher,1,card_images/example.png
+Insult the student,Deal 20 damage,5,teacher,2,card_images/example.png

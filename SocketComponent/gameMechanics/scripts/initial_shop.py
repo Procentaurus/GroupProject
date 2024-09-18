@@ -8,7 +8,8 @@ from gameMechanics.serializers import ReactionCardDataSerializer, ActionCardData
 
 @database_sync_to_async
 def get_random_card_ids(model, count, player_type):
-    all_instances = model.objects.filter(playerType=player_type)
+    # Filter out the mock cards
+    all_instances = model.objects.filter(playerType=player_type).exclude(name__in=["Insult the teacher", "Insult the student"])
     random_instances = random.sample(list(all_instances), count)
 
     # Serialize instances using appropriate serializer
