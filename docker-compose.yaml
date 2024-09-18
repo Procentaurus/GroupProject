@@ -35,12 +35,28 @@ services:
   app_socket:
     container_name: backend_app_socket
     build: ./SocketComponent
-    ports:
-      - "8001:8000"
+    volumes:
+      - socket_static_data:/var/www/socket/static/
+      - socket_media_data:/var/www/socket/media/
     depends_on:
       - redis
+      - db_socket
+    restart: always
+
+  nginx:
+    container_name: backend_nginx
+    build: ./NginxComponent
+    ports:
+      - "8000:8000"
+    volumes:
+      - socket_static_data:/var/www/socket/static/
+      - socket_media_data:/var/www/socket/media/
+    depends_on:
+      - app_socket
     restart: always
 
 volumes:
   api_data:
   socket_data:
+  socket_static_data:
+  socket_media_data:

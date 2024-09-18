@@ -1,5 +1,5 @@
 ### Stage 1: Build environment ###
-FROM python:3.9-slim AS builder
+FROM python:3.9-slim AS dependencies
 
 RUN apt-get update && apt-get install -y \
     gcc \
@@ -16,18 +16,28 @@ COPY requirements.txt /app/
 # Install Python dependencies (building wheels in this stage)
 RUN pip wheel --no-cache-dir --no-deps -r requirements.txt -w /wheels
 
-### Stage 2: Final runtime environment ###
-FROM python:3.9-slim
-
-RUN groupadd -r appuser && useradd -r -g appuser appuser
-
-COPY --from=builder /wheels /wheels
-
-RUN pip install --no-cache /wheels/*
+### Stage 2: Copy files ###
+FROM alpine:3.20.3 AS files
 
 COPY . /app/
 
+RUN rm -r ./app/static
+
+COPY ./static /static/
+
+### Stage 3: Final runtime environment ###
+FROM python:3.9-slim
+
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+RUN mkdir -p /var/www/socket/static/ /var/www/socket/media/
+
+COPY --from=dependencies /wheels /wheels
+COPY --from=files /static /var/www/socket/media
+COPY --from=files /app /app
+
+RUN pip install --no-cache /wheels/*
 RUN chown -R appuser:appuser /app
+RUN chown -R appuser:appuser /var/www/socket/static/ /var/www/socket/media/
 
 WORKDIR /app
 
@@ -41,11 +51,16 @@ RUN apt-get install -y postgresql-client
 
 USER appuser
 
+################ Auth data ################
 ENV DJANGO_SUPERUSER_USERNAME=Procentaurus
 ENV DJANGO_SUPERUSER_EMAIL=michalski.44@wp.pl
 ENV DJANGO_SUPERUSER_PASSWORD=123456PIOTR
 
-######### Gameplay Settings #########
+ENV POSTRESQL_USER=postgres_socket
+ENV POSTRESQL_PASSWORD=postgres_socket
+ENV POSTRESQL_DB_NAME=SocketDataBase
+
+############ Gameplay Settings ###########
 ENV INIT_MOVES_PER_CLASH=1
 ENV MAX_MOVES_PER_CLASH=3
 ENV TURNS_BETWEEN_NUM_MOVES_INC=5
@@ -56,7 +71,7 @@ ENV REROLL_PRICE_INCREASE_VALUE=10
 ENV MORALE_INITIAL_VALUE=100
 ENV MONEY_INITIAL_VALUE=500
 
-######### Timeouts Settings #########
+########### Timeouts Settings ###########
 ENV ACTION_MOVE_TIMEOUT=30
 ENV REACTION_MOVE_TIMEOUT=60
 ENV HUB_STAGE_TIMEOUT=60
@@ -65,11 +80,11 @@ ENV DELETE_GAME_TIMEOUT=100
 # !!! Must be smaller than DELETE_GAME_TIMEOUT !!!
 ENV REJOIN_TIMEOUT=30
 
-######### JWT Settings #########
+############## JWT Settings #############
 ENV ACCESS_TOKEN_LIFETIME=10
 ENV REFRESH_TOKEN_LIFETIME=120
 
-######### Throttle rates Settings #########
+######## Throttle rates Settings ########
 ENV GAMETOKEN_CREATE_THROTTLE_HOUR_RATE=60
 
 ENTRYPOINT ["/bin/bash", "/app/start_script.sh"]
