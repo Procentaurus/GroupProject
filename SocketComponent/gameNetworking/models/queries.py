@@ -72,17 +72,12 @@ def get_game_token(token_id):
 
 @database_sync_to_async
 def delete_game_token(game_user):
-
     if game_user is not None:
-        my_user = game_user.user
         try:
-            token = GameAuthenticationToken.objects.get(user=my_user)
-            token.delete()
-            return True
+            t = GameAuthenticationToken.objects.get(user_id=game_user.user_id)
+            t.delete()
         except GameAuthenticationToken.DoesNotExist:
-            return False
-    else:
-        return False
+            pass
 
 
 

@@ -67,9 +67,9 @@ class Connector:
             await self._connect_to_new_game()
 
     async def _connect_to_new_game(self):
-         # TODO usuwać game token -> await delete_game_token(game_user)
         game_user = await self._create_game_user()
         self._consumer.set_game_user(game_user)
+        await delete_game_token(game_user)
         num_t = await get_number_of_waiting_players("teacher")
         num_s = await get_number_of_waiting_players("student")
         if num_t > 0 and num_s > 0:
