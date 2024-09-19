@@ -110,11 +110,12 @@ def get_values_dict(values_string):
 async def get_rerolled_cards(game_user):
     pass
 
-def get_mock_action_card(player_type):
+@database_sync_to_async
+def get_mock_action_card_id(player_type):
     if player_type == 'teacher':
-        return ActionCard.objects.get(name='Insult the student')
+        return ActionCard.objects.get(name='Insult the student').id
     elif player_type == 'student':
-        return ActionCard.objects.get(name='Insult the teacher')
+        return ActionCard.objects.get(name='Insult the teacher').id
     else:
         raise ValueError("Invalid player type")
 

@@ -1,4 +1,5 @@
 from gameMechanics.scripts.basic_mechanics import get_new_morale
+from gameMechanics.scripts.basic_mechanics import get_mock_action_card_id
 from gameMechanics.queries import get_a_card_serialized
 
 from ....enums import MessageType, PlayerState
@@ -36,10 +37,10 @@ class ActionMoveHandler(MoveHandler):
         super().__init__(consumer)
         self._game = consumer.get_game()
         self._a_card = data.get("id")
+        self._g_u = self._consumer.get_game_user()
+        self._is_mock_card_used = (not self._any_card_sent())
 
     async def _verify_move(self):
-        if not self._any_card_sent(): return False
-
         g_v = GameVerifier(self._consumer)
         if not await g_v.verify_next_move_performer(): return False
         if not await g_v.verify_game_next_move_type("action"): return False
@@ -47,33 +48,38 @@ class ActionMoveHandler(MoveHandler):
         p_v = PlayerVerifier(self._consumer)
         if not await p_v.verify_player_in_clash(): return False
 
-        a_c_c = ActionCardsChecker([self._a_card])
-        c_v = CardVerifier(self._consumer, a_c_c)
-        if not await c_v.verify_cards_for_clash(): return False
+        if not self._is_mock_card_used:
+            a_c_c = ActionCardsChecker([self._a_card])
+            c_v = CardVerifier(self._consumer, a_c_c)
+            if not await c_v.verify_cards_for_clash(): return False
+            self.logger.info(f"User({self._g_u.user_id})'s"
+                             " action move passed verification")
+        else:
+            self._a_card = await get_mock_action_card_id(
+                self._g_u.conflict_side)
         if not await g_v.verify_turn_update_successful(): return False
-        self.logger.info(f"User({self._consumer.get_game_user().user_id})'s "
-                         " action move passed verification")
         return True
 
     async def _perform_move_mechanics(self, is_delayed):
-        game_user = self._consumer.get_game_user()
-        await game_user.remove_action_card(self._a_card)
+        if not is_delayed:
+            remove_delayed_task(f'limit_action_time_{self._g_u.id}')
+
+        if not self._is_mock_card_used:
+            await self._g_u.remove_action_card(self._a_card)
+
         await self._consumer.send_message_to_opponent(
             {"action_card" : await get_a_card_serialized(self._a_card)},
             "opponent_move"
         )
-
         self._consumer.decrease_action_moves()
         if self._consumer.get_action_moves_left() == 0:
             update_game_user_state(
                 str(self._game.id),
-                str(game_user.id),
+                str(self._g_u.id),
                 PlayerState.AWAIT_CLASH_END
             )
-        if not is_delayed:
-            remove_delayed_task(f'limit_action_time_{game_user.id}')
         self._consumer.limit_opponent_reaction_time()
-        self.logger.info(f"User({game_user.user_id}) performed action move")
+        self.logger.info(f"User({self._g_u.user_id}) performed action move")
 
     def _any_card_sent(self):
         return False if (self._a_card is None or self._a_card == []) else True
@@ -158,8 +164,6 @@ class ReactionMoveHandler(MoveHandler):
 
         mng = InitCardsManager(self._consumer)
         await mng.manage_cards()
-        if not is_delayed:
-            remove_delayed_task(f'limit_reaction_time_{self._g_u.id}')
         self._consumer.limit_player_hub_time(self._g_u)
         self._consumer.limit_player_hub_time(opp)
         self.logger.info(f"User({self._g_u.user_id}) performed reaction move")
