@@ -1,7 +1,7 @@
 [
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "42e613ab-83e4-441c-96f9-0dc77536d03c",
+        "pk": "5e61d94c-e696-4308-9473-28ab735209cf",
         "fields": {
             "name": "Junior Bully",
             "description": "Redirect 5 damage",
@@ -14,7 +14,7 @@
     },
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "3d19cdf2-0721-46de-b7b5-3e6e4461bf54",
+        "pk": "5d76b5eb-3b62-45fc-8590-ce62111437a0",
         "fields": {
             "name": "Freshman Bully",
             "description": "Redirect 10 damage",
@@ -27,7 +27,7 @@
     },
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "3298676c-375c-4a68-9b72-dd76a0ff81a6",
+        "pk": "efcb3085-4a9a-4c4d-9a4b-df66af06ec31",
         "fields": {
             "name": "Senior Bully",
             "description": "Redirect 15 damage",
@@ -40,7 +40,7 @@
     },
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "b005916f-dc7b-45fc-a2b1-464d0ced39c7",
+        "pk": "e5358d4b-8de9-4731-8940-f68fe40fa1d2",
         "fields": {
             "name": "Drunk Uncle Roger",
             "description": "Add 10 damage to current redirection",
@@ -53,7 +53,7 @@
     },
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "8eb44193-36e1-489b-827b-46f8bc601fac",
+        "pk": "57752344-f70d-49e0-801e-a6ea03c82029",
         "fields": {
             "name": "Protein Shake",
             "description": "If your blocked damage is above 10, redirect 10 at your opponent",
@@ -66,7 +66,7 @@
     },
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "915676b7-138b-42e0-8293-2c2a49a515d9",
+        "pk": "f510dc2d-727f-44e6-8897-b3a3478901e8",
         "fields": {
             "name": "Junior Nerd",
             "description": "Block 5 damage",
@@ -79,7 +79,7 @@
     },
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "a1c934ae-9a70-4226-bc97-5948f097e446",
+        "pk": "5153bcc0-f09a-4d1a-a6fd-a73791e82ac4",
         "fields": {
             "name": "Freshman Nerd",
             "description": "Block 10 damage",
@@ -92,7 +92,7 @@
     },
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "4a952329-7797-45d8-9f86-19b7ea75967e",
+        "pk": "af486843-40fa-4638-b95f-afb566e74c94",
         "fields": {
             "name": "Senior Nerd",
             "description": "Block 15 damage",
@@ -105,7 +105,7 @@
     },
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "e2091ead-b107-4a95-8a4d-50971d2a1cca",
+        "pk": "6a5c09de-334d-4e6a-985c-c14e99b53c53",
         "fields": {
             "name": "Math Expert",
             "description": "Block 10% of incoming damage",
@@ -118,7 +118,7 @@
     },
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "0e008d70-b690-4499-b549-c1dc774cc14e",
+        "pk": "e2dd16da-2887-480d-980e-74f79fc01bf5",
         "fields": {
             "name": "Senior's Notebook",
             "description": "If your redirected damage is above 10, block 10 incoming damage",
@@ -131,7 +131,7 @@
     },
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "1593e2b7-4534-4261-aaf2-394289bcc8ed",
+        "pk": "37412b78-6c27-4a4e-96f4-374fdc6113dc",
         "fields": {
             "name": "PE Substitute",
             "description": "Redirect 5 damage",
@@ -144,7 +144,7 @@
     },
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "2d31e0f3-ffc1-45c4-a2ea-253226ac482e",
+        "pk": "c657011d-f2ea-4c55-a085-b99f83c08bfe",
         "fields": {
             "name": "PE teacher",
             "description": "Redirect 10 damage",
@@ -157,7 +157,7 @@
     },
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "13279960-8255-4f75-8307-53c5e56172ad",
+        "pk": "218a6ab5-25c5-4ae1-9022-a1be28bcd00f",
         "fields": {
             "name": "Hank, Football Coach",
             "description": "Redirect 15 damage",
@@ -170,7 +170,7 @@
     },
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "46ee4af8-0d0e-4849-a60f-43b479e2266b",
+        "pk": "970c89e3-2670-468b-9ed4-020a06eace98",
         "fields": {
             "name": "Hank's Son",
             "description": "Add 10 damage to current redirection",
@@ -183,7 +183,7 @@
     },
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "c4399569-a39a-4def-88c8-666e12909a97",
+        "pk": "80897c4d-f310-49e9-9324-b056d5071e16",
         "fields": {
             "name": "Training Session",
             "description": "If your blocked damage is above 10, redirect 10 at your opponent",
@@ -196,7 +196,7 @@
     },
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "4ddf73bc-35df-404d-b8c0-8ce01cdf3e75",
+        "pk": "0d7156bd-bf51-4250-9b30-ccbdc1e7d736",
         "fields": {
             "name": "Science Substitute",
             "description": "Block 5 damage",
@@ -209,7 +209,7 @@
     },
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "82ba4ed8-0fb4-4f4b-8167-0319216b47d6",
+        "pk": "a3e2443a-87d0-4370-a6f0-c3c0254636d6",
         "fields": {
             "name": "Science teacher",
             "description": "Block 10 damage",
@@ -222,7 +222,7 @@
     },
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "98274a26-b99a-4a37-a38c-266212976c02",
+        "pk": "3c85b024-c806-498a-98e4-32ef68fa2f40",
         "fields": {
             "name": "Ross, Paleontologist",
             "description": "Block 15 damage",
@@ -235,7 +235,7 @@
     },
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "3cf064e7-3d37-42a5-95b3-01aeed70dd02",
+        "pk": "8334c873-87b6-4d5f-adb8-ebc4feb0acae",
         "fields": {
             "name": "Math teacher",
             "description": "Block 10% of incoming damage",
@@ -248,7 +248,7 @@
     },
     {
         "model": "gameMechanics.reactioncard",
-        "pk": "93d1033d-d475-4412-af76-4fb02b9b17f9",
+        "pk": "9d9e0cbe-2eac-4b90-b427-335f2b992201",
         "fields": {
             "name": "Entry Test",
             "description": "If your redirected damage is above 10, block 10 incoming damage",
@@ -261,7 +261,7 @@
     },
     {
         "model": "gameMechanics.actioncard",
-        "pk": "47c5ccf0-34f6-4b8a-b274-1d3e4a532edb",
+        "pk": "60066053-9406-465f-9fef-cef03a06cd15",
         "fields": {
             "name": "Clog The School Toilet",
             "description": "Deal 20 damage",
@@ -273,7 +273,7 @@
     },
     {
         "model": "gameMechanics.actioncard",
-        "pk": "d1028168-117b-4263-81bd-a99b9d298823",
+        "pk": "da588b20-893a-49ce-b991-11d05a2888bf",
         "fields": {
             "name": "Shoot A Spitball",
             "description": "Deal 20 damage",
@@ -285,7 +285,7 @@
     },
     {
         "model": "gameMechanics.actioncard",
-        "pk": "20626564-6364-40c9-867d-ef3975f432df",
+        "pk": "796528fc-362f-4b9a-a375-46bff019c949",
         "fields": {
             "name": "Bite On The teacher's Pencil",
             "description": "Deal 20 damage",
@@ -297,7 +297,7 @@
     },
     {
         "model": "gameMechanics.actioncard",
-        "pk": "1909ef81-5358-47e5-92e1-185b67e25ff1",
+        "pk": "b7e8c62f-dce1-4cf6-b453-55f5193f18a7",
         "fields": {
             "name": "Eat Class Markers",
             "description": "Deal 20 damage",
@@ -309,7 +309,7 @@
     },
     {
         "model": "gameMechanics.actioncard",
-        "pk": "bd64e091-f04b-49e0-a537-fe82382c8597",
+        "pk": "4fa89165-6cc1-426b-a268-d49bc3caeb0f",
         "fields": {
             "name": "Report To Your Parents",
             "description": "Deal 20 damage",
@@ -321,7 +321,7 @@
     },
     {
         "model": "gameMechanics.actioncard",
-        "pk": "f867bbf5-60ef-4236-9563-a8b0209dae2b",
+        "pk": "26e497f2-95d3-4ec3-8089-1b2f775266f6",
         "fields": {
             "name": "Report To student's Parents",
             "description": "Deal 20 damage",
@@ -333,7 +333,7 @@
     },
     {
         "model": "gameMechanics.actioncard",
-        "pk": "87934445-b242-4161-bced-b785df4a1863",
+        "pk": "d30ed02a-659b-4e16-97f7-8282bd335392",
         "fields": {
             "name": "Ground The student",
             "description": "Deal 20 damage",
@@ -345,7 +345,7 @@
     },
     {
         "model": "gameMechanics.actioncard",
-        "pk": "2a2d85d5-b7fd-4119-8068-1d9f0abd3e6f",
+        "pk": "74f3cb75-174d-4722-86f0-ddda9e985d6a",
         "fields": {
             "name": "Biology Exam",
             "description": "Deal 20 damage",
@@ -357,7 +357,7 @@
     },
     {
         "model": "gameMechanics.actioncard",
-        "pk": "35c1df3f-04ca-4f3f-a460-07b04ce9797d",
+        "pk": "f4320db3-4d38-4397-85ae-3d85ce965a0d",
         "fields": {
             "name": "Math Homework",
             "description": "Deal 20 damage",
@@ -369,13 +369,37 @@
     },
     {
         "model": "gameMechanics.actioncard",
-        "pk": "ee6540c4-826f-4734-ae92-7ca3bd397048",
+        "pk": "f56c3002-4a6a-432c-9606-fc9baf75e616",
         "fields": {
             "name": "Cancel A Break",
             "description": "Deal 20 damage",
             "price": "3",
             "playerType": "teacher",
             "pressure": "0",
+            "image": "card_images/example.png"
+        }
+    },
+    {
+        "model": "gameMechanics.actioncard",
+        "pk": "d1066d5c-da4e-45d1-b6e0-ad6074e65cf6",
+        "fields": {
+            "name": "Insult the teacher",
+            "description": "Deal 20 damage",
+            "price": "4",
+            "playerType": "teacher",
+            "pressure": "1",
+            "image": "card_images/example.png"
+        }
+    },
+    {
+        "model": "gameMechanics.actioncard",
+        "pk": "ade5aa03-73ac-4bd8-835e-7848a17c02c8",
+        "fields": {
+            "name": "Insult the student",
+            "description": "Deal 20 damage",
+            "price": "5",
+            "playerType": "teacher",
+            "pressure": "2",
             "image": "card_images/example.png"
         }
     }

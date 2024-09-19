@@ -6,7 +6,7 @@ from ...enums import PlayerState
 from ...implementations.game_consumer_impl.main_game_loop.hub_stage import \
     ReadyMoveHandler
 from ...implementations.game_consumer_impl.main_game_loop.clash_stage import \
-    ReactionMoveHandler
+    ReactionMoveHandler, ActionMoveHandler
 from ...models.queries import get_game_user, get_game
 from .main_game_loop.common import *
 
@@ -134,6 +134,8 @@ async def action_move_timeout(self, data=None):
     })
     await self.refresh_game_user()
     await self.refresh_game()
+    handler = ActionMoveHandler(self, {'id': []})
+    await handler.perform_move(True)
     self.logger.info(f"Action move timeout for User({self._game_user.user_id})")
 
 async def reaction_move_timeout(self, data=None):
