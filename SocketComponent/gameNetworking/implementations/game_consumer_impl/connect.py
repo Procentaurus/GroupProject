@@ -125,6 +125,7 @@ class Connector:
         await mng.manage_cards()
 
     async def _connect_to_saved_game(self, player, game, opponent):
+        await delete_game_token(player)
         await player.update_channel_name(self._consumer.channel_name)
         self._consumer.update_after_reconnect(game, player, opponent)
         set_in_game_status(str(player.user_id))

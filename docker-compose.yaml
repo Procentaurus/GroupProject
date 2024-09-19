@@ -4,8 +4,6 @@ services:
   db_api:
     container_name: backend_postgres_api
     image: postgres:16
-    ports:
-      - "5499:5432"
     environment:
       POSTGRES_DB: "ApiDataBase"
       POSTGRES_USER: "postgres_api"
@@ -28,8 +26,6 @@ services:
   redis:
     container_name: backend_redis
     image: redis:7
-    ports:
-      - "6378:6379"
     restart: always
 
   app_socket:
@@ -43,6 +39,17 @@ services:
       - db_socket
     restart: always
 
+  app_api:
+    container_name: backend_app_api
+    build: ./ApiComponent
+    volumes:
+      - api_static_data:/var/www/api/static/
+      - api_media_data:/var/www/api/media/
+    depends_on:
+      - redis
+      - db_socket
+    restart: always
+
   nginx:
     container_name: backend_nginx
     build: ./NginxComponent
@@ -51,6 +58,8 @@ services:
     volumes:
       - socket_static_data:/var/www/socket/static/
       - socket_media_data:/var/www/socket/media/
+      - api_static_data:/var/www/api/static/
+      - api_media_data:/var/www/api/media/
     depends_on:
       - app_socket
     restart: always
@@ -60,3 +69,5 @@ volumes:
   socket_data:
   socket_static_data:
   socket_media_data:
+  api_static_data:
+  api_media_data:

@@ -1,5 +1,6 @@
 from pathlib import Path
 from datetime import timedelta
+import os
 
 from django.conf import settings
 
@@ -13,7 +14,7 @@ SECRET_KEY = '78NwJjMS1M8Bg55/dV59ll/CK6dNm3KRl9WhLtW7pOyoSNfHQ4h+DEaDRjEEJgF' \
     + 'Wn0AVhaJ3JpX+qoJjX3A='
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 # Networking config
 ALLOWED_HOSTS = ["*"]
@@ -21,6 +22,7 @@ CORS_ORIGIN_ALLOW_ALL = False
 CORS_ORIGIN_WHITELIST = (
   'http://localhost:8080',   # adress of frontend application
 )
+CSRF_TRUSTED_ORIGINS = ['http://localhost:8000']
 
 INSTALLED_APPS = [
  
@@ -74,8 +76,8 @@ ASGI_APPLICATION = "ApiComponent.asgi.application"
 
 
 ##############################    REDIS SETTINGS    ############################
-REDIS_MESSAGING_HOST = '127.0.0.1'
-REDIS_MESSAGING_PORT = 6378
+REDIS_MESSAGING_HOST = 'redis'
+REDIS_MESSAGING_PORT = 6379
 REDIS_MESSAGING_DB = 2
 ################################################################################
 
@@ -87,28 +89,45 @@ IN_GAME_STATUS_MESSAGING_CHANNEL_NAME = 'in_game_status_messaging_channel'
 ARCHIVE_CREATION_MESSAGING_CHANNEL_NAME = 'archive_creation_messaging_channel'
 
 ######### Pagination sizes Settings #########
-ARCHIVE_LIST_ENDPOINT_PAGE_SIZE = 150
-MYUSER_LIST_ENDPOINT_PAGE_SIZE = 50
+ARCHIVE_LIST_ENDPOINT_PAGE_SIZE = int(
+    os.getenv('ARCHIVE_LIST_ENDPOINT_PAGE_SIZE', 150))
+MYUSER_LIST_ENDPOINT_PAGE_SIZE = int(
+    os.getenv('MYUSER_LIST_ENDPOINT_PAGE_SIZE', 50))
 
 ######### Throttle rates Settings #########
-MYUSER_LIST_THROTTLE_MIN_RATE = '15/min'
-MYUSER_GET_THROTTLE_MIN_RATE = '15/min'
-ARCHIVE_LIST_THROTTLE_MIN_RATE = '20/min'
-ARCHIVE_LIST_THROTTLE_DAY_RATE = '200/day'
-MYUSER_LIST_THROTTLE_DAY_RATE = '100/day'
-MYUSER_GET_THROTTLE_DAY_RATE = '400/day'
-MYUSER_CREATE_THROTTLE_DAY_RATE = '5/day'
-MYUSER_UPDATE_THROTTLE_DAY_RATE = '15/day'
-MYUSER_DELETE_THROTTLE_DAY_RATE = '1/day'
-CUSTOMTOKEN_CREATE_THROTTLE_ANON_HOUR_RATE = '10/hour'
-CUSTOMTOKEN_CREATE_THROTTLE_HOUR_RATE = '2/hour'
-CUSTOMTOKEN_ROTATE_THROTTLE_HOUR_RATE = '5/hour'
-CUSTOMTOKEN_ROTATE_THROTTLE_DAY_RATE = '40/day'
+MYUSER_LIST_THROTTLE_MIN_RATE = os.getenv(
+    'MYUSER_LIST_THROTTLE_MIN_RATE', '15') + '/min'
+MYUSER_GET_THROTTLE_MIN_RATE = os.getenv(
+    'MYUSER_GET_THROTTLE_MIN_RATE', '15') + '/min'
+ARCHIVE_LIST_THROTTLE_MIN_RATE = os.getenv(
+    'ARCHIVE_LIST_THROTTLE_MIN_RATE', '20') + '/min'
+ARCHIVE_LIST_THROTTLE_DAY_RATE = os.getenv(
+    'ARCHIVE_LIST_THROTTLE_DAY_RATE', '200') + '/day'
+MYUSER_LIST_THROTTLE_DAY_RATE = os.getenv(
+    'MYUSER_LIST_THROTTLE_DAY_RATE', '100') + '/day'
+MYUSER_GET_THROTTLE_DAY_RATE = os.getenv(
+    'MYUSER_GET_THROTTLE_DAY_RATE', '400') + '/day'
+MYUSER_CREATE_THROTTLE_DAY_RATE = os.getenv(
+    'MYUSER_CREATE_THROTTLE_DAY_RATE', '5') + '/day'
+MYUSER_UPDATE_THROTTLE_DAY_RATE = os.getenv(
+    'MYUSER_UPDATE_THROTTLE_DAY_RATE', '15') + '/day'
+MYUSER_DELETE_THROTTLE_DAY_RATE = os.getenv(
+    'MYUSER_DELETE_THROTTLE_DAY_RATE', '1') + '/day'
+CUSTOMTOKEN_CREATE_THROTTLE_ANON_HOUR_RATE = os.getenv(
+    'CUSTOMTOKEN_CREATE_THROTTLE_ANON_HOUR_RATE', '10') + '/hour'
+CUSTOMTOKEN_CREATE_THROTTLE_HOUR_RATE = os.getenv(
+    'CUSTOMTOKEN_CREATE_THROTTLE_HOUR_RATE', '2') + '/hour'
+CUSTOMTOKEN_ROTATE_THROTTLE_HOUR_RATE = os.getenv(
+    'CUSTOMTOKEN_ROTATE_THROTTLE_HOUR_RATE', '5') + '/hour'
+CUSTOMTOKEN_ROTATE_THROTTLE_DAY_RATE = os.getenv(
+    'CUSTOMTOKEN_ROTATE_THROTTLE_DAY_RATE', '40') + '/day'
 ################################################################################
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=10),
-    "REFRESH_TOKEN_LIFETIME": timedelta(minutes=120),
+    "ACCESS_TOKEN_LIFETIME": timedelta(
+        minutes=int(os.getenv('ACCESS_TOKEN_LIFETIME', 10))),
+    "REFRESH_TOKEN_LIFETIME": timedelta(
+        minutes=int(os.getenv('REFRESH_TOKEN_LIFETIME', 120))),
     "UPDATE_LAST_LOGIN": True,
     'ROTATE_REFRESH_TOKENS': True,
 
@@ -130,12 +149,12 @@ SIMPLE_JWT = {
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'ApiDataBase',
-        'USER': 'postgres_api',
-        'PASSWORD': 'postgres_api',
-        'HOST': 'localhost',
-        'PORT': '5499',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('POSTRESQL_DB_NAME'),
+        'USER': os.getenv('POSTRESQL_USER'),
+        'PASSWORD':os.getenv('POSTRESQL_PASSWORD'),
+        'HOST': 'db_api',
+        'PORT': '5432',
     }
 }
 
@@ -188,10 +207,10 @@ USE_I18N = True
 USE_TZ = True
 
 
-STATIC_URL = 'static/'
-
-# Media files
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+STATIC_URL = '/static/api/'
+MEDIA_URL = '/media/api/'
+
+STATIC_ROOT = '/var/www/api/static/'
+MEDIA_ROOT = '/var/www/api/media/'
