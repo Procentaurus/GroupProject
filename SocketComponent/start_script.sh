@@ -32,7 +32,7 @@ python manage.py loaddata gameMechanics/fixtures/cards.json
 echo "Collecting all static data"
 python manage.py collectstatic
 
-echo "Create admin user account"
+echo "Create superuser account"
 python manage.py create_admin
 
 echo "Starting production server"
