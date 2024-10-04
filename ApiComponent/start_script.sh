@@ -28,7 +28,7 @@ python manage.py migrate
 echo "Collecting all static data"
 python manage.py collectstatic
 
-echo "Create admin user account"
+echo "Create admin account"
 python manage.py create_admin
 
 echo "Starting production server"

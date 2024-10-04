@@ -6,12 +6,7 @@ from django.conf import settings
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = '78NwJjMS1M8Bg55/dV59ll/CK6dNm3KRl9WhLtW7pOyoSNfHQ4h+DEaDRjEEJgF' \
-    + '9x6PtqphjTDlzLUJ1WetCF0uMk1K1qI4ePuQ0K+ydvM4oyZ7G9Lwjuqqgf5KMhRHpBvv8c' \
-    + '8JCQdGEz+IENLf5V/VC43MPOjG72ju9rS+klWubXyY8CznZJk8Aupk6Q8/oRSp6zJY2iBo' \
-    + 'T7yW7trv1j7F/jjrBiDmyM7Y+pa8IhvvSRoo8V3iUQURpv3KRmSmd8GVlwXubQdIna/GKA' \
-    + 'rqyEz71/lkQQmRJDPNn1YzOY7+QyoDSOGftw78CpjxPaIvRRzGZb+7l4gL+vZNdT0gJ+k5' \
-    + 'Wn0AVhaJ3JpX+qoJjX3A='
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
@@ -20,9 +15,13 @@ DEBUG = False
 ALLOWED_HOSTS = ["*"]
 CORS_ORIGIN_ALLOW_ALL = False
 CORS_ORIGIN_WHITELIST = (
-  'http://localhost:8080',   # adress of frontend application
+  'http://localhost:8000',
+  'http://localhost:8080'
 )
-CSRF_TRUSTED_ORIGINS = ['http://localhost:8000']
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8000',
+    'http://localhost:8080'
+]
 
 INSTALLED_APPS = [
  

@@ -11,14 +11,15 @@ The repository contains source code of game's backend including all tests and ad
 ## Installation
 - ensure you have python and docker installed on your host system
 - clone the repo
-- change CRLF to LF in both: SocketComponent\start_script.sh and ApiComponent\start_script.sh if you are working on windows
 - run docker-compose file that creates:
   - Redis container
   - SocketComponent container
   - ApiComponent container
   - Nginx container
   - 2 PostreSQL containers, 1 for each component
-  ```docker-compose up```
+  ```
+  docker-compose up
+  ```
 
 <br>Congratulations, you have successfully installed the best online game
 

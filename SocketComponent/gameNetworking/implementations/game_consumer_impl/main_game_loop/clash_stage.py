@@ -1,5 +1,5 @@
-from SocketComponent.gameMechanics.clashMechanics.main import get_new_morale
-from SocketComponent.gameMechanics.clashMechanics.main import get_mock_action_card_id
+from gameMechanics.scripts.basic_mechanics import get_new_morale
+from gameMechanics.scripts.basic_mechanics import get_mock_action_card_id
 from gameMechanics.queries import get_a_card_serialized
 
 from ....enums import MessageType, PlayerState
