@@ -1,4 +1,4 @@
-from SocketComponent.gameMechanics.clashMechanics.utils import get_values_dict
+from gameMechanics.clashMechanics.utils import get_values_dict
 
 
 def handle_block(value, action_damage, blocked_damage, redirected_damage, condition_satisfied):
