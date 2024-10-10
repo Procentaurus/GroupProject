@@ -1,5 +1,4 @@
 import re
-from gameMechanics.models import ActionCard
 
 def calculate_action_damage(action_card):
     pattern = r'(\d+)\s+damage'
