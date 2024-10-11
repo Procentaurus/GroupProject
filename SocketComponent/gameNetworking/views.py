@@ -12,7 +12,15 @@ from .serializers import *
 logger = logging.getLogger(__name__)
 
 
-class GameAuthenticationTokenCreateView(generics.CreateAPIView):
+class Authenticator:
+
+    def is_authenticated(self, user):
+        if user is None or not isinstance(user, tuple):
+            return False
+        else: return True
+
+
+class GameAuthenticationTokenCreateView(generics.CreateAPIView, Authenticator):
 
     throttle_classes = [GameAuthenticationTokenCreateHourRate]
     queryset = GameAuthenticationToken.objects.all()
@@ -24,6 +32,9 @@ class GameAuthenticationTokenCreateView(generics.CreateAPIView):
             return GameAuthenticationTokenPublicSerializer
 
     def create(self, request, *args, **kwargs):
+        if not self.is_authenticated(request.user):
+            return Response("No credentials provided",
+                status=status.HTTP_401_UNAUTHORIZED)
         user_id, is_admin = request.user
         num_tokens = GameAuthenticationToken.objects \
             .filter(user_id=user_id).count()
@@ -42,14 +53,18 @@ class GameAuthenticationTokenCreateView(generics.CreateAPIView):
                 status=status.HTTP_400_BAD_REQUEST)
 
 
-class GameAuthenticationTokenListView(generics.ListCreateAPIView):
+class GameAuthenticationTokenListView(generics.ListCreateAPIView,
+                                      Authenticator):
 
     permission_classes = [IsAdmin,]
     queryset = GameAuthenticationToken.objects.all()
 
     def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
-
+        if self.is_authenticated(request.user):
+            return self.list(request, *args, **kwargs)
+        else:
+            return Response("No credentials provided",
+                            status=status.HTTP_401_UNAUTHORIZED)
 
 class GameAuthenticationTokenView(APIView):
 

@@ -6,12 +6,11 @@ class CustomUserRateThrottle(SimpleRateThrottle):
     scope = 'user'
 
     def get_cache_key(self, request, view):
-        id, _ = request.user
-        if id:
-            ident = id
-        else:
+        if request.user is None or not isinstance(request.user, tuple):
             ident = self.get_ident(request)
-
+        else:
+            id, _ = request.user
+            ident = id if id else self.get_ident(request)
         return self.cache_format % {
             'scope': self.scope,
             'ident': ident
