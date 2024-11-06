@@ -11,3 +11,5 @@ Math Homework,Deal 20 damage,3,teacher,0,card_images/example.png
 Cancel A Break,Deal 20 damage,3,teacher,0,card_images/example.png
 Insult the teacher,Deal 20 damage,4,teacher,1,card_images/example.png
 Insult the student,Deal 20 damage,5,teacher,2,card_images/example.png
+Lingering Poison,Deal 10 poison damage for 3 turns,5,student,1,card_images/example_poison.png
+Borrow Strength,Deal 10 damage and steal 5 morale,6,teacher,1,card_images/example_steal.png

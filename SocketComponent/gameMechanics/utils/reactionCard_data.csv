@@ -9,6 +9,9 @@ Freshman Nerd,Block 10 damage,block=10,4,student,Intelligence,card_images/exampl
 Senior Nerd,Block 15 damage,block=15,6,student,Intelligence,card_images/example.png
 Math Expert,Block 10% of incoming damage,percentage_value=blocked;percentage=10,5,student,Intelligence,card_images/example.png
 Senior's Notebook,"If your redirected damage is above 10, block 10 incoming damage",conditional_value=redirected;conditional_threshold=10;block=10,5,student,Intelligence,card_images/example.png
+Energy Shield,Block 15 damage for next 2 turns,block=15;duration=2,6,student,Defense,card_images/example_shield.png
+Study Group,Activate synergy bonus and add 10 block,synergy=1;synergy_bonus=10;mechanic_type=block,5,student,Support,card_images/example_study.png
+Group Leader,Add 10 redirect if synergy is active,synergy_bonus=10;mechanic_type=redirect,4,student,Support,card_images/example_leader.png
 PE Substitute,Redirect 5 damage,redirect=5;block=5,2,teacher,Brute,card_images/example.png
 PE teacher,Redirect 10 damage,redirect=10;block=10,4,teacher,Brute,card_images/example.png
 "Hank, Football Coach",Redirect 15 damage,redirect=15;block=15,6,teacher,Brute,card_images/example.png
@@ -19,3 +22,7 @@ Science teacher,Block 10 damage,block=10,4,teacher,Intelligence,card_images/exam
 "Ross, Paleontologist",Block 15 damage,block=15,6,teacher,Intelligence,card_images/example.png
 Math teacher,Block 10% of incoming damage,percentage_value=blocked;percentage=10,5,teacher,Intelligence,card_images/example.png
 Entry Test,"If your redirected damage is above 10, block 10 incoming damage",conditional_value=redirected;conditional_threshold=10;block=10,5,teacher,Intelligence,card_images/example.png
+Teacher's Friend,Activate synergy bonus and add 5 redirect,synergy=1;synergy_bonus=5;mechanic_type=redirect,4,teacher,Support,card_images/example_synergy.png
+Friend's Dog,Add 5 redirect if synergy is active,synergy_bonus=5;mechanic_type=redirect,3,teacher,Support,card_images/example_dog.png
+Science Partner,Activate synergy bonus and add 5 poison,synergy=1;synergy_bonus=5;mechanic_type=poison,4,teacher,Support,card_images/example_poison.png
+Pet Snake,Add 5 poison if synergy is active,synergy_bonus=5;mechanic_type=poison,3,teacher,Support,card_images/example_snake.png
