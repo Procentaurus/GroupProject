@@ -1,14 +1,15 @@
 from gameMechanics.clashMechanics.utils import get_values_dict
 
 
-def handle_block(value, action_damage, blocked_damage, redirected_damage, condition_satisfied):
+def handle_block(value, action_damage, blocked_damage, redirected_damage, condition_satisfied, percentage_value):
     if condition_satisfied:
         blocked_damage += int(value)
     return blocked_damage, redirected_damage
 
-def handle_redirect(value, action_damage, blocked_damage, redirected_damage, condition_satisfied):
+def handle_redirect(value, action_damage, blocked_damage, redirected_damage, condition_satisfied, percentage_value):
     if condition_satisfied:
         redirected_damage += int(value)
+        blocked_damage += int(value)
     return blocked_damage, redirected_damage
 
 def handle_percentage(value, action_damage, blocked_damage, redirected_damage, condition_satisfied, percentage_value):
