@@ -30,7 +30,7 @@ def get_random_card_ids(model, count, player_type):
 
     return serialized_data
 
-async def get_initial_shop_for_player(num_reaction_cards, num_action_cards, player_type):
+async def get_shop_for_player(num_reaction_cards, num_action_cards, player_type):
     reaction_card_instances = await get_random_card_ids(ReactionCard, num_reaction_cards, player_type)
     action_card_instances = await get_random_card_ids(ActionCard, num_action_cards, player_type)
 
