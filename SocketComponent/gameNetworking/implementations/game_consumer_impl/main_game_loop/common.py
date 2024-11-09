@@ -1,6 +1,6 @@
 from django.conf import settings
 
-from gameMechanics.hubMechanics.initial_shop import get_initial_shop_for_player
+from SocketComponent.gameMechanics.hubMechanics.shop import get_shop_for_player
 
 from ....models.queries import add_reaction_card_to_shop
 from ....messager.scheduler import check_game_user_state
@@ -146,12 +146,12 @@ class InitShopCardsGetter:
 
     async def get_player_cards(self):
         conflict_side = "teacher" if self._g_u.is_teacher() else "student"
-        return (await get_initial_shop_for_player(
+        return (await get_shop_for_player(
             self._num_a_cards, self._num_r_cards, conflict_side))[::-1]
 
     async def get_opponent_cards(self):
         conflict_side = "student" if self._g_u.is_teacher() else "teacher"
-        return (await get_initial_shop_for_player(
+        return (await get_shop_for_player(
             self._num_a_cards, self._num_r_cards, conflict_side))[::-1]
 
 

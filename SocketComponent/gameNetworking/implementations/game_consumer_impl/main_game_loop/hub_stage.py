@@ -102,8 +102,7 @@ class RerollMoveHandler(MoveHandler):
         await g_u.buy_reroll()
         await g_u.increase_reroll_price()
 
-        #  TODO (new_a_cards, new_r_cards) = await get_rerolled_cards(g_u)
-        (new_a_cards, new_r_cards) = (None, None)
+        (new_a_cards, new_r_cards) = await get_shop_for_player(2, 5, g_u.player_type)
 
         s_c_a = ShopCardsAdder(g_u, new_a_cards, new_r_cards)
         await s_c_a.add_all_cards_shop()
