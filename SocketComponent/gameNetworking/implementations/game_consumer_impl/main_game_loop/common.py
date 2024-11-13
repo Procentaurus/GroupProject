@@ -1,6 +1,6 @@
 from django.conf import settings
 
-from SocketComponent.gameMechanics.hubMechanics.shop import get_shop_for_player
+from gameMechanics.hubMechanics.shop import get_shop_for_player
 
 from ....models.queries import add_reaction_card_to_shop
 from ....messager.scheduler import check_game_user_state

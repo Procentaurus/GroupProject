@@ -1,11 +1,29 @@
 import re
-from gameMechanics.models import ReactionCard
+from gameMechanics.models import ActionCard as DBActionCard, ReactionCard as DBReactionCard
+from .cards import CardFactory
 
-def get_values_dict(values_string):
-    dictionary = dict(re.findall(r'(\w+)[=:]([^\s,;]+)', values_string))
-    return dictionary
+def load_cards_for_clash(action_card_id, reaction_card_ids):
+    # Load the action card from the database
+    db_action_card = DBActionCard.objects.get(id=action_card_id)
+    action_card_data = {
+        "model": "gameMechanics.actioncard",
+        "fields": db_action_card.__dict__
+    }
+    action_card = CardFactory.create_card(action_card_data)
 
-def get_reaction_cards_from_dictionary(reaction_cards_dict):
+    # Load the reaction cards from the database
+    db_reaction_cards = DBReactionCard.objects.filter(id__in=reaction_card_ids)
+    reaction_cards = [
+        CardFactory.create_card({
+            "model": "gameMechanics.reactioncard",
+            "fields": db_reaction_card.__dict__
+        })
+        for db_reaction_card in db_reaction_cards
+    ]
+
+    return action_card, reaction_cards
+
+def get_reaction_cards_ids_from_dictionary(reaction_cards_dict):
     card_uuids = []
 
     for item in reaction_cards_dict:
@@ -13,6 +31,4 @@ def get_reaction_cards_from_dictionary(reaction_cards_dict):
         amount = item['amount']
         card_uuids.extend([card_id] * amount)
 
-    reaction_cards = ReactionCard.objects.filter(pk__in=card_uuids)
-
-    return list(reaction_cards)
+    return list(card_uuids)
