@@ -19,21 +19,32 @@ class ActionCard(Card):
 
 class ReactionCard(Card):
     def __init__(self, name, description, values, price, player_type, card_type):
-        super().__init__(name, description, price, player_type)
+        self.name = name
+        self.description = description
         self.values = self.parse_values(values)
+        self.price = price
+        self.player_type = player_type
         self.card_type = card_type
 
     def parse_values(self, values):
-        # Converts 'values' string into a dictionary
-        return dict(item.split("=") for item in values.split(";"))
+        return dict(item.split('=') for item in values.split(';'))
 
     def apply_reaction(self, action_damage):
         blocked_damage = 0
         redirected_damage = 0
-        condition_satisfied = True  # Default to true if no conditions exist
-        percentage_value = None
+        condition_satisfied = self.check_conditions(blocked_damage, redirected_damage)
+        percentage_value = self.values.get('percentage_value', None)
 
-        # Parse conditional values and thresholds
+        blocked_damage = self.apply_block_effect(blocked_damage, condition_satisfied)
+        redirected_damage = self.apply_redirect_effect(redirected_damage, condition_satisfied)
+        blocked_damage, redirected_damage = self.apply_percentage_modifications(
+            action_damage, blocked_damage, redirected_damage, percentage_value
+        )
+
+        return action_damage - blocked_damage, redirected_damage
+
+    def check_conditions(self, blocked_damage, redirected_damage):
+        condition_satisfied = True
         if 'conditional_value' in self.values:
             conditional_value = self.values['conditional_value']
             threshold = int(self.values.get('conditional_threshold', 0))
@@ -42,27 +53,24 @@ class ReactionCard(Card):
                 condition_satisfied = False
             elif conditional_value == 'redirected' and redirected_damage <= threshold:
                 condition_satisfied = False
+        return condition_satisfied
 
-        # Parse percentage effects (if applicable)
-        if 'percentage_value' in self.values:
-            percentage_value = self.values['percentage_value']
-
-        # Apply block effect
+    def apply_block_effect(self, blocked_damage, condition_satisfied):
         if 'block' in self.values and condition_satisfied:
             blocked_damage += int(self.values['block'])
+        return blocked_damage
 
-        # Apply redirect effect
+    def apply_redirect_effect(self, redirected_damage, condition_satisfied):
         if 'redirect' in self.values and condition_satisfied:
             redirected_damage += int(self.values['redirect'])
+        return redirected_damage
 
-        # Apply percentage modifications
+    def apply_percentage_modifications(self, action_damage, blocked_damage, redirected_damage, percentage_value):
         if percentage_value == 'blocked':
             blocked_damage += action_damage * 0.01 * int(self.values.get('percentage', 0))
         elif percentage_value == 'redirected':
             redirected_damage += action_damage * 0.01 * int(self.values.get('percentage', 0))
-
-        # Return modified action damage and redirected damage
-        return max(0, action_damage - blocked_damage), redirected_damage
+        return blocked_damage, redirected_damage
 
 
 class CardFactory:
