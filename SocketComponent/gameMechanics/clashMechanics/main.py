@@ -13,6 +13,8 @@ def get_new_morale(
     # Retrieve player health
     acting_player_health = acting_player.morale
     reacting_player_health = reacting_player.morale
+    blocked_damage = 0
+    redirected_damage = 0
     
     # Convert reaction_card_dictionary to IDs for loading
     reaction_card_ids = [item['id'] for item in reaction_card_dictionary]
@@ -25,14 +27,24 @@ def get_new_morale(
 
     # Apply each reaction card's effect to modify action damage
     for reaction_card in reaction_cards:
-        action_damage, redirected_damage = reaction_card.apply_reaction(action_damage)
+        new_blocked_damage, new_redirected_damage = reaction_card.apply_reaction(action_damage, blocked_damage, redirected_damage)
+        blocked_damage += new_blocked_damage
+        redirected_damage += new_redirected_damage
+
+    if redirected_damage >= action_damage:
+        redirected_damage = action_damage
+
+    if blocked_damage >= action_damage:
+        blocked_damage = action_damage
+    
+    action_damage -= blocked_damage
 
     # Calculate final health values after clash
     new_acting_player_health = acting_player_health - redirected_damage
     new_reacting_player_health = reacting_player_health - action_damage
     
     # Placeholder money values (can adjust as needed for actual game mechanics)
-    new_acting_player_money, new_reacting_player_money = 200, 200
+    new_acting_player_money, new_reacting_player_money = 20, 20
 
     return new_acting_player_health, new_acting_player_money, new_reacting_player_health, new_reacting_player_money
 

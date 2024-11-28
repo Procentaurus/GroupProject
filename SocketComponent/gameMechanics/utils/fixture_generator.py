@@ -4,9 +4,6 @@ import os
 import uuid
 import csv
 
-# Define the file path
-output_file_path = os.path.join(os.path.dirname(__file__), '..\\fixtures\\basicCards.json')
-
 def save_json_file(output_file_path, fixture_data_from_csv):
     if os.path.exists(output_file_path):
         with open(output_file_path, 'r') as json_file:
