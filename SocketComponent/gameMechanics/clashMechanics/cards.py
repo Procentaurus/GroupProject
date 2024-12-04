@@ -29,10 +29,10 @@ class ReactionCard(Card):
     def parse_values(self, values):
         return dict(item.split('=') for item in values.split(';'))
 
-    def apply_reaction(self, action_damage):
+    def apply_reaction(self, action_damage, overall_blocked, overall_redirected):
         blocked_damage = 0
         redirected_damage = 0
-        condition_satisfied = self.check_conditions(blocked_damage, redirected_damage)
+        condition_satisfied = self.check_conditions(overall_blocked, overall_redirected)
         percentage_value = self.values.get('percentage_value', None)
 
         blocked_damage = self.apply_block_effect(blocked_damage, condition_satisfied)
@@ -41,17 +41,17 @@ class ReactionCard(Card):
             action_damage, blocked_damage, redirected_damage, percentage_value
         )
 
-        return action_damage - blocked_damage, redirected_damage
+        return blocked_damage, redirected_damage
 
-    def check_conditions(self, blocked_damage, redirected_damage):
+    def check_conditions(self, overall_blocked_damage, overall_redirected_damage):
         condition_satisfied = True
         if 'conditional_value' in self.values:
             conditional_value = self.values['conditional_value']
             threshold = int(self.values.get('conditional_threshold', 0))
 
-            if conditional_value == 'blocked' and blocked_damage <= threshold:
+            if conditional_value == 'blocked' and overall_blocked_damage <= threshold:
                 condition_satisfied = False
-            elif conditional_value == 'redirected' and redirected_damage <= threshold:
+            elif conditional_value == 'redirected' and overall_redirected_damage <= threshold:
                 condition_satisfied = False
         return condition_satisfied
 

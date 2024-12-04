@@ -1,21 +1,21 @@
 name,description,values,price,playerType,type,image
-Junior Bully,Redirect 5 damage,redirect=5;block=5,2,student,Brute,card_images/example.png
-Freshman Bully,Redirect 10 damage,redirect=10;block=10,4,student,Brute,card_images/example.png
-Senior Bully,Redirect 15 damage,redirect=15;block=15,6,student,Brute,card_images/example.png
-Drunk Uncle Roger,Add 10 damage to current redirection,redirect=10,5,student,Brute,card_images/example.png
-Protein Shake,"If your blocked damage is above 10, redirect 10 at your opponent",conditional_value=blocked;conditional_threshold=10;redirect=10;block=10,5,student,Brute,card_images/example.png
-Junior Nerd,Block 5 damage,block=5,2,student,Intelligence,card_images/example.png
-Freshman Nerd,Block 10 damage,block=10,4,student,Intelligence,card_images/example.png
-Senior Nerd,Block 15 damage,block=15,6,student,Intelligence,card_images/example.png
-Math Expert,Block 10% of incoming damage,percentage_value=blocked;percentage=10,5,student,Intelligence,card_images/example.png
-Senior's Notebook,"If your redirected damage is above 10, block 10 incoming damage",conditional_value=redirected;conditional_threshold=10;block=10,5,student,Intelligence,card_images/example.png
-PE Substitute,Redirect 5 damage,redirect=5;block=5,2,teacher,Brute,card_images/example.png
-PE teacher,Redirect 10 damage,redirect=10;block=10,4,teacher,Brute,card_images/example.png
-"Hank, Football Coach",Redirect 15 damage,redirect=15;block=15,6,teacher,Brute,card_images/example.png
-Hank's Son,Add 10 damage to current redirection,redirect=10,5,teacher,Brute,card_images/example.png
-Training Session,"If your blocked damage is above 10, redirect 10 at your opponent",conditional_value=blocked;conditional_threshold=10;redirect=10;block=10,5,teacher,Brute,card_images/example.png
-Science Substitute,Block 5 damage,block=5,2,teacher,Intelligence,card_images/example.png
-Science teacher,Block 10 damage,block=10,4,teacher,Intelligence,card_images/example.png
-"Ross, Paleontologist",Block 15 damage,block=15,6,teacher,Intelligence,card_images/example.png
-Math teacher,Block 10% of incoming damage,percentage_value=blocked;percentage=10,5,teacher,Intelligence,card_images/example.png
-Entry Test,"If your redirected damage is above 10, block 10 incoming damage",conditional_value=redirected;conditional_threshold=10;block=10,5,teacher,Intelligence,card_images/example.png
+Junior Bully,Redirect 5 damage,redirect=5;block=5,2,student,Brute,card_images/junior_bully.png
+Freshman Bully,Redirect 10 damage,redirect=10;block=10,4,student,Brute,card_images/freshman_bully.png
+Senior Bully,Redirect 15 damage,redirect=15;block=15,6,student,Brute,card_images/senior_bully.png
+Drunk Uncle Roger,Add 10 damage to current redirection,redirect=10,5,student,Brute,card_images/drunk_uncle_roger.png
+Protein Shake,"If your blocked damage is above 10, redirect 10 at your opponent",conditional_value=blocked;conditional_threshold=10;redirect=10;block=10,5,student,Brute,card_images/protein_shake.png
+Junior Nerd,Block 5 damage,block=5,2,student,Intelligence,card_images/junior_nerd.png
+Freshman Nerd,Block 10 damage,block=10,4,student,Intelligence,card_images/freshman_nerd.png
+Senior Nerd,Block 15 damage,block=15,6,student,Intelligence,card_images/senior_nerd.png
+Math Expert,Block 10% of incoming damage,percentage_value=blocked;percentage=10,5,student,Intelligence,card_images/math_expert.png
+Senior's Notebook,"If your redirected damage is above 10, block 10 incoming damage",conditional_value=redirected;conditional_threshold=10;block=10,5,student,Intelligence,card_images/senior's_notebook.png
+PE Substitute,Redirect 5 damage,redirect=5;block=5,2,teacher,Brute,card_images/pe_substitute.png
+PE teacher,Redirect 10 damage,redirect=10;block=10,4,teacher,Brute,card_images/pe_teacher.png
+"Hank, Football Coach",Redirect 15 damage,redirect=15;block=15,6,teacher,Brute,"card_images/hank,_football_coach.png"
+Hank's Son,Add 10 damage to current redirection,redirect=10,5,teacher,Brute,card_images/hank's_son.png
+Training Session,"If your blocked damage is above 10, redirect 10 at your opponent",conditional_value=blocked;conditional_threshold=10;redirect=10;block=10,5,teacher,Brute,card_images/training_session.png
+Science Substitute,Block 5 damage,block=5,2,teacher,Intelligence,card_images/science_substitute.png
+Science teacher,Block 10 damage,block=10,4,teacher,Intelligence,card_images/science_teacher.png
+"Ross, Paleontologist",Block 15 damage,block=15,6,teacher,Intelligence,"card_images/ross,_paleontologist.png"
+Math teacher,Block 10% of incoming damage,percentage_value=blocked;percentage=10,5,teacher,Intelligence,card_images/math_teacher.png
+Entry Test,"If your redirected damage is above 10, block 10 incoming damage",conditional_value=redirected;conditional_threshold=10;block=10,5,teacher,Intelligence,card_images/entry_test.png
